@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1140,8 +1141,20 @@
     }
   }
 
+  // ── CONFIGURACIÓN WEBHOOKS ──
+  const WEBHOOK_STEP1 = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/approval-step1';
+  const WEBHOOK_STEP2 = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/approval-step2';
+
+  // Obtener token y paso desde la URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const TOKEN = urlParams.get('token') || 'demo-token';
+  const STEP  = parseInt(urlParams.get('step') || '1');
+  const ANALYSIS_ID = parseInt(urlParams.get('analysis_id') || '1');
+  const PROJECT_ID  = parseInt(urlParams.get('project_id') || '1');
+  const SPECIALTY   = urlParams.get('specialty') || 'Climatización';
+
   // ── SUBMIT ──
-  function submitDecision() {
+  async function submitDecision() {
     if (!currentDecision) return;
     const notes = document.getElementById('decision-notes').value;
     const altSupplier = document.getElementById('alt-supplier-select').value;
@@ -1152,7 +1165,38 @@
       return;
     }
 
-    // Simular envío
+    // Deshabilitar botón mientras se envía
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    // Payload para n8n
+    const payload = {
+      token: TOKEN,
+      step: STEP,
+      analysis_id: ANALYSIS_ID,
+      project_id: PROJECT_ID,
+      specialty: SPECIALTY,
+      decision: currentDecision,
+      decided_supplier_id: altSupplier ? parseInt(altSupplier) : null,
+      notes: notes,
+      user_name: document.getElementById('user-display').textContent,
+      user_email: 'tecnico@bygsoluciones.es',
+      decided_at: new Date().toISOString()
+    };
+
+    try {
+      const webhookUrl = STEP === 1 ? WEBHOOK_STEP1 : WEBHOOK_STEP2;
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('Error en el servidor: ' + response.status);
+    } catch (err) {
+      console.warn('Webhook no disponible, continuando en modo demo:', err.message);
+    }
+
     const now = new Date();
     const timeStr = now.toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) + ' · ' + now.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
 
