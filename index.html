@@ -31,15 +31,12 @@
     .dept-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid #ddd; background: white; font-size: 12px; cursor: pointer; color: #666; }
     .dept-btn.active { background: #185FA5; color: white; border-color: #185FA5; }
     .btn-refresh { background: #185FA5; color: white; border: none; padding: 7px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; }
-    .btn-refresh:hover { background: #0C447C; }
     .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 2rem; }
-    @media (max-width: 900px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
     .metric { background: #f5f5f0; border-radius: 8px; padding: 1rem; }
     .metric-label { font-size: 12px; color: #666; margin-bottom: 4px; }
     .metric-value { font-size: 28px; font-weight: 500; color: #1a1a1a; }
     .metric-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
     .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
-    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
     .section-title { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 1rem; }
     .card { background: white; border: 1px solid #e5e5e0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
     .project-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f0ea; cursor: pointer; border-radius: 6px; padding-left: 6px; }
@@ -62,13 +59,10 @@
     .btn { padding: 7px 16px; border-radius: 8px; border: 1px solid #ddd; background: white; font-size: 12px; cursor: pointer; color: #1a1a1a; }
     .btn:hover { background: #f5f5f0; }
     .btn-primary { background: #185FA5; color: white; border-color: #185FA5; }
-    .btn-primary:hover { background: #0C447C; }
     .btn-success { background: #3B6D11; color: white; border-color: #3B6D11; }
     .btn-danger { background: #A32D2D; color: white; border-color: #A32D2D; }
     .btn-back { background: #f5f5f0; border-color: #ddd; color: #666; }
     .supervision-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    .project-info h2 { font-size: 15px; font-weight: 500; color: #1a1a1a; }
-    .project-info p { font-size: 12px; color: #888; margin-top: 2px; }
     .alert-box { background: #FAEEDA; border: 1px solid #FAC775; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
     .alert-box-title { font-size: 13px; font-weight: 500; color: #633806; margin-bottom: 4px; }
     .alert-box-desc { font-size: 12px; color: #854F0B; }
@@ -84,7 +78,6 @@
     .partidas-table td { padding: 6px 8px; color: #1a1a1a; border-bottom: 1px solid #f0f0ea; }
     .partidas-table tr:last-child td { border-bottom: none; }
     .partidas-table input { border: 1px solid #ddd; border-radius: 4px; padding: 3px 6px; font-size: 12px; width: 100%; background: white; color: #1a1a1a; }
-    .partidas-table input:focus { outline: none; border-color: #185FA5; }
     .partidas-table input.error { border-color: #E24B4A; background: #fff8f8; }
     .actions-bar { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f0f0ea; }
     .aprobacion-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0ea; }
@@ -95,50 +88,40 @@
     .empty { color: #aaa; font-size: 13px; padding: 1.5rem 0; text-align: center; }
     .live-dot { width: 7px; height: 7px; background: #3B6D11; border-radius: 50%; display: inline-block; margin-right: 6px; }
     .last-update { font-size: 11px; color: #aaa; margin-left: 8px; }
+    .btn-analisis { background: #E6F1FB; color: #0C447C; border: 1px solid #B5D4F4; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500; cursor: pointer; width: 100%; text-align: center; margin-top: 8px; }
+    .btn-analisis:hover { background: #B5D4F4; }
   </style>
 </head>
 <body>
-
 <div class="sidebar">
   <div class="logo-area">
     <div class="logo-box">BYG</div>
-    <div class="logo-text">BYG Soluciones<span>EasyProject · by Solventa IA</span></div>
+    <div class="logo-text">BYG Soluciones<span>EasyProject by Solventa IA</span></div>
   </div>
   <div class="nav-section">Principal</div>
-  <div class="nav-item active" id="nav-dashboard" onclick="showPanel('dashboard')">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/></svg>
-    Dashboard
-  </div>
-  <div class="nav-item" id="nav-supervision" onclick="showPanel('supervision')">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    Supervisión técnica
-  </div>
-  <div class="nav-item" id="nav-aprobacion" onclick="showPanel('aprobacion')">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Aprobación
-  </div>
+  <div class="nav-item active" id="nav-dashboard" onclick="showPanel('dashboard')">Dashboard</div>
+  <div class="nav-item" id="nav-supervision" onclick="showPanel('supervision')">Supervision tecnica</div>
+  <div class="nav-item" id="nav-aprobacion" onclick="showPanel('aprobacion')">Aprobacion</div>
   <div class="nav-section">Datos</div>
-  <div class="nav-item"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M2 6h12M6 6v8" stroke="currentColor" stroke-width="1.2"/></svg>Proyectos</div>
-  <div class="nav-item"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Proveedores</div>
-  <div class="nav-item"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Documentos</div>
+  <div class="nav-item">Proyectos</div>
+  <div class="nav-item">Proveedores</div>
+  <div class="nav-item">Documentos</div>
   <div class="user-pill">
-    <strong id="user-name">Dept. Técnico</strong>
-    <span id="user-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9ce8f9fff2f5fff3dcfee5fbeff3f0e9fff5f3f2f9efb2f9ef">[email&#160;protected]</a></span>
+    <strong id="user-name">Dept. Tecnico</strong>
+    <span id="user-email">tecnico@bygsoluciones.es</span>
   </div>
   <div class="powered">powered by <span>Solventa IA</span></div>
 </div>
 
 <div class="main">
-
-  <!-- DASHBOARD -->
   <div id="panel-dashboard" class="panel active">
     <div class="topbar">
       <h1><span class="live-dot"></span>Dashboard<span class="last-update" id="last-update"></span></h1>
       <div class="topbar-right">
-        <button class="btn-refresh" onclick="loadDashboard()">↻ Actualizar</button>
+        <button class="btn-refresh" onclick="loadDashboard()">Actualizar</button>
         <div class="dept-select">
-          <button class="dept-btn active" onclick="setDept('tecnico',this)">Técnico</button>
-          <button class="dept-btn" onclick="setDept('direccion',this)">Dirección</button>
+          <button class="dept-btn active" onclick="setDept('tecnico',this)">Tecnico</button>
+          <button class="dept-btn" onclick="setDept('direccion',this)">Direccion</button>
           <button class="dept-btn" onclick="setDept('comercial',this)">Comercial</button>
           <button class="dept-btn" onclick="setDept('prl',this)">PRL</button>
           <button class="dept-btn" onclick="setDept('admin',this)">Admin</button>
@@ -146,10 +129,10 @@
       </div>
     </div>
     <div class="metrics">
-      <div class="metric"><div class="metric-label">Proyectos totales</div><div class="metric-value" id="m-total">—</div><div class="metric-sub">en base de datos</div></div>
-      <div class="metric"><div class="metric-label">Emails ingestados</div><div class="metric-value" id="m-emails">—</div><div class="metric-sub">procesados por n8n</div></div>
-      <div class="metric"><div class="metric-label">Pendiente revisión</div><div class="metric-value" id="m-review" style="color:#854F0B;">—</div><div class="metric-sub">review_required</div></div>
-      <div class="metric"><div class="metric-label">Errores registrados</div><div class="metric-value" id="m-errors" style="color:#A32D2D;">—</div><div class="metric-sub">automation_errors</div></div>
+      <div class="metric"><div class="metric-label">Proyectos totales</div><div class="metric-value" id="m-total">-</div><div class="metric-sub">en base de datos</div></div>
+      <div class="metric"><div class="metric-label">Emails ingestados</div><div class="metric-value" id="m-emails">-</div><div class="metric-sub">procesados por n8n</div></div>
+      <div class="metric"><div class="metric-label">Pendiente revision</div><div class="metric-value" id="m-review" style="color:#854F0B;">-</div><div class="metric-sub">review_required</div></div>
+      <div class="metric"><div class="metric-label">Errores registrados</div><div class="metric-value" id="m-errors" style="color:#A32D2D;">-</div><div class="metric-sub">automation_errors</div></div>
     </div>
     <div class="grid-2">
       <div>
@@ -165,46 +148,44 @@
     </div>
   </div>
 
-  <!-- SUPERVISION -->
   <div id="panel-supervision" class="panel">
     <div class="topbar">
-      <h1>Supervisión técnica</h1>
-      <button class="btn btn-back" onclick="showPanel('dashboard')">← Dashboard</button>
+      <h1>Supervision tecnica</h1>
+      <button class="btn btn-back" onclick="showPanel('dashboard')">Volver al dashboard</button>
     </div>
     <div id="sup-list">
-      <div class="section-title">Proyectos pendientes de supervisión</div>
+      <div class="section-title">Proyectos pendientes de supervision</div>
       <div class="card" id="sup-projects"><div class="loading">Cargando...</div></div>
     </div>
     <div id="sup-detail" style="display:none;">
       <div class="supervision-header">
-        <button class="btn btn-back" onclick="backToSupList()">← Volver</button>
-        <div class="project-info">
-          <h2 id="sup-name">—</h2>
-          <p id="sup-meta">—</p>
+        <button class="btn btn-back" onclick="backToSupList()">Volver</button>
+        <div>
+          <div style="font-size:15px;font-weight:500;color:#1a1a1a;" id="sup-name">-</div>
+          <div style="font-size:12px;color:#888;" id="sup-meta">-</div>
         </div>
-        <span id="sup-badge" class="badge badge-review" style="margin-left:auto;">Revisión requerida</span>
+        <span id="sup-badge" class="badge badge-review" style="margin-left:auto;">Revision requerida</span>
       </div>
       <div class="alert-box" id="sup-alertbox">
-        <div class="alert-box-title">Supervisión técnica requerida</div>
-        <div class="alert-box-desc">Revisa las partidas extraídas por la IA, corrige los errores marcados en rojo, y valida para enviar a aprobación.</div>
+        <div class="alert-box-title">Supervision tecnica requerida</div>
+        <div class="alert-box-desc">Revisa las partidas extraidas por la IA, corrige los errores marcados en rojo, y valida para enviar a aprobacion.</div>
       </div>
       <div id="gremio-container"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
         <button class="btn" onclick="alert('Cambios guardados.')">Guardar cambios</button>
-        <button class="btn btn-primary" onclick="enviarAprobacion()">Enviar a aprobación →</button>
+        <button class="btn btn-primary" onclick="enviarAprobacion()">Enviar a aprobacion</button>
       </div>
     </div>
   </div>
 
-  <!-- APROBACION -->
   <div id="panel-aprobacion" class="panel">
     <div class="topbar">
-      <h1>Aprobación de envío</h1>
-      <button class="btn btn-back" onclick="showPanel('dashboard')">← Dashboard</button>
+      <h1>Aprobacion de envio</h1>
+      <button class="btn btn-back" onclick="showPanel('dashboard')">Volver al dashboard</button>
     </div>
     <div id="apro-empty" class="card" style="text-align:center;padding:2rem;">
-      <div style="font-size:14px;color:#888;margin-bottom:6px;">No hay proyectos pendientes de aprobación</div>
-      <div style="font-size:12px;color:#aaa;">Aparecerán aquí cuando Técnico envíe un proyecto a aprobación</div>
+      <div style="font-size:14px;color:#888;margin-bottom:6px;">No hay proyectos pendientes de aprobacion</div>
+      <div style="font-size:12px;color:#aaa;">Apareceran aqui cuando Tecnico envie un proyecto a aprobacion</div>
     </div>
     <div id="apro-detail" style="display:none;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
@@ -217,196 +198,238 @@
         <div>
           <div class="section-title">Estado de aprobaciones</div>
           <div class="card">
-            <div class="aprobacion-row"><div class="dot-green"></div><div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">Técnico — Validado</div><div style="font-size:11px;color:#aaa;" id="apro-tecnico-date">—</div></div></div>
-            <div class="aprobacion-row"><div class="dot-orange"></div><div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">Dirección — Pendiente</div><div style="font-size:11px;color:#aaa;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c7a3aeb5a2a4a4aea8a987a5bea0b4a8abb2a4aea8a9a2b4e9a2b4">[email&#160;protected]</a></div></div></div>
-            <div class="aprobacion-row"><div class="dot-orange"></div><div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">Comercial — Pendiente</div><div style="font-size:11px;color:#aaa;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bdded2d0d8cfded4dcd1fddfc4daced2d1c8ded4d2d3d8ce93d8ce">[email&#160;protected]</a></div></div></div>
+            <div class="aprobacion-row"><div class="dot-green"></div><div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">Tecnico - Validado</div><div style="font-size:11px;color:#aaa;" id="apro-tecnico-date">-</div></div></div>
+            <div class="aprobacion-row"><div class="dot-orange"></div><div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">Direccion - Pendiente</div><div style="font-size:11px;color:#aaa;">direccion@bygsoluciones.es</div></div></div>
+            <div class="aprobacion-row"><div class="dot-orange"></div><div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">Comercial - Pendiente</div><div style="font-size:11px;color:#aaa;">comercial@bygsoluciones.es</div></div></div>
           </div>
           <div class="card" style="background:#f9f9f6;" id="apro-action-card">
-            <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:#1a1a1a;">Tu aprobación</div>
-            <div style="font-size:12px;color:#888;margin-bottom:12px;">¿Apruebas el envío de peticiones de oferta a los proveedores seleccionados?</div>
+            <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:#1a1a1a;">Tu aprobacion</div>
+            <div style="font-size:12px;color:#888;margin-bottom:12px;">Apruebas el envio de peticiones de oferta a los proveedores seleccionados?</div>
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-danger" onclick="alert('Envío rechazado. Se ha notificado al equipo.')">Rechazar</button>
-              <button class="btn btn-success" onclick="aprobar()">Aprobar envío ✓</button>
+              <button class="btn btn-danger" onclick="alert('Envio rechazado.')">Rechazar</button>
+              <button class="btn btn-success" onclick="aprobar()">Aprobar envio</button>
             </div>
           </div>
           <div class="card" id="apro-analisis-card" style="display:none;background:#E6F1FB;border:1px solid #B5D4F4;margin-top:0;">
-            <div style="font-size:13px;font-weight:500;margin-bottom:6px;color:#0C447C;">Análisis comparativo de ofertas disponible</div>
-            <div style="font-size:12px;color:#185FA5;margin-bottom:12px;">La IA ha comparado las ofertas recibidas y ha generado una recomendación. Revisa el análisis y registra tu decisión.</div>
-            <button class="btn btn-primary" onclick="abrirFormularioAprobacion()" style="width:100%;text-align:center;">Ver análisis de ofertas y decidir →</button>
+            <div style="font-size:13px;font-weight:500;margin-bottom:6px;color:#0C447C;">Analisis comparativo de ofertas disponible</div>
+            <div style="font-size:12px;color:#185FA5;margin-bottom:12px;">La IA ha comparado las ofertas recibidas. Revisa el analisis y registra tu decision.</div>
+            <button class="btn-analisis" onclick="abrirFormularioAprobacion()">Ver analisis de ofertas y decidir</button>
           </div>
         </div>
       </div>
     </div>
   </div>
-
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-const SUPA_URL = 'https://wpkeqjsgmzwnsfxouizc.supabase.co';
-const SUPA_KEY = 'sb_publishable_OTS4kcfMPwH4jgYQAdJcCg_TpTIC4E0';
-const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
-let currentProj = null;
+<script>
+var SUPA_URL = 'https://wpkeqjsgmzwnsfxouizc.supabase.co';
+var SUPA_KEY = 'sb_publishable_OTS4kcfMPwH4jgYQAdJcCg_TpTIC4E0';
+var db = supabase.createClient(SUPA_URL, SUPA_KEY);
+var currentProj = null;
 
-const badges = {
+var badges = {
   ready: '<span class="badge badge-ready">Listo para licitar</span>',
   processing: '<span class="badge badge-processing">En proceso</span>',
   sent: '<span class="badge badge-sent">Enviado</span>',
-  review_required: '<span class="badge badge-review">Revisión requerida</span>',
+  review_required: '<span class="badge badge-review">Revision requerida</span>',
   skipped_duplicate: '<span class="badge badge-default">Duplicado</span>',
   offer_received: '<span class="badge badge-ready">Oferta recibida</span>',
   error: '<span class="badge badge-error">Error</span>',
   cancelled: '<span class="badge badge-default">Cancelado</span>'
 };
 
-const gremios = {
+var gremios = {
   ELECTRICIDAD: { partidas: [
-    {c:'E-001',d:'Cuadro eléctrico general CGD',u:'Ud',q:'1',ok:true},
-    {c:'E-002',d:'Línea alimentación fuerza desde CGD',u:'m',q:'45',ok:true},
+    {c:'E-001',d:'Cuadro electrico general CGD',u:'Ud',q:'1',ok:true},
+    {c:'E-002',d:'Linea alimentacion fuerza desde CGD',u:'m',q:'45',ok:true},
     {c:'E-003',d:'Puntos de luz LED empotrado',u:'Ud',q:'32',ok:false},
     {c:'E-004',d:'Toma de corriente 16A',u:'Ud',q:'18',ok:true}
-  ], proveedores: ['Instalaciones García S.L.','Electra Madrid S.A.'] },
+  ], proveedores: ['Instalaciones Garcia S.L.','Electra Madrid S.A.'] },
   CLIMATIZACION: { partidas: [
-    {c:'C-001',d:'Unidad interior VRF cassette 4 vías',u:'Ud',q:'3',ok:true},
+    {c:'C-001',d:'Unidad interior VRF cassette 4 vias',u:'Ud',q:'3',ok:true},
     {c:'C-002',d:'Unidad exterior VRF 10 HP',u:'Ud',q:'1',ok:true},
-    {c:'C-003',d:'Red de tuberías refrigerantes',u:'m',q:'28',ok:true}
+    {c:'C-003',d:'Red de tuberias refrigerantes',u:'m',q:'28',ok:true}
   ], proveedores: ['Clima Madrid S.A.'] },
   FONTANERIA: { partidas: [
-    {c:'F-001',d:'Red de fontanería fría y caliente',u:'m',q:'22',ok:true},
+    {c:'F-001',d:'Red de fontaneria fria y caliente',u:'m',q:'22',ok:true},
     {c:'F-002',d:'Aparatos sanitarios vestuario',u:'Ud',q:'4',ok:true}
-  ], proveedores: ['Fontanería Roca'] },
+  ], proveedores: ['Fontaneria Roca'] },
   ALBANILERIA: { partidas: [
-    {c:'A-001',d:'Tabiquería de pladur',u:'m2',q:'85',ok:true},
-    {c:'A-002',d:'Pavimento porcelánico',u:'m2',q:'120',ok:false},
+    {c:'A-001',d:'Tabiqueria de pladur',u:'m2',q:'85',ok:true},
+    {c:'A-002',d:'Pavimento porcelanico',u:'m2',q:'120',ok:false},
     {c:'A-003',d:'Falso techo continuo',u:'m2',q:'95',ok:true}
-  ], proveedores: ['Construcciones López S.L.'] }
+  ], proveedores: ['Construcciones Lopez S.L.'] }
 };
 
-function fmt(d) { return d ? new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'; }
-function capFirst(s) { return s ? s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g,' ') : s; }
+function fmt(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function capFirst(s) {
+  if (!s) return s;
+  return s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g,' ');
+}
 
 function showPanel(name) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
   document.getElementById('panel-'+name).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const nav = document.getElementById('nav-'+name);
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var nav = document.getElementById('nav-'+name);
   if (nav) nav.classList.add('active');
   if (name === 'supervision') loadSupList();
 }
 
 function setDept(dept, btn) {
-  document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.dept-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
-  const d = { tecnico:{name:'Dept. Técnico',email:'tecnico@bygsoluciones.es'}, direccion:{name:'Dirección',email:'direccion@bygsoluciones.es'}, comercial:{name:'Dept. Comercial',email:'comercial@bygsoluciones.es'}, prl:{name:'Dept. PRL',email:'prl@bygsoluciones.es'}, admin:{name:'Administración',email:'admin@bygsoluciones.es'} };
-  document.getElementById('user-name').textContent = d[dept].name;
-  document.getElementById('user-email').textContent = d[dept].email;
+  var depts = {
+    tecnico: {name:'Dept. Tecnico',email:'tecnico@bygsoluciones.es'},
+    direccion: {name:'Direccion',email:'direccion@bygsoluciones.es'},
+    comercial: {name:'Dept. Comercial',email:'comercial@bygsoluciones.es'},
+    prl: {name:'Dept. PRL',email:'prl@bygsoluciones.es'},
+    admin: {name:'Administracion',email:'admin@bygsoluciones.es'}
+  };
+  document.getElementById('user-name').textContent = depts[dept].name;
+  document.getElementById('user-email').textContent = depts[dept].email;
 }
 
 async function loadDashboard() {
-  ['projects-list','emails-list','errors-list'].forEach(id => document.getElementById(id).innerHTML = '<div class="loading">Cargando...</div>');
-  const [pr,er,err,rev] = await Promise.all([
-    db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)',{count:'exact'}).order('created_at',{ascending:false}).limit(8),
-    db.from('ingested_emails').select('id,sender,subject,received_at',{count:'exact'}).order('received_at',{ascending:false}).limit(5),
-    db.from('automation_errors').select('id,flow_name,node_name,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(4),
-    db.from('projects').select('id',{count:'exact'}).eq('project_status_id',4)
-  ]);
-  document.getElementById('m-total').textContent = pr.count ?? 0;
-  document.getElementById('m-emails').textContent = er.count ?? 0;
-  document.getElementById('m-review').textContent = rev.count ?? 0;
-  document.getElementById('m-errors').textContent = err.count ?? 0;
-  document.getElementById('last-update').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-ES');
+  ['projects-list','emails-list','errors-list'].forEach(function(id) {
+    document.getElementById(id).innerHTML = '<div class="loading">Cargando...</div>';
+  });
+  document.getElementById('m-total').textContent = '-';
+  document.getElementById('m-emails').textContent = '-';
+  document.getElementById('m-review').textContent = '-';
+  document.getElementById('m-errors').textContent = '-';
 
-  const pl = document.getElementById('projects-list');
-  pl.innerHTML = (!pr.data || !pr.data.length) ? '<div class="empty">No hay proyectos aún</div>' :
-    pr.data.map(p => {
-      const st = p.project_statuses?.code || 'default';
-      const badge = badges[st] || '<span class="badge badge-default">'+(p.project_statuses?.name||st)+'</span>';
-      const conf = p.confidence ? Math.round(p.confidence*100)+'%' : '';
-      const clickable = st === 'review_required' || st === 'ready';
-      return `<div class="project-row" ${clickable ? 'onclick="goSupervision('+p.id+')"' : ''}>
-        <div style="flex:1;min-width:0">
-          <div class="project-name">${p.name||p.code||'#'+p.id}</div>
-          <div class="project-client">${p.contact_email||'—'}${p.category?' · '+p.category:''}${conf?' · IA: '+conf:''}</div>
-        </div>${badge}
-        <div style="font-size:11px;color:#aaa;white-space:nowrap">${fmt(p.received_at)}</div>
-        ${clickable?'<span style="font-size:11px;color:#185FA5;">Ver →</span>':''}
-      </div>`;
-    }).join('');
+  try {
+    var pr = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)', {count:'exact'}).order('created_at',{ascending:false}).limit(8);
+    var er = await db.from('ingested_emails').select('id,sender,subject,received_at', {count:'exact'}).order('received_at',{ascending:false}).limit(5);
+    var err = await db.from('automation_errors').select('id,flow_name,node_name,created_at', {count:'exact'}).order('created_at',{ascending:false}).limit(4);
+    var rev = await db.from('projects').select('id', {count:'exact'}).eq('project_status_id',4);
 
-  document.getElementById('emails-list').innerHTML = (!er.data || !er.data.length) ? '<div class="empty">No hay emails aún</div>' :
-    er.data.map(e => `<div class="alert-item"><div class="alert-dot" style="background:#3B6D11"></div><div style="flex:1;min-width:0"><div class="alert-text">${e.subject||'(sin asunto)'}</div><div class="alert-time">${e.sender||'—'} · ${fmt(e.received_at)}</div></div></div>`).join('');
+    document.getElementById('m-total').textContent = pr.count || 0;
+    document.getElementById('m-emails').textContent = er.count || 0;
+    document.getElementById('m-review').textContent = rev.count || 0;
+    document.getElementById('m-errors').textContent = err.count || 0;
+    document.getElementById('last-update').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-ES');
 
-  document.getElementById('errors-list').innerHTML = (!err.data || !err.data.length) ? '<div class="empty">Sin errores registrados</div>' :
-    err.data.map(e => `<div class="alert-item"><div class="alert-dot" style="background:#E24B4A"></div><div style="flex:1;min-width:0"><div class="alert-text">${e.flow_name} · ${e.node_name||''}</div><div class="alert-time">${fmt(e.created_at)}</div></div></div>`).join('');
+    var pl = document.getElementById('projects-list');
+    if (!pr.data || !pr.data.length) {
+      pl.innerHTML = '<div class="empty">No hay proyectos aun</div>';
+    } else {
+      pl.innerHTML = pr.data.map(function(p) {
+        var st = p.project_statuses ? p.project_statuses.code : 'default';
+        var badge = badges[st] || '<span class="badge badge-default">' + st + '</span>';
+        var conf = p.confidence ? Math.round(p.confidence*100)+'%' : '';
+        var clickable = st === 'review_required' || st === 'ready';
+        return '<div class="project-row" ' + (clickable ? 'onclick="goSupervision('+p.id+')"' : '') + '>' +
+          '<div style="flex:1;min-width:0">' +
+          '<div class="project-name">' + (p.name || p.code || '#'+p.id) + '</div>' +
+          '<div class="project-client">' + (p.contact_email||'-') + (p.category?' - '+p.category:'') + (conf?' - IA: '+conf:'') + '</div>' +
+          '</div>' + badge +
+          '<div style="font-size:11px;color:#aaa;white-space:nowrap">' + fmt(p.received_at) + '</div>' +
+          (clickable ? '<span style="font-size:11px;color:#185FA5;">Ver</span>' : '') +
+          '</div>';
+      }).join('');
+    }
+
+    var el = document.getElementById('emails-list');
+    if (!er.data || !er.data.length) {
+      el.innerHTML = '<div class="empty">No hay emails aun</div>';
+    } else {
+      el.innerHTML = er.data.map(function(e) {
+        return '<div class="alert-item"><div class="alert-dot" style="background:#3B6D11"></div>' +
+          '<div style="flex:1;min-width:0"><div class="alert-text">' + (e.subject||'(sin asunto)') + '</div>' +
+          '<div class="alert-time">' + (e.sender||'-') + ' - ' + fmt(e.received_at) + '</div></div></div>';
+      }).join('');
+    }
+
+    var errl = document.getElementById('errors-list');
+    if (!err.data || !err.data.length) {
+      errl.innerHTML = '<div class="empty">Sin errores registrados</div>';
+    } else {
+      errl.innerHTML = err.data.map(function(e) {
+        return '<div class="alert-item"><div class="alert-dot" style="background:#E24B4A"></div>' +
+          '<div style="flex:1;min-width:0"><div class="alert-text">' + e.flow_name + ' - ' + (e.node_name||'') + '</div>' +
+          '<div class="alert-time">' + fmt(e.created_at) + '</div></div></div>';
+      }).join('');
+    }
+  } catch(e) {
+    console.error('Error cargando dashboard:', e);
+  }
 }
 
 async function loadSupList() {
   document.getElementById('sup-list').style.display = 'block';
   document.getElementById('sup-detail').style.display = 'none';
-  const el = document.getElementById('sup-projects');
+  var el = document.getElementById('sup-projects');
   el.innerHTML = '<div class="loading">Cargando...</div>';
-  const {data} = await db.from('projects').select('id,name,code,category,confidence,received_at,contact_email,project_statuses(code,name)').in('project_status_id',[1,4]).order('created_at',{ascending:false});
-  if (!data || !data.length) { el.innerHTML = '<div class="empty">No hay proyectos pendientes de supervisión</div>'; return; }
-  el.innerHTML = data.map(p => {
-    const st = p.project_statuses?.code || 'default';
-    const conf = p.confidence ? Math.round(p.confidence*100)+'%' : '';
-    return `<div class="project-row" onclick="openSupDetail(${p.id},'${(p.name||'').replace(/'/g,"\\'")}','${p.category||''}','${p.contact_email||''}','${st}','${conf}')">
-      <div style="flex:1;min-width:0">
-        <div class="project-name">${p.name||p.code||'#'+p.id}</div>
-        <div class="project-client">${p.contact_email||'—'} · ${p.category||'—'}${conf?' · IA: '+conf:''}</div>
-      </div>${badges[st]||'<span class="badge badge-default">'+st+'</span>'}
-      <span style="font-size:12px;color:#185FA5;white-space:nowrap;">Revisar →</span>
-    </div>`;
+  var res = await db.from('projects').select('id,name,code,category,confidence,received_at,contact_email,project_statuses(code,name)').in('project_status_id',[1,4]).order('created_at',{ascending:false});
+  if (!res.data || !res.data.length) {
+    el.innerHTML = '<div class="empty">No hay proyectos pendientes de supervision</div>';
+    return;
+  }
+  el.innerHTML = res.data.map(function(p) {
+    var st = p.project_statuses ? p.project_statuses.code : 'default';
+    var conf = p.confidence ? Math.round(p.confidence*100)+'%' : '';
+    return '<div class="project-row" onclick="openSupDetail(' + p.id + ',\'' + (p.name||'').replace(/'/g,"\\'") + '\',\'' + (p.category||'') + '\',\'' + (p.contact_email||'') + '\',\'' + st + '\',\'' + conf + '\')">' +
+      '<div style="flex:1;min-width:0"><div class="project-name">' + (p.name||p.code||'#'+p.id) + '</div>' +
+      '<div class="project-client">' + (p.contact_email||'-') + ' - ' + (p.category||'-') + (conf?' - IA: '+conf:'') + '</div></div>' +
+      (badges[st] || '<span class="badge badge-default">'+st+'</span>') +
+      '<span style="font-size:12px;color:#185FA5;white-space:nowrap;">Revisar</span></div>';
   }).join('');
 }
 
 function openSupDetail(id, name, cat, email, status, conf) {
-  currentProj = {id,name,cat,email,status,conf};
+  currentProj = {id:id, name:name, cat:cat, email:email, status:status, conf:conf};
   document.getElementById('sup-list').style.display = 'none';
   document.getElementById('sup-detail').style.display = 'block';
   document.getElementById('sup-name').textContent = name;
-  document.getElementById('sup-meta').textContent = email + ' · ' + cat + (conf?' · IA: '+conf:'');
-  const badge = document.getElementById('sup-badge');
-  badge.className = 'badge ' + (status==='review_required'?'badge-review':'badge-ready');
-  badge.textContent = status==='review_required'?'Revisión requerida':'Listo para licitar';
-
-  const data = gremios[cat] || { partidas:[{c:'P-001',d:'Partida extraída',u:'Ud',q:'1',ok:true}], proveedores:['Proveedor S.L.'] };
-  const hasErr = data.partidas.some(p => !p.ok);
-  const ab = document.getElementById('sup-alertbox');
+  document.getElementById('sup-meta').textContent = email + ' - ' + cat + (conf ? ' - IA: '+conf : '');
+  var badge = document.getElementById('sup-badge');
+  badge.className = 'badge ' + (status==='review_required' ? 'badge-review' : 'badge-ready');
+  badge.textContent = status==='review_required' ? 'Revision requerida' : 'Listo para licitar';
+  var data = gremios[cat] || {partidas:[{c:'P-001',d:'Partida extraida',u:'Ud',q:'1',ok:true}], proveedores:['Proveedor S.L.']};
+  var hasErr = data.partidas.some(function(p) { return !p.ok; });
+  var ab = document.getElementById('sup-alertbox');
   if (hasErr) {
     ab.className = 'alert-box';
-    ab.innerHTML = '<div class="alert-box-title">Supervisión técnica requerida</div><div class="alert-box-desc">Se han detectado posibles errores en partidas marcadas en rojo. Revisa y corrige antes de enviar.</div>';
+    ab.innerHTML = '<div class="alert-box-title">Supervision tecnica requerida</div><div class="alert-box-desc">Se han detectado posibles errores en partidas marcadas en rojo. Revisa y corrige antes de enviar.</div>';
   } else {
     ab.className = 'alert-box alert-box-success';
-    ab.innerHTML = '<div class="alert-box-title">Extracción correcta</div><div class="alert-box-desc">La IA no detectó errores. Puedes validar y enviar directamente a aprobación.</div>';
+    ab.innerHTML = '<div class="alert-box-title">Extraccion correcta</div><div class="alert-box-desc">La IA no detecto errores. Puedes validar y enviar directamente a aprobacion.</div>';
   }
-
-  document.getElementById('gremio-container').innerHTML = `<div class="gremio-card">
-    <div class="gremio-header">
-      <div><div class="gremio-title">${capFirst(cat)}</div><div class="gremio-meta">${data.partidas.length} partidas · ${data.proveedores.join(', ')}</div></div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span class="badge ${hasErr?'badge-review':'badge-ready'}" id="gremio-badge">${hasErr?'Revisar':'Listo'}</span>
-        <button class="btn" onclick="alert('Descargando ${cat}_partidas.xlsx')">Descargar Excel</button>
-      </div>
-    </div>
-    <table class="partidas-table">
-      <tr><th>Cód.</th><th>Descripción</th><th>Ud.</th><th>Cantidad</th><th></th></tr>
-      ${data.partidas.map(p=>`<tr><td style="color:#888;white-space:nowrap">${p.c}</td><td><input value="${p.d}" class="${p.ok?'':'error'}"></td><td style="color:#888">${p.u}</td><td><input value="${p.q}" style="width:60px" class="${p.ok?'':'error'}"></td><td>${p.ok?'':'<span style="font-size:11px;color:#A32D2D;font-weight:500;">Revisar</span>'}</td></tr>`).join('')}
-    </table>
-    <div class="actions-bar">
-      <button class="btn btn-danger" onclick="alert('Gremio rechazado. Se notifica al equipo.')">Rechazar</button>
-      <button class="btn btn-success" onclick="validarGremio()">Validar gremio ✓</button>
-    </div>
-  </div>`;
+  document.getElementById('gremio-container').innerHTML = '<div class="gremio-card">' +
+    '<div class="gremio-header"><div><div class="gremio-title">' + capFirst(cat) + '</div>' +
+    '<div class="gremio-meta">' + data.partidas.length + ' partidas - ' + data.proveedores.join(', ') + '</div></div>' +
+    '<div style="display:flex;gap:8px;align-items:center;">' +
+    '<span class="badge ' + (hasErr?'badge-review':'badge-ready') + '" id="gremio-badge">' + (hasErr?'Revisar':'Listo') + '</span>' +
+    '<button class="btn" onclick="alert(\'Descargando Excel...\')">Descargar Excel</button></div></div>' +
+    '<table class="partidas-table"><tr><th>Cod.</th><th>Descripcion</th><th>Ud.</th><th>Cantidad</th><th></th></tr>' +
+    data.partidas.map(function(p) {
+      return '<tr><td style="color:#888;white-space:nowrap">' + p.c + '</td>' +
+        '<td><input value="' + p.d + '" class="' + (p.ok?'':'error') + '"></td>' +
+        '<td style="color:#888">' + p.u + '</td>' +
+        '<td><input value="' + p.q + '" style="width:60px" class="' + (p.ok?'':'error') + '"></td>' +
+        '<td>' + (p.ok?'':'<span style="font-size:11px;color:#A32D2D;font-weight:500;">Revisar</span>') + '</td></tr>';
+    }).join('') +
+    '</table><div class="actions-bar">' +
+    '<button class="btn btn-danger" onclick="alert(\'Gremio rechazado.\')">Rechazar</button>' +
+    '<button class="btn btn-success" id="btn-validar" onmouseenter="this.style.opacity=\'1\'" onmouseleave="this.style.opacity=\'1\'" onclick="validarGremio()">Validar gremio</button>' +
+    '</div></div>';
 }
 
 function validarGremio() {
-  document.getElementById('gremio-badge').className = 'badge badge-ready';
-  document.getElementById('gremio-badge').textContent = 'Validado ✓';
-  document.querySelectorAll('.partidas-table input.error').forEach(i => i.classList.remove('error'));
-  const ab = document.getElementById('sup-alertbox');
+  var badge = document.getElementById('gremio-badge');
+  if (badge) { badge.className = 'badge badge-ready'; badge.textContent = 'Validado'; }
+  document.querySelectorAll('.partidas-table input.error').forEach(function(i) { i.classList.remove('error'); });
+  var ab = document.getElementById('sup-alertbox');
   ab.className = 'alert-box alert-box-success';
-  ab.innerHTML = '<div class="alert-box-title">Gremio validado ✓</div><div class="alert-box-desc">El gremio ha sido validado. Pulsa "Enviar a aprobación" para continuar.</div>';
+  ab.innerHTML = '<div class="alert-box-title">Gremio validado</div><div class="alert-box-desc">El gremio ha sido validado. Pulsa Enviar a aprobacion para continuar.</div>';
+  var btn = document.getElementById('btn-validar');
+  if (btn) { btn.textContent = 'Validado'; btn.disabled = true; }
 }
 
 function backToSupList() {
@@ -421,9 +444,40 @@ function goSupervision(id) {
 
 function enviarAprobacion() {
   if (!currentProj) return;
-  const data = gremios[currentProj.cat] || { partidas:[], proveedores:['Proveedor S.L.'] };
+  var data = gremios[currentProj.cat] || {partidas:[], proveedores:['Proveedor S.L.']};
   document.getElementById('apro-empty').style.display = 'none';
   document.getElementById('apro-detail').style.display = 'block';
-  document.getElementById('apro-gremios').innerHTML = `<div class="aprobacion-row"><div class="dot-green"></div><div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">${capFirst(currentProj.cat)}</div><div style="font-size:11px;color:#aaa;">${data.partidas.length} partidas validadas</div></div></div>`;
-  document.getElementById('apro-proveedores').innerHTML = data.proveedores.map(p=>`<div class="aprobacion-row"><div class="dot-green"></div><div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">${p}</div><div style="font-size:11px;color:#aaa;">${currentProj.cat}</div></div></div>`).join('');
-  document.getElementById('apro-tecnico-date').textContent = 'tecnico@bygsoluciones.es · ' + new Date().toLocaleDateString('es-ES'
+  document.getElementById('apro-gremios').innerHTML = '<div class="aprobacion-row"><div class="dot-green"></div><div>' +
+    '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + capFirst(currentProj.cat) + '</div>' +
+    '<div style="font-size:11px;color:#aaa;">' + data.partidas.length + ' partidas validadas</div></div></div>';
+  document.getElementById('apro-proveedores').innerHTML = data.proveedores.map(function(p) {
+    return '<div class="aprobacion-row"><div class="dot-green"></div><div>' +
+      '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + p + '</div>' +
+      '<div style="font-size:11px;color:#aaa;">' + currentProj.cat + '</div></div></div>';
+  }).join('');
+  document.getElementById('apro-tecnico-date').textContent = 'tecnico@bygsoluciones.es - ' + new Date().toLocaleDateString('es-ES');
+  showPanel('aprobacion');
+}
+
+function aprobar() {
+  document.getElementById('apro-action-card').innerHTML =
+    '<div style="text-align:center;padding:1rem 0;">' +
+    '<div style="font-size:28px;margin-bottom:8px;color:#3B6D11;">OK</div>' +
+    '<div style="font-size:14px;font-weight:500;color:#3B6D11;margin-bottom:4px;">Envio aprobado</div>' +
+    '<div style="font-size:12px;color:#888;">Las peticiones se enviaran cuando todos los departamentos aprueben.</div></div>';
+  var card = document.getElementById('apro-analisis-card');
+  if (card) card.style.display = 'block';
+}
+
+function abrirFormularioAprobacion() {
+  if (!currentProj) return;
+  var params = 'token=demo-' + currentProj.id + '-' + Date.now() +
+    '&step=1&analysis_id=1&project_id=' + currentProj.id +
+    '&specialty=' + encodeURIComponent(currentProj.cat);
+  window.open('/aprobar.html?' + params, '_blank');
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
