@@ -421,7 +421,7 @@ function openSupDetail(id, name, cat, email, status, conf) {
     '</div></div>';
 }
 
-function validarGremio() {
+async function validarGremio() {
   var badge = document.getElementById('gremio-badge');
   if (badge) { badge.className = 'badge badge-ready'; badge.textContent = 'Validado'; }
   document.querySelectorAll('.partidas-table input.error').forEach(function(i) { i.classList.remove('error'); });
@@ -430,6 +430,12 @@ function validarGremio() {
   ab.innerHTML = '<div class="alert-box-title">Gremio validado</div><div class="alert-box-desc">El gremio ha sido validado. Pulsa Enviar a aprobacion para continuar.</div>';
   var btn = document.getElementById('btn-validar');
   if (btn) { btn.textContent = 'Validado'; btn.disabled = true; }
+  if (currentProj) {
+    try {
+      await db.from('projects').update({project_status_id: 9, updated_at: new Date().toISOString()}).eq('id', currentProj.id);
+      console.log('Estado actualizado a pending_tech_review en proyecto', currentProj.id);
+    } catch(e) { console.error('Error actualizando estado:', e); }
+  }
 }
 
 function backToSupList() {
@@ -442,11 +448,15 @@ function goSupervision(id) {
   showPanel('supervision');
 }
 
-function enviarAprobacion() {
+async function enviarAprobacion() {
   if (!currentProj) return;
   var data = gremios[currentProj.cat] || {partidas:[], proveedores:['Proveedor S.L.']};
   document.getElementById('apro-empty').style.display = 'none';
   document.getElementById('apro-detail').style.display = 'block';
+  try {
+    await db.from('projects').update({project_status_id: 9, updated_at: new Date().toISOString()}).eq('id', currentProj.id);
+    console.log('Estado actualizado a pending_tech_review en proyecto', currentProj.id);
+  } catch(e) { console.error('Error actualizando estado:', e); }
   document.getElementById('apro-gremios').innerHTML = '<div class="aprobacion-row"><div class="dot-green"></div><div>' +
     '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + capFirst(currentProj.cat) + '</div>' +
     '<div style="font-size:11px;color:#aaa;">' + data.partidas.length + ' partidas validadas</div></div></div>';
@@ -459,7 +469,7 @@ function enviarAprobacion() {
   showPanel('aprobacion');
 }
 
-function aprobar() {
+async function aprobar() {
   document.getElementById('apro-action-card').innerHTML =
     '<div style="text-align:center;padding:1rem 0;">' +
     '<div style="font-size:28px;margin-bottom:8px;color:#3B6D11;">OK</div>' +
@@ -467,6 +477,12 @@ function aprobar() {
     '<div style="font-size:12px;color:#888;">Las peticiones se enviaran cuando todos los departamentos aprueben.</div></div>';
   var card = document.getElementById('apro-analisis-card');
   if (card) card.style.display = 'block';
+  if (currentProj) {
+    try {
+      await db.from('projects').update({project_status_id: 10, updated_at: new Date().toISOString()}).eq('id', currentProj.id);
+      console.log('Estado actualizado a pending_mgmt_approval en proyecto', currentProj.id);
+    } catch(e) { console.error('Error actualizando estado:', e); }
+  }
 }
 
 function abrirFormularioAprobacion() {
