@@ -376,13 +376,30 @@
 <div id="panel-clientes" class="panel">
   <div class="topbar">
     <h1>Clientes</h1>
-    <button class="btn btn-primary" onclick="alert('Alta de nuevo cliente — próximamente')">+ Nuevo cliente</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="imprimirListadoClientes()">Imprimir listado</button>
+      <button class="btn btn-primary" onclick="alert('Alta de nuevo cliente — próximamente')">+ Nuevo cliente</button>
+    </div>
   </div>
   <div class="card">
-    <table class="data-table">
-      <thead><tr><th>Nombre comercial</th><th>Razón social</th><th>Email</th><th>Tipo</th><th>Proyectos</th></tr></thead>
+    <table class="data-table" id="clientes-table">
+      <thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Email contacto</th><th>Teléfono</th><th></th></tr></thead>
       <tbody id="clientes-tbody"><tr><td colspan="5" class="loading">Cargando...</td></tr></tbody>
     </table>
+  </div>
+</div>
+
+<!-- FICHA CLIENTE -->
+<div id="panel-cliente-detalle" class="panel">
+  <div class="topbar">
+    <h1 id="cliente-det-title">Ficha de cliente</h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="imprimirFichaCliente()">Imprimir ficha</button>
+      <button class="btn btn-back" onclick="showPanel('clientes')">Volver al listado</button>
+    </div>
+  </div>
+  <div class="card" id="cliente-ficha-content" style="max-width:700px;">
+    <div class="loading">Cargando...</div>
   </div>
 </div>
 
@@ -776,17 +793,110 @@ function abrirFormularioAprobacion() {
   window.open('/aprobar.html?'+params,'_blank');
 }
 
+var clientesData = [];
+
 async function loadClientes() {
   var tbody=document.getElementById('clientes-tbody');
   tbody.innerHTML='<tr><td colspan="5" class="loading">Cargando...</td></tr>';
   try {
     var res=await db.from('clients').select('*').order('commercial_name');
-    if (!res.data||!res.data.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No hay clientes dados de alta</td></tr>';return;}
-    tbody.innerHTML=res.data.map(function(c){
-      return '<tr><td>'+c.commercial_name+'</td><td>'+(c.legal_name||'-')+'</td>' +
-        '<td>'+(c.commercial_email||'-')+'</td><td>'+(c.client_type||'-')+'</td><td>-</td></tr>';
+    clientesData = res.data || [];
+    if (!clientesData.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No hay clientes dados de alta</td></tr>';return;}
+    tbody.innerHTML=clientesData.map(function(c){
+      return '<tr onclick="abrirFichaCliente('+c.id+')" style="cursor:pointer;">' +
+        '<td>'+(c.internal_code||'-')+'</td>' +
+        '<td style="font-weight:500;">'+c.commercial_name+'</td>' +
+        '<td>'+(c.commercial_email||'-')+'</td>' +
+        '<td>'+(c.phone||'-')+'</td>' +
+        '<td><span class="item-arr">Ver ficha</span></td></tr>';
     }).join('');
   } catch(e){console.error(e);}
+}
+
+function abrirFichaCliente(id) {
+  var c = clientesData.find(function(x){return x.id===id;});
+  if (!c) return;
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-cliente-detalle').classList.add('active');
+  document.getElementById('cliente-det-title').textContent = c.commercial_name;
+  var campos = [
+    {label:'Código interno',    val:c.internal_code},
+    {label:'Nombre comercial',  val:c.commercial_name},
+    {label:'Razón social',      val:c.legal_name},
+    {label:'CIF / NIF',         val:c.cif},
+    {label:'Email contacto',    val:c.commercial_email},
+    {label:'Teléfono',          val:c.phone},
+    {label:'Dirección',         val:c.address},
+    {label:'Ciudad',            val:c.city},
+    {label:'Tipo de cliente',   val:c.client_type},
+    {label:'Notas',             val:c.notes},
+    {label:'Alta en sistema',   val:c.created_at ? new Date(c.created_at).toLocaleDateString('es-ES') : '-'},
+    {label:'Última actualización', val:c.updated_at ? new Date(c.updated_at).toLocaleDateString('es-ES') : '-'}
+  ];
+  document.getElementById('cliente-ficha-content').innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:0;">' +
+    campos.map(function(f){
+      return '<div style="display:flex;padding:10px 0;border-bottom:1px solid #f5f5f0;">' +
+        '<div style="width:200px;font-size:12px;color:#888;font-weight:500;flex-shrink:0;">'+f.label+'</div>' +
+        '<div style="font-size:13px;color:#1a1a1a;">'+(f.val||'—')+'</div></div>';
+    }).join('') + '</div>';
+}
+
+function imprimirListadoClientes() {
+  var win = window.open('','_blank');
+  var rows = clientesData.map(function(c){
+    return '<tr><td>'+(c.internal_code||'-')+'</td><td>'+c.commercial_name+'</td>' +
+      '<td>'+(c.commercial_email||'-')+'</td><td>'+(c.phone||'-')+'</td></tr>';
+  }).join('');
+  win.document.write('<html><head><title>Listado de Clientes — EasyProject</title>' +
+    '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
+    'h2{color:#1B3A6B;margin-bottom:0.5rem;}' +
+    'p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th{text-align:left;padding:8px 12px;background:#f5f5f0;border-bottom:2px solid #ddd;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#666;}' +
+    'td{padding:8px 12px;border-bottom:1px solid #eee;}</style></head><body>' +
+    '<h2>BYG Soluciones — Listado de Clientes</h2>' +
+    '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
+    '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
+    '<tbody>'+rows+'</tbody></table></body></html>');
+  win.document.close();
+  win.print();
+}
+
+function imprimirFichaCliente() {
+  var title = document.getElementById('cliente-det-title').textContent;
+  var c = clientesData.find(function(x){return x.commercial_name===title;});
+  if (!c) return;
+  var campos = [
+    {label:'Código interno',    val:c.internal_code},
+    {label:'Nombre comercial',  val:c.commercial_name},
+    {label:'Razón social',      val:c.legal_name},
+    {label:'CIF / NIF',         val:c.cif},
+    {label:'Email contacto',    val:c.commercial_email},
+    {label:'Teléfono',          val:c.phone},
+    {label:'Dirección',         val:c.address},
+    {label:'Ciudad',            val:c.city},
+    {label:'Tipo de cliente',   val:c.client_type},
+    {label:'Notas',             val:c.notes},
+    {label:'Alta en sistema',   val:c.created_at ? new Date(c.created_at).toLocaleDateString('es-ES') : '-'},
+    {label:'Última actualización', val:c.updated_at ? new Date(c.updated_at).toLocaleDateString('es-ES') : '-'}
+  ];
+  var win = window.open('','_blank');
+  win.document.write('<html><head><title>Ficha Cliente — '+c.commercial_name+'</title>' +
+    '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
+    'h2{color:#1B3A6B;margin-bottom:0.25rem;}' +
+    'p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
+    '.row{display:flex;padding:10px 0;border-bottom:1px solid #eee;}' +
+    '.lbl{width:200px;font-size:12px;color:#888;font-weight:600;flex-shrink:0;}' +
+    '.val{font-size:13px;color:#1a1a1a;}</style></head><body>' +
+    '<h2>BYG Soluciones — Ficha de Cliente</h2>' +
+    '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
+    campos.map(function(f){
+      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val||'—')+'</div></div>';
+    }).join('') +
+    '</body></html>');
+  win.document.close();
+  win.print();
 }
 
 async function loadProveedores() {
