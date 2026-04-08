@@ -1213,7 +1213,7 @@ function filtrarJefes(q) {
   renderTablaJefes(filtered);
 }
 
-function abrirFichaJefe(id) {
+async function abrirFichaJefe(id) {
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('panel-jefe-detalle').classList.add('active');
   modoEdicionJefe = false;
@@ -1221,26 +1221,39 @@ function abrirFichaJefe(id) {
   document.getElementById('btn-guardar-jefe').style.display = 'none';
   if (!id) {
     jefeActual = {};
+    jefeActual._proyectos = [];
     document.getElementById('jefe-det-title').textContent = 'Nuevo jefe de obra';
     renderFichaJefe(jefeActual, true);
     return;
   }
   jefeActual = jefesData.find(function(x){return x.id===id;}) || {};
   document.getElementById('jefe-det-title').textContent = jefeActual.full_name || 'Ficha de jefe de obra';
+  try {
+    var res = await db.from('projects').select('id,name,code,project_statuses(name)').eq('project_manager_id', id);
+    jefeActual._proyectos = res.data || [];
+  } catch(e) { jefeActual._proyectos = []; }
   renderFichaJefe(jefeActual, false);
 }
 
 function renderFichaJefe(j, editable) {
   var specs = Array.isArray(j.specialties) ? j.specialties.join(', ') : (j.specialties||'');
+  var proyectos = j._proyectos || [];
+  var proyectosHtml = proyectos.length ?
+    proyectos.map(function(p){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">' +
+        '<span class="badge b-adjudicado" style="font-size:10px;">'+(p.project_statuses?p.project_statuses.name:'-')+'</span>' +
+        '<span style="font-size:12px;color:#1a1a1a;">'+(p.name||p.code||'#'+p.id)+'</span></div>';
+    }).join('') :
+    '<span style="font-size:12px;color:#aaa;">Sin proyectos asignados actualmente</span>';
+
   var campos = [
     {label:'ID',                    key:'_id',            val:j.id?'#'+j.id:'-',          readonly:true},
     {label:'Nombre completo',       key:'full_name',       val:j.full_name},
     {label:'Email',                 key:'email',           val:j.email},
     {label:'Teléfono',             key:'phone',           val:j.phone},
-    {label:'Especialidades',        key:'_specs',          val:specs,                        readonly:false, isSpecs:true},
-    {label:'Proyectos activos',     key:'current_projects',val:j.current_projects!=null?j.current_projects:'0'},
-    {label:'Disponible',           key:'_available',      val:j.available?'Sí':'No',        readonly:false, isBool:true},
-    {label:'Activo en empresa',     key:'_active',         val:j.active!==false?'Sí':'No',  readonly:false, isBool:true},
+    {label:'Especialidades',        key:'_specs',          val:specs},
+    {label:'Disponible',           key:'_available',      val:j.available?'Sí':'No',  isBool:true},
+    {label:'Activo en empresa',     key:'_active',         val:j.active!==false?'Sí':'No', isBool:true},
     {label:'Notas',                key:'notes',           val:j.notes},
     {label:'Alta en sistema',       key:'_created',        val:j.created_at?new Date(j.created_at).toLocaleDateString('es-ES'):'-', readonly:true},
     {label:'Última actualización',  key:'_updated',        val:j.updated_at?new Date(j.updated_at).toLocaleDateString('es-ES'):'-', readonly:true}
@@ -1265,7 +1278,11 @@ function renderFichaJefe(j, editable) {
       return '<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
         '<div style="width:200px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">'+f.label+'</div>' +
         inputEl+'</div>';
-    }).join('') + '</div>';
+    }).join('') +
+    '<div style="display:flex;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
+    '<div style="width:200px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">Proyectos asignados</div>' +
+    '<div style="flex:1;">'+proyectosHtml+'</div></div>' +
+    '</div>';
 }
 
 function toggleEditarJefe() {
