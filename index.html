@@ -515,7 +515,7 @@
       <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Proyecto</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oc-name">-</div></div>
       <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Cliente</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oc-client">-</div></div>
       <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Fecha límite cliente</div><div style="font-size:13px;font-weight:500;color:#A32D2D;" id="oc-deadline">-</div></div>
-      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Estado</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oc-status">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Código expediente</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oc-status">-</div></div>
     </div>
   </div>
 
@@ -1130,6 +1130,7 @@ function abrirFichaCliente(id) {
   document.getElementById('cliente-det-title').textContent = c.commercial_name;
   var campos = [
     {label:'Código interno',    val:c.internal_code},
+    {label:'Acrónimo cliente',  val:c.client_code},
     {label:'Nombre comercial',  val:c.commercial_name},
     {label:'Razón social',      val:c.legal_name},
     {label:'CIF / NIF',         val:c.cif},
@@ -2080,13 +2081,13 @@ async function abrirOfertaCurso(id, nameEnc) {
   ocAprobaciones = {tecnico:false, comercial:false, direccion:false};
 
   try {
-    var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,project_statuses(code,name)').eq('id',id).single();
+    var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,project_code,project_statuses(code,name)').eq('id',id).single();
     ocProyecto = res.data;
     document.getElementById('oc-title').textContent = 'Oferta en curso - '+(ocProyecto.name||ocProyecto.code||'#'+id);
     document.getElementById('oc-name').textContent = ocProyecto.name||ocProyecto.code||'#'+id;
     document.getElementById('oc-client').textContent = ocProyecto.contact_email||'-';
     document.getElementById('oc-deadline').textContent = 'Consultar petición cliente';
-    document.getElementById('oc-status').textContent = 'Oferta en curso';
+    document.getElementById('oc-status').textContent = ocProyecto.project_code || 'Oferta en curso';
 
     // Cargar gremios del proyecto
     var gremiosRes = await db.from('project_specialties').select('specialty_code,confidence').eq('project_id',id).order('confidence',{ascending:false});
@@ -2138,7 +2139,8 @@ async function cargarPeticionesGremios(peticionesExistentes) {
       var petExistente = peticionesExistentes.find(function(p){return p.specialty_code===gremio;});
       var yaEnviado = petExistente && petExistente.status === 'sent';
 
-      var emailBody = 'Estimado proveedor,\n\nNos dirigimos a ustedes para solicitar oferta económica para el proyecto: ' + (ocProyecto.name||ocProyecto.code) + '.\n\nAdjuntamos el Excel con el desglose de partidas del gremio ' + gremio + ' para que procedan a su valoración.\n\nLes rogamos nos envíen su oferta antes de la fecha indicada, en el formato Excel adjunto o en el suyo propio.\n\nQuedamos a su disposición para cualquier consulta.\n\nAtentamente,\nDepartamento Técnico\nBYG Soluciones S.L.';
+      var projCode = ocProyecto.project_code || ('#'+ocProyecto.id);
+      var emailBody = 'Estimado proveedor,\n\nNos dirigimos a ustedes para solicitar presupuesto para el siguiente proyecto:\n\nProyecto: ' + (ocProyecto.name||ocProyecto.code) + '\nCódigo de expediente: ' + projCode + '\nGremio: ' + gremio + '\n\nAdjuntamos el Excel con el desglose de partidas del gremio ' + gremio + ' para que procedan a su valoración económica.\n\nIMPORTANTE: Por favor, indiquen siempre el código de expediente ' + projCode + ' en el asunto de su respuesta y envíen su oferta a: proveedores.ofertas@bygsoluciones.es\n\nLes rogamos nos envíen su oferta antes de la fecha límite indicada, en el formato Excel adjunto o en el suyo propio.\n\nQuedamos a su disposición para cualquier consulta.\n\nAtentamente,\nDepartamento Técnico\nBYG Soluciones S.L.\nTel: 91 XXX XX XX';
 
       var provList = provGremio.map(function(p){
         return '<div style="font-size:12px;padding:4px 0;display:flex;align-items:center;gap:6px;">' +
