@@ -976,7 +976,7 @@ async function abrirProyecto(id, nameEnc) {
   showProjTab('info', document.querySelector('.proj-tab'));
 
   try {
-    var res = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)').eq('id',id).single();
+    var res = await db.from('projects').select('id,name,code,project_code,contact_email,category,confidence,received_at,project_statuses(code,name)').eq('id',id).single();
     var p = res.data;
     currentProj = {id:p.id, name:p.name, cat:p.category, email:p.contact_email, status:p.project_statuses?p.project_statuses.code:'', conf:p.confidence?Math.round(p.confidence*100)+'%':''};
     document.getElementById('det-name').value    = p.name||'-';
@@ -1179,6 +1179,7 @@ function imprimirFichaCliente() {
   if (!c) return;
   var campos = [
     {label:'Código interno',    val:c.internal_code},
+    {label:'Acrónimo cliente',  val:c.client_code},
     {label:'Nombre comercial',  val:c.commercial_name},
     {label:'Razón social',      val:c.legal_name},
     {label:'CIF / NIF',         val:c.cif},
@@ -2084,7 +2085,7 @@ async function abrirOfertaCurso(id, nameEnc) {
     var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,project_code,project_statuses(code,name)').eq('id',id).single();
     ocProyecto = res.data;
     document.getElementById('oc-title').textContent = 'Oferta en curso - '+(ocProyecto.name||ocProyecto.code||'#'+id);
-    document.getElementById('oc-name').textContent = ocProyecto.name||ocProyecto.code||'#'+id;
+    document.getElementById('oc-name').textContent = (ocProyecto.project_code ? '['+ocProyecto.project_code+'] ' : '') + (ocProyecto.name||ocProyecto.code||'#'+id);
     document.getElementById('oc-client').textContent = ocProyecto.contact_email||'-';
     document.getElementById('oc-deadline').textContent = 'Consultar petición cliente';
     document.getElementById('oc-status').textContent = ocProyecto.project_code || 'Oferta en curso';
