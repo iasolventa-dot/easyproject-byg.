@@ -1813,7 +1813,6 @@ var _gremioMap = {};
 async function cargarGremiosAnalisis(categoria) {
   var el = document.getElementById('an-gremios-list');
   el.innerHTML = '<div class="loading">Cargando proveedores...</div>';
-  _gremioMap = {};
 
   try {
     var provRes = await db.from('suppliers').select('id,internal_code,commercial_name,specialty_code,rating,supplier_specialty_rel(specialty_code,primary_specialty)').eq('status','active');
