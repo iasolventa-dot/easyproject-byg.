@@ -2354,7 +2354,7 @@ async function cargarMontajeOferta() {
       '<td style="text-align:center;">'+p.qty+' '+p.unit+'</td>' +
       '<td style="text-align:right;">'+(p.cost).toLocaleString('es-ES',{minimumFractionDigits:2})+'€</td>' +
       '<td style="text-align:center;width:80px;"><input type="number" value="'+margen+'" min="0" max="100" step="0.5" '+
-      'onchange="actualizarMargen(''+p.code+'',this.value)" '+
+      'onchange="actualizarMargen(this)" data-code="'+p.code+'" '+
       'style="width:60px;padding:3px 5px;border:1px solid #ddd;border-radius:4px;font-size:12px;text-align:center;"> %</td>' +
       '<td style="text-align:right;font-weight:500;color:#3B6D11;">'+(precioFinal).toLocaleString('es-ES',{minimumFractionDigits:2})+'€</td>' +
       '</tr>';
@@ -2383,8 +2383,9 @@ async function cargarMontajeOferta() {
   document.getElementById('oc-aprobacion-margenes').style.display = 'none';
 }
 
-function actualizarMargen(code, valor) {
-  ocMargenes[code] = parseFloat(valor) || 0;
+function actualizarMargen(input) {
+  var code = input.getAttribute('data-code');
+  ocMargenes[code] = parseFloat(input.value) || 0;
 }
 
 function someterAprobacionMargenes() {
