@@ -403,17 +403,41 @@
   </div>
 </div>
 
-<!-- PROVEEDORES -->
+<!-- PROVEEDORES LISTADO -->
 <div id="panel-proveedores" class="panel">
   <div class="topbar">
     <h1>Proveedores / Subcontratistas</h1>
-    <button class="btn btn-primary" onclick="alert('Alta de nuevo proveedor — próximamente')">+ Nuevo proveedor</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="imprimirListadoProveedores()">Imprimir listado</button>
+      <button class="btn btn-primary" onclick="abrirFichaProveedor(null)">+ Nuevo proveedor</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">
+    <input id="prov-search" type="text" placeholder="Buscar por nombre, gremio, email, teléfono..." 
+      style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;color:#1a1a1a;"
+      oninput="filtrarProveedores(this.value)">
   </div>
   <div class="card">
-    <table class="data-table">
-      <thead><tr><th>Nombre</th><th>Gremio principal</th><th>Categoría</th><th>Estado</th><th>Valoración</th><th>Email</th></tr></thead>
+    <table class="data-table" id="proveedores-table">
+      <thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Gremios</th><th>Email contacto</th><th>Teléfono</th><th></th></tr></thead>
       <tbody id="proveedores-tbody"><tr><td colspan="6" class="loading">Cargando...</td></tr></tbody>
     </table>
+  </div>
+</div>
+
+<!-- PROVEEDOR FICHA -->
+<div id="panel-proveedor-detalle" class="panel">
+  <div class="topbar">
+    <h1 id="prov-det-title">Ficha de proveedor</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="imprimirFichaProveedor()">Imprimir ficha</button>
+      <button class="btn btn-primary" id="btn-editar-prov" onclick="toggleEditarProveedor()">Editar</button>
+      <button class="btn btn-success" id="btn-guardar-prov" style="display:none;" onclick="guardarProveedor()">Guardar</button>
+      <button class="btn btn-back" onclick="showPanel('proveedores')">Volver</button>
+    </div>
+  </div>
+  <div class="card" id="prov-ficha-content" style="max-width:800px;">
+    <div class="loading">Cargando...</div>
   </div>
 </div>
 
@@ -899,19 +923,221 @@ function imprimirFichaCliente() {
   win.print();
 }
 
+var proveedoresData = [];
+var proveedorActual = null;
+var modoEdicion = false;
+
 async function loadProveedores() {
-  var tbody=document.getElementById('proveedores-tbody');
-  tbody.innerHTML='<tr><td colspan="6" class="loading">Cargando...</td></tr>';
+  var tbody = document.getElementById('proveedores-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Cargando...</td></tr>';
   try {
-    var res=await db.from('suppliers').select('*').order('commercial_name');
-    if (!res.data||!res.data.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No hay proveedores dados de alta</td></tr>';return;}
-    tbody.innerHTML=res.data.map(function(s){
-      var rating=s.rating?'★'.repeat(s.rating)+' ('+s.rating+'/5)':'-';
-      return '<tr><td>'+s.commercial_name+'</td><td>'+(s.specialty_code||'-')+'</td>' +
-        '<td>'+(s.category||'-')+'</td><td>'+(s.status||'-')+'</td><td>'+rating+'</td>' +
-        '<td>'+(s.commercial_email||'-')+'</td></tr>';
-    }).join('');
-  } catch(e){console.error(e);}
+    var res = await db.from('suppliers').select('*, supplier_specialty_rel(specialty_code, primary_specialty)').order('commercial_name');
+    proveedoresData = res.data || [];
+    renderTablaProveedores(proveedoresData);
+  } catch(e) { console.error(e); }
+}
+
+function renderTablaProveedores(data) {
+  var tbody = document.getElementById('proveedores-tbody');
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay proveedores dados de alta</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(function(s) {
+    var gremios = [];
+    if (s.supplier_specialty_rel && s.supplier_specialty_rel.length) {
+      var sorted = s.supplier_specialty_rel.slice().sort(function(a,b){ return b.primary_specialty - a.primary_specialty; });
+      gremios = sorted.slice(0,2).map(function(r){ return r.specialty_code; });
+    } else if (s.specialty_code) {
+      gremios = [s.specialty_code];
+    }
+    var gremsHtml = gremios.map(function(g){ return '<span class="badge b-default" style="margin-right:3px;">'+g+'</span>'; }).join('');
+    return '<tr onclick="abrirFichaProveedor('+s.id+')" style="cursor:pointer;">' +
+      '<td>'+(s.internal_code||'-')+'</td>' +
+      '<td style="font-weight:500;">'+s.commercial_name+'</td>' +
+      '<td>'+(gremsHtml||'-')+'</td>' +
+      '<td>'+(s.commercial_email||'-')+'</td>' +
+      '<td>'+(s.phone||'-')+'</td>' +
+      '<td><span class="item-arr">Ver ficha</span></td></tr>';
+  }).join('');
+}
+
+function filtrarProveedores(q) {
+  if (!q.trim()) { renderTablaProveedores(proveedoresData); return; }
+  var lower = q.toLowerCase();
+  var filtered = proveedoresData.filter(function(s) {
+    var gremios = s.supplier_specialty_rel ? s.supplier_specialty_rel.map(function(r){return r.specialty_code;}).join(' ') : (s.specialty_code||'');
+    return (s.commercial_name||'').toLowerCase().includes(lower) ||
+      (s.internal_code||'').toLowerCase().includes(lower) ||
+      (s.commercial_email||'').toLowerCase().includes(lower) ||
+      (s.phone||'').toLowerCase().includes(lower) ||
+      gremios.toLowerCase().includes(lower);
+  });
+  renderTablaProveedores(filtered);
+}
+
+function abrirFichaProveedor(id) {
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-proveedor-detalle').classList.add('active');
+  modoEdicion = false;
+  document.getElementById('btn-editar-prov').style.display = 'inline-block';
+  document.getElementById('btn-guardar-prov').style.display = 'none';
+
+  if (!id) {
+    proveedorActual = {};
+    document.getElementById('prov-det-title').textContent = 'Nuevo proveedor';
+    renderFichaProveedor(proveedorActual, true);
+    return;
+  }
+  proveedorActual = proveedoresData.find(function(x){return x.id===id;}) || {};
+  document.getElementById('prov-det-title').textContent = proveedorActual.commercial_name || 'Ficha de proveedor';
+  renderFichaProveedor(proveedorActual, false);
+}
+
+function renderFichaProveedor(p, editable) {
+  var gremios = [];
+  if (p.supplier_specialty_rel && p.supplier_specialty_rel.length) {
+    gremios = p.supplier_specialty_rel.map(function(r){ return r.specialty_code + (r.primary_specialty?' (principal)':''); });
+  } else if (p.specialty_code) { gremios = [p.specialty_code]; }
+
+  var campos = [
+    {label:'Código interno',          key:'internal_code',     val:p.internal_code},
+    {label:'Nombre comercial',         key:'commercial_name',   val:p.commercial_name},
+    {label:'Razón social',             key:'legal_name',        val:p.legal_name},
+    {label:'CIF / NIF',               key:'cif',               val:p.cif},
+    {label:'Gremios / Especialidades', key:'_gremios',          val:gremios.join(', '), readonly:true},
+    {label:'Categoría',               key:'category',          val:p.category},
+    {label:'Estado',                  key:'status',            val:p.status},
+    {label:'Valoración histórica',    key:'rating',            val:p.rating?p.rating+'/5':''},
+    {label:'Email principal',         key:'commercial_email',  val:p.commercial_email},
+    {label:'Email Dpto. Técnico',     key:'tech_email',        val:p.tech_email},
+    {label:'Email Dpto. Administración', key:'admin_email',    val:p.admin_email},
+    {label:'Teléfono principal',      key:'phone',             val:p.phone},
+    {label:'Teléfono Dpto. Técnico',  key:'tech_phone',        val:p.tech_phone},
+    {label:'Teléfono Dpto. Administración', key:'admin_phone', val:p.admin_phone},
+    {label:'Dirección',              key:'address',           val:p.address},
+    {label:'Ciudad',                 key:'city',              val:p.city},
+    {label:'Provincia',              key:'province',          val:p.province},
+    {label:'Condiciones de pago',    key:'payment_terms',     val:p.payment_terms},
+    {label:'Método de pago',         key:'payment_method',    val:p.payment_method},
+    {label:'Retención (%)',          key:'retention_pct',     val:p.retention_pct},
+    {label:'Notas',                  key:'notes',             val:p.notes},
+    {label:'Alta en sistema',        key:'_created',          val:p.created_at?new Date(p.created_at).toLocaleDateString('es-ES'):'-', readonly:true},
+    {label:'Última actualización',   key:'_updated',          val:p.updated_at?new Date(p.updated_at).toLocaleDateString('es-ES'):'-', readonly:true}
+  ];
+
+  document.getElementById('prov-ficha-content').innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:0;">' +
+    campos.map(function(f) {
+      var isReadonly = f.readonly || !editable;
+      var inputStyle = isReadonly ?
+        'background:#f9f9f6;border:1px solid transparent;' :
+        'background:white;border:1px solid #ddd;';
+      return '<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
+        '<div style="width:220px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">'+f.label+'</div>' +
+        '<input id="prov-field-'+f.key+'" value="'+(f.val||'')+'" '+(isReadonly?'readonly':'')+
+        ' style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;color:#1a1a1a;'+inputStyle+'"></div>';
+    }).join('') + '</div>';
+}
+
+function toggleEditarProveedor() {
+  modoEdicion = true;
+  document.getElementById('btn-editar-prov').style.display = 'none';
+  document.getElementById('btn-guardar-prov').style.display = 'inline-block';
+  renderFichaProveedor(proveedorActual, true);
+}
+
+async function guardarProveedor() {
+  var campos = ['internal_code','commercial_name','legal_name','cif','category','status',
+    'commercial_email','tech_email','admin_email','phone','tech_phone','admin_phone',
+    'address','city','province','payment_terms','payment_method','retention_pct','notes'];
+  var data = {updated_at: new Date().toISOString()};
+  campos.forEach(function(k) {
+    var el = document.getElementById('prov-field-'+k);
+    if (el) data[k] = el.value || null;
+  });
+  try {
+    if (proveedorActual.id) {
+      await db.from('suppliers').update(data).eq('id', proveedorActual.id);
+    } else {
+      await db.from('suppliers').insert(data);
+    }
+    alert('Proveedor guardado correctamente.');
+    modoEdicion = false;
+    document.getElementById('btn-editar-prov').style.display = 'inline-block';
+    document.getElementById('btn-guardar-prov').style.display = 'none';
+    await loadProveedores();
+    var updated = proveedoresData.find(function(x){return x.commercial_name===data.commercial_name;});
+    if (updated) { proveedorActual = updated; renderFichaProveedor(updated, false); }
+  } catch(e) { alert('Error al guardar: '+e.message); }
+}
+
+function imprimirListadoProveedores() {
+  var rows = proveedoresData.map(function(s) {
+    var gremios = s.supplier_specialty_rel && s.supplier_specialty_rel.length ?
+      s.supplier_specialty_rel.slice(0,2).map(function(r){return r.specialty_code;}).join(', ') :
+      (s.specialty_code||'-');
+    return '<tr><td>'+(s.internal_code||'-')+'</td><td>'+s.commercial_name+'</td>' +
+      '<td>'+gremios+'</td><td>'+(s.commercial_email||'-')+'</td><td>'+(s.phone||'-')+'</td></tr>';
+  }).join('');
+  var win = window.open('','_blank');
+  win.document.write('<html><head><title>Listado de Proveedores — EasyProject</title>' +
+    '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
+    'h2{color:#1B3A6B;margin-bottom:0.25rem;}p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th{text-align:left;padding:8px 12px;background:#f5f5f0;border-bottom:2px solid #ddd;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#666;}' +
+    'td{padding:8px 12px;border-bottom:1px solid #eee;}</style></head><body>' +
+    '<h2>BYG Soluciones — Listado de Proveedores</h2>' +
+    '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
+    '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Gremios</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
+    '<tbody>'+rows+'</tbody></table></body></html>');
+  win.document.close(); win.print();
+}
+
+function imprimirFichaProveedor() {
+  var p = proveedorActual;
+  if (!p) return;
+  var gremios = p.supplier_specialty_rel && p.supplier_specialty_rel.length ?
+    p.supplier_specialty_rel.map(function(r){return r.specialty_code+(r.primary_specialty?' (principal)':'');}).join(', ') :
+    (p.specialty_code||'-');
+  var campos = [
+    {label:'Código interno',               val:p.internal_code},
+    {label:'Nombre comercial',             val:p.commercial_name},
+    {label:'Razón social',                 val:p.legal_name},
+    {label:'CIF / NIF',                   val:p.cif},
+    {label:'Gremios / Especialidades',     val:gremios},
+    {label:'Categoría',                   val:p.category},
+    {label:'Estado',                      val:p.status},
+    {label:'Valoración histórica',        val:p.rating?p.rating+'/5':'-'},
+    {label:'Email principal',             val:p.commercial_email},
+    {label:'Email Dpto. Técnico',         val:p.tech_email},
+    {label:'Email Dpto. Administración',  val:p.admin_email},
+    {label:'Teléfono principal',          val:p.phone},
+    {label:'Teléfono Dpto. Técnico',      val:p.tech_phone},
+    {label:'Teléfono Dpto. Administración',val:p.admin_phone},
+    {label:'Dirección',                  val:p.address},
+    {label:'Ciudad',                     val:p.city},
+    {label:'Provincia',                  val:p.province},
+    {label:'Condiciones de pago',        val:p.payment_terms},
+    {label:'Método de pago',             val:p.payment_method},
+    {label:'Retención (%)',              val:p.retention_pct},
+    {label:'Notas',                      val:p.notes},
+    {label:'Alta en sistema',            val:p.created_at?new Date(p.created_at).toLocaleDateString('es-ES'):'-'},
+    {label:'Última actualización',       val:p.updated_at?new Date(p.updated_at).toLocaleDateString('es-ES'):'-'}
+  ];
+  var win = window.open('','_blank');
+  win.document.write('<html><head><title>Ficha Proveedor — '+(p.commercial_name||'')+'</title>' +
+    '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
+    'h2{color:#1B3A6B;margin-bottom:0.25rem;}p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
+    '.row{display:flex;padding:9px 0;border-bottom:1px solid #eee;}' +
+    '.lbl{width:230px;font-size:11px;color:#888;font-weight:600;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;}' +
+    '.val{font-size:13px;color:#1a1a1a;}</style></head><body>' +
+    '<h2>BYG Soluciones — Ficha de Proveedor</h2>' +
+    '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
+    campos.map(function(f){
+      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val||'—')+'</div></div>';
+    }).join('')+'</body></html>');
+  win.document.close(); win.print();
 }
 
 async function loadJefes() {
