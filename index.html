@@ -1838,13 +1838,21 @@ var _gremioMap = {};
 
 async function cargarGremiosAnalisis(categoria) {
   var el = document.getElementById('an-gremios-list');
-  el.innerHTML = '<div class="loading">Cargando proveedores...</div>';
+  el.innerHTML = '<div class="loading">Cargando gremios y proveedores...</div>';
 
   try {
     var provRes = await db.from('suppliers').select('id,internal_code,commercial_name,specialty_code,rating,supplier_specialty_rel(specialty_code,primary_specialty)').eq('status','active');
     var todosProveedores = provRes.data || [];
 
-    var gremios = [categoria||'ELECTRICIDAD'];
+    // Cargar gremios reales del proyecto desde project_specialties
+    var gremiosRes = await db.from('project_specialties')
+      .select('specialty_code,confidence')
+      .eq('project_id', analisisProyecto.id)
+      .order('confidence', {ascending:false});
+
+    var gremios = gremiosRes.data && gremiosRes.data.length ?
+      gremiosRes.data.map(function(g){return g.specialty_code;}) :
+      [categoria||'ELECTRICIDAD'];
 
     var html = gremios.map(function(gremio) {
       var provGremio = todosProveedores.filter(function(p){
@@ -1856,6 +1864,12 @@ async function cargarGremiosAnalisis(categoria) {
       if (!gremiosSeleccionados[gremio]) {
         gremiosSeleccionados[gremio] = propuestos.map(function(p){return p.id;});
       }
+
+      // Confianza de este gremio
+      var gremioConf = gremiosRes && gremiosRes.data ?
+        gremiosRes.data.find(function(g){return g.specialty_code===gremio;}) : null;
+      var confLabel = gremioConf && gremioConf.confidence ?
+        ' <span style="font-size:10px;color:#185FA5;background:#E6F1FB;padding:2px 6px;border-radius:4px;">IA: '+Math.round(gremioConf.confidence*100)+'%</span>' : '';
 
       var filas = todosProveedores.map(function(p) {
         var esPropuesto = propuestos.some(function(x){return x.id===p.id;});
@@ -1874,8 +1888,8 @@ async function cargarGremiosAnalisis(categoria) {
 
       return '<div style="margin-bottom:1rem;">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">' +
-        '<span class="badge b-default">' + gremio + '</span>' +
-        '<span style="font-size:12px;color:#888;">Selecciona los proveedores a los que enviar petición de oferta</span></div>' +
+        '<span class="badge b-default">' + gremio + '</span>' + confLabel +
+        '<span style="font-size:12px;color:#888;margin-left:4px;">Selecciona los proveedores a los que enviar petición de oferta</span></div>' +
         '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
         '<thead><tr style="background:#f9f9f6;">' +
         '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #e5e5e0;width:40px;">Sel.</th>' +
