@@ -2138,19 +2138,7 @@ async function cargarPeticionesGremios(peticionesExistentes) {
       var petExistente = peticionesExistentes.find(function(p){return p.specialty_code===gremio;});
       var yaEnviado = petExistente && petExistente.status === 'sent';
 
-      var emailBody = 'Estimado proveedor,
-
-Nos dirigimos a ustedes para solicitar oferta económica para el proyecto: ' + (ocProyecto.name||ocProyecto.code) + '.
-
-Adjuntamos el Excel con el desglose de partidas del gremio ' + gremio + ' para que procedan a su valoración.
-
-Les rogamos nos envíen su oferta antes de la fecha indicada, en el formato Excel adjunto o en el suyo propio.
-
-Quedamos a su disposición para cualquier consulta.
-
-Atentamente,
-Departamento Técnico
-BYG Soluciones S.L.';
+      var emailBody = 'Estimado proveedor,\n\nNos dirigimos a ustedes para solicitar oferta económica para el proyecto: ' + (ocProyecto.name||ocProyecto.code) + '.\n\nAdjuntamos el Excel con el desglose de partidas del gremio ' + gremio + ' para que procedan a su valoración.\n\nLes rogamos nos envíen su oferta antes de la fecha indicada, en el formato Excel adjunto o en el suyo propio.\n\nQuedamos a su disposición para cualquier consulta.\n\nAtentamente,\nDepartamento Técnico\nBYG Soluciones S.L.';
 
       var provList = provGremio.map(function(p){
         return '<div style="font-size:12px;padding:4px 0;display:flex;align-items:center;gap:6px;">' +
@@ -2245,9 +2233,7 @@ async function enviarPeticion(gremio) {
         status: 'sent', sent_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }, {onConflict:'project_id,specialty_code,supplier_id'});
     }
-    alert('Petición de oferta enviada a '+proveedores.length+' proveedor(es) del gremio '+gremio+'.
-
-(En producción se enviará por Outlook con el Excel adjunto)');
+    alert('Petición de oferta enviada a '+proveedores.length+' proveedor(es) del gremio '+gremio+'.\n\n(En producción se enviará por Outlook con el Excel adjunto)');
     abrirOfertaCurso(ocProyecto.id, encodeURIComponent(ocProyecto.name||ocProyecto.code));
   } catch(e) { alert('Error: '+e.message); }
 }
@@ -2413,19 +2399,8 @@ function aprobarMargenes(dept) {
 
   if (ocAprobaciones.tecnico && ocAprobaciones.comercial && ocAprobaciones.direccion) {
     document.getElementById('oc-envio-final').style.display = 'block';
-    var emailCliente = 'Estimado cliente,
-
-Nos complace presentarles nuestra propuesta económica para el proyecto ' +
-      (ocProyecto?ocProyecto.name||ocProyecto.code:'') + '.
-
-Adjuntamos nuestra oferta detallada por partidas y gremios para su revisión.
-
-' +
-      'Quedamos a su disposición para cualquier aclaración o modificación que precisen.
-
-Atentamente,
-Departamento Técnico
-BYG Soluciones S.L.';
+    var emailCliente = 'Estimado cliente,\n\nNos complace presentarles nuestra propuesta económica para el proyecto ' +
+      (ocProyecto?ocProyecto.name||ocProyecto.code:'') + '.\n\nAdjuntamos nuestra oferta detallada por partidas y gremios para su revisión.\n\nQuedamos a su disposición para cualquier aclaración o modificación que precisen.\n\nAtentamente,\nDepartamento Técnico\nBYG Soluciones S.L.';
     document.getElementById('oc-email-cliente').value = emailCliente;
     document.getElementById('oc-envio-final').scrollIntoView({behavior:'smooth', block:'start'});
   }
@@ -2437,11 +2412,7 @@ async function enviarOfertaCliente() {
     var stRes = await db.from('project_statuses').select('id').eq('code','oferta_enviada').single();
     if (stRes.data) {
       await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',ocProyecto.id);
-      alert('Oferta enviada al cliente correctamente.
-
-El proyecto pasa a estado "Oferta enviada".
-
-(En producción se enviará por Outlook con el PDF/Excel adjunto)');
+      alert('Oferta enviada al cliente correctamente.\n\nEl proyecto pasa a estado Oferta enviada.\n\n(En producción se enviará por Outlook con el PDF/Excel adjunto)');
       ocProyecto = null;
       await showProyectosFase('oferta_en_curso');
       loadDashboard();
