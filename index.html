@@ -502,6 +502,84 @@
   <div class="card" id="alertas-content"><div class="loading">Cargando...</div></div>
 </div>
 
+<!-- PANEL PROYECTO EN ANALISIS -->
+<div id="panel-analisis" class="panel">
+  <div class="topbar">
+    <h1 id="analisis-title">Proyecto en análisis</h1>
+    <button class="btn btn-back" onclick="volverDesdeAnalisis()">Volver</button>
+  </div>
+
+  <!-- INFO + EMAIL ENVIADO -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+    <div style="background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:1rem 1.25rem;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+        <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Proyecto</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="an-name">-</div></div>
+        <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Cliente</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="an-client">-</div></div>
+        <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Gremio principal</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="an-cat">-</div></div>
+      </div>
+    </div>
+    <div id="an-email-status" style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:10px;padding:1rem 1.25rem;display:flex;align-items:center;gap:10px;">
+      <div style="font-size:24px;">✉️</div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#3B6D11;">Email enviado al cliente</div>
+        <div style="font-size:11px;color:#3B6D11;opacity:0.8;" id="an-email-date">Notificación de proyecto en estudio enviada</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOCUMENTACION -->
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="card-header">
+      <div class="card-title">Documentación recibida</div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;cursor:pointer;">
+        <input type="checkbox" id="an-docs-reviewed" onchange="marcarDocsRevisados(this.checked)">
+        Documentación revisada
+      </label>
+    </div>
+    <div id="an-docs-list">
+      <div class="loading">Cargando documentos...</div>
+    </div>
+  </div>
+
+  <!-- GREMIOS Y PROVEEDORES -->
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="card-header">
+      <div class="card-title">Selección de proveedores por gremio</div>
+      <span style="font-size:11px;color:#888;">La IA propone 3 candidatos por gremio. Puedes modificar la selección.</span>
+    </div>
+    <div id="an-gremios-list">
+      <div class="loading">Cargando gremios...</div>
+    </div>
+  </div>
+
+  <!-- INFORME TECNICO -->
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="card-header">
+      <div class="card-title">Informe técnico de análisis</div>
+      <button class="btn btn-sm btn-primary" onclick="guardarInformeTecnico()">Guardar informe</button>
+    </div>
+    <textarea id="an-tech-notes" placeholder="Escribe aquí las observaciones técnicas, puntualizaciones y detalles relevantes para el futuro de este proyecto..."
+      style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:140px;resize:vertical;font-family:inherit;line-height:1.6;color:#1a1a1a;"></textarea>
+    <div style="font-size:11px;color:#aaa;margin-top:6px;" id="an-notes-saved"></div>
+  </div>
+
+  <!-- ACCIONES FINALES -->
+  <div class="card" style="background:#f9f9f6;">
+    <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:#1a1a1a;">Decisión sobre el proyecto</div>
+    <div style="font-size:12px;color:#888;margin-bottom:1rem;">Una vez completado el análisis, selecciona la acción a realizar.</div>
+    <div style="margin-bottom:0.75rem;">
+      <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Motivo (obligatorio para cancelar o solicitar aclaraciones)</label>
+      <textarea id="an-decision-reason" placeholder="Describe el motivo de la decisión..."
+        style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-danger" onclick="accionAnalisis('cancelled')">Cancelar proyecto</button>
+      <button class="btn" style="border-color:#EF9F27;color:#854F0B;background:#FAEEDA;" onclick="accionAnalisis('info_requested')">Solicitar aclaraciones al cliente</button>
+      <button class="btn btn-success" onclick="accionAnalisis('oferta_en_curso')" style="margin-left:auto;">Confirmar y pasar a Oferta en curso →</button>
+    </div>
+  </div>
+</div>
+
 <!-- PANEL EVALUACION PROYECTO SOLICITADO -->
 <div id="panel-evaluacion" class="panel">
   <div class="topbar">
@@ -804,8 +882,13 @@ async function abrirProyecto(id, nameEnc) {
   var name = decodeURIComponent(nameEnc);
   // Si el proyecto está en estado solicitado, ir a evaluación
   var stCheck = await db.from('projects').select('project_statuses(code)').eq('id',id).single();
-  if (stCheck.data && stCheck.data.project_statuses && stCheck.data.project_statuses.code === 'solicitado') {
+  var stCode = stCheck.data && stCheck.data.project_statuses ? stCheck.data.project_statuses.code : '';
+  if (stCode === 'solicitado') {
     abrirEvaluacion(id, nameEnc);
+    return;
+  }
+  if (stCode === 'en_analisis') {
+    abrirAnalisis(id, nameEnc);
     return;
   }
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
@@ -1650,6 +1733,214 @@ function volverDesdeEvaluacion() {
   } else {
     showPanel('dashboard');
   }
+}
+
+// ── PROYECTO EN ANÁLISIS ──
+var analisisProyecto = null;
+var analisisData = null;
+var gremiosSeleccionados = {};
+
+var proveedoresPorGremio = {
+  ELECTRICIDAD: ['PRV-001','PRV-002'],
+  CLIMATIZACION: ['PRV-003','PRV-006'],
+  FONTANERIA: ['PRV-004'],
+  ALBANILERIA: ['PRV-005']
+};
+
+async function abrirAnalisis(id, nameEnc) {
+  var name = decodeURIComponent(nameEnc);
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-analisis').classList.add('active');
+  gremiosSeleccionados = {};
+
+  try {
+    var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,confidence,project_statuses(code,name)').eq('id',id).single();
+    analisisProyecto = res.data;
+    document.getElementById('analisis-title').textContent = 'En Análisis — '+(analisisProyecto.name||analisisProyecto.code||'#'+id);
+    document.getElementById('an-name').textContent = analisisProyecto.name||analisisProyecto.code||'#'+id;
+    document.getElementById('an-client').textContent = analisisProyecto.contact_email||'-';
+    document.getElementById('an-cat').textContent = analisisProyecto.category||'-';
+
+    // Cargar análisis existente
+    var anRes = await db.from('project_analysis').select('*').eq('project_id',id).maybeSingle();
+    analisisData = anRes.data;
+    if (analisisData) {
+      document.getElementById('an-tech-notes').value = analisisData.tech_notes||'';
+      document.getElementById('an-docs-reviewed').checked = analisisData.docs_reviewed||false;
+      if (analisisData.email_sent_at) {
+        document.getElementById('an-email-date').textContent = 'Enviado el '+new Date(analisisData.email_sent_at).toLocaleDateString('es-ES');
+      }
+    } else {
+      // Crear registro de análisis y marcar email como enviado
+      var newAn = {project_id:id, email_sent_at:new Date().toISOString(), docs_reviewed:false};
+      var insRes = await db.from('project_analysis').insert(newAn).select().single();
+      analisisData = insRes.data;
+      document.getElementById('an-email-date').textContent = 'Enviado el '+new Date().toLocaleDateString('es-ES');
+    }
+
+    // Cargar documentos
+    cargarDocumentosAnalisis(id);
+
+    // Cargar gremios y proveedores propuestos
+    cargarGremiosAnalisis(analisisProyecto.category);
+
+  } catch(e) { console.error('Error abriendo analisis:',e); }
+}
+
+function cargarDocumentosAnalisis(projectId) {
+  var el = document.getElementById('an-docs-list');
+  var docs = [
+    {name:'Mediciones_'+projectId+'.xlsx', type:'Excel', size:'245 KB', date:new Date().toLocaleDateString('es-ES')},
+    {name:'Memoria_descriptiva.pdf', type:'PDF', size:'1.2 MB', date:new Date().toLocaleDateString('es-ES')},
+    {name:'Planos_locales.pdf', type:'PDF', size:'3.8 MB', date:new Date().toLocaleDateString('es-ES')}
+  ];
+  el.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;">' +
+    docs.map(function(d){
+      var color = d.type==='Excel'?'#3B6D11':'#A32D2D';
+      var bg = d.type==='Excel'?'#EAF3DE':'#FCEBEB';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f0;">' +
+        '<span style="background:'+bg+';color:'+color+';font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;">'+d.type+'</span>' +
+        '<span style="font-size:13px;color:#1a1a1a;flex:1;">'+d.name+'</span>' +
+        '<span style="font-size:11px;color:#aaa;">'+d.size+'</span>' +
+        '<span style="font-size:11px;color:#aaa;">'+d.date+'</span>' +
+        '<button class="btn btn-sm" onclick="alert('Abriendo '+d.name+' desde SharePoint...')">Abrir</button></div>';
+    }).join('') + '</div>' +
+    '<div style="font-size:11px;color:#aaa;margin-top:8px;font-style:italic;">Los archivos se abrirán desde SharePoint cuando estén conectadas las credenciales Microsoft 365.</div>';
+}
+
+async function cargarGremiosAnalisis(categoria) {
+  var el = document.getElementById('an-gremios-list');
+  el.innerHTML = '<div class="loading">Cargando proveedores...</div>';
+
+  try {
+    var provRes = await db.from('suppliers').select('id,internal_code,commercial_name,specialty_code,rating,supplier_specialty_rel(specialty_code,primary_specialty)').eq('status','active');
+    var todosProveedores = provRes.data || [];
+
+    // Determinar gremios del proyecto
+    var gremios = categoria ? [categoria] : ['ELECTRICIDAD'];
+    // Añadir gremios adicionales simulados si hay más de uno
+    if (categoria === 'ELECTRICIDAD') gremios = ['ELECTRICIDAD'];
+    else if (categoria === 'CLIMATIZACION') gremios = ['CLIMATIZACION'];
+    else if (categoria === 'FONTANERIA') gremios = ['FONTANERIA'];
+    else if (categoria === 'ALBANILERIA') gremios = ['ALBANILERIA'];
+    else gremios = [categoria||'ELECTRICIDAD'];
+
+    el.innerHTML = gremios.map(function(gremio) {
+      // Filtrar proveedores por gremio
+      var provGremio = todosProveedores.filter(function(p){
+        var specs = p.supplier_specialty_rel ? p.supplier_specialty_rel.map(function(r){return r.specialty_code;}) : [p.specialty_code];
+        return specs.indexOf(gremio) > -1;
+      });
+
+      // IA propone hasta 3
+      var propuestos = provGremio.slice(0,3);
+      if (!gremiosSeleccionados[gremio]) {
+        gremiosSeleccionados[gremio] = propuestos.map(function(p){return p.id;});
+      }
+
+      var opcionesSelect = todosProveedores.map(function(p){
+        return '<option value="'+p.id+'">'+p.commercial_name+' ('+p.specialty_code+')</option>';
+      }).join('');
+
+      return '<div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #f0f0ea;">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">' +
+        '<span class="badge b-default" style="font-size:11px;">'+gremio+'</span>' +
+        '<span style="font-size:12px;color:#888;">'+propuestos.length+' proveedores propuestos por IA</span></div>' +
+        '<div id="prov-list-'+gremio+'" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">' +
+        propuestos.map(function(p, idx){
+          var stars = p.rating ? '★'.repeat(p.rating) : '';
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f9f9f6;border-radius:6px;border:1px solid #e5e5e0;">' +
+            '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:2px 6px;border-radius:4px;font-weight:600;">IA</span>' +
+            '<span style="font-size:13px;font-weight:500;flex:1;">'+p.commercial_name+'</span>' +
+            '<span style="font-size:11px;color:#EF9F27;">'+stars+'</span>' +
+            '<button class="btn btn-sm" style="color:#A32D2D;border-color:#F7C1C1;" onclick="quitarProveedor(''+gremio+'','+p.id+')">Quitar</button></div>';
+        }).join('') + '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;">' +
+        '<select id="add-prov-'+gremio+'" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">'+
+        '<option value="">+ Añadir proveedor manualmente...</option>'+opcionesSelect+'</select>' +
+        '<button class="btn btn-sm btn-primary" onclick="añadirProveedorGremio(''+gremio+'')">Añadir</button></div></div>';
+    }).join('');
+
+  } catch(e) { console.error('Error cargando gremios:',e); el.innerHTML='<div class="empty">Error cargando proveedores</div>'; }
+}
+
+function quitarProveedor(gremio, provId) {
+  gremiosSeleccionados[gremio] = (gremiosSeleccionados[gremio]||[]).filter(function(id){return id!==provId;});
+  cargarGremiosAnalisis(analisisProyecto.category);
+}
+
+function añadirProveedorGremio(gremio) {
+  var sel = document.getElementById('add-prov-'+gremio);
+  var val = parseInt(sel.value);
+  if (!val) return;
+  if (!gremiosSeleccionados[gremio]) gremiosSeleccionados[gremio] = [];
+  if (gremiosSeleccionados[gremio].indexOf(val) === -1) {
+    gremiosSeleccionados[gremio].push(val);
+    cargarGremiosAnalisis(analisisProyecto.category);
+  }
+}
+
+async function marcarDocsRevisados(checked) {
+  if (!analisisProyecto) return;
+  try {
+    await db.from('project_analysis').update({docs_reviewed:checked, updated_at:new Date().toISOString()}).eq('project_id', analisisProyecto.id);
+  } catch(e) { console.error(e); }
+}
+
+async function guardarInformeTecnico() {
+  if (!analisisProyecto) return;
+  var notes = document.getElementById('an-tech-notes').value;
+  try {
+    await db.from('project_analysis').update({tech_notes:notes, updated_at:new Date().toISOString()}).eq('project_id', analisisProyecto.id);
+    var el = document.getElementById('an-notes-saved');
+    el.textContent = 'Guardado el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES');
+    el.style.color = '#3B6D11';
+  } catch(e) { alert('Error al guardar: '+e.message); }
+}
+
+async function accionAnalisis(accion) {
+  if (!analisisProyecto) return;
+  var reason = document.getElementById('an-decision-reason').value.trim();
+  if ((accion === 'cancelled' || accion === 'info_requested') && !reason) {
+    document.getElementById('an-decision-reason').style.borderColor = '#A32D2D';
+    document.getElementById('an-decision-reason').focus();
+    alert('El motivo es obligatorio para esta acción.');
+    return;
+  }
+  try {
+    var stRes = await db.from('project_statuses').select('id').eq('code', accion).single();
+    if (stRes.data) {
+      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id', analisisProyecto.id);
+      if (accion === 'oferta_en_curso') {
+        // Guardar selección de proveedores
+        var inserts = [];
+        Object.keys(gremiosSeleccionados).forEach(function(gremio){
+          (gremiosSeleccionados[gremio]||[]).forEach(function(provId){
+            inserts.push({project_id:analisisProyecto.id, specialty_code:gremio, supplier_id:provId, proposed_by_ai:true, selected:true});
+          });
+        });
+        if (inserts.length) {
+          await db.from('project_gremio_suppliers').upsert(inserts, {onConflict:'project_id,specialty_code,supplier_id'});
+        }
+        alert('Proyecto avanzado a Oferta en curso. Proveedores seleccionados guardados.');
+      } else if (accion === 'cancelled') {
+        alert('Proyecto cancelado. Motivo registrado.');
+      } else {
+        alert('Aclaraciones solicitadas al cliente. El proyecto queda en espera.');
+      }
+      analisisProyecto = null;
+      analisisData = null;
+      await showProyectosFase('en_analisis');
+      loadDashboard();
+    }
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+function volverDesdeAnalisis() {
+  analisisProyecto = null;
+  analisisData = null;
+  if (currentFase) showProyectosFase(currentFase);
+  else showPanel('dashboard');
 }
 
 loadDashboard();
