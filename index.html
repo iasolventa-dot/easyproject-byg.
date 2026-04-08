@@ -244,7 +244,7 @@
     </div>
   </div>
   <div class="dept-indicator di-tecnico" id="dept-indicator">
-    Vista: Departamento Técnico — Supervisión y control de proyectos en curso
+    Vista: Departamento Técnico - Supervisión y control de proyectos en curso
   </div>
   <div class="metrics">
     <div class="metric"><div class="metric-label">Proyectos activos</div><div class="metric-value" id="m-total">-</div><div class="metric-sub">en base de datos</div></div>
@@ -344,9 +344,9 @@
         <div>
           <div class="section-title">Estado de aprobaciones</div>
           <div class="card">
-            <div class="apro-row"><div class="dot-g"></div><div><div style="font-size:12px;font-weight:500;">Técnico — Validado</div><div style="font-size:10px;color:#aaa;" id="apro-tecnico-det">-</div></div></div>
-            <div class="apro-row"><div class="dot-o"></div><div><div style="font-size:12px;font-weight:500;">Dirección — Pendiente</div><div style="font-size:10px;color:#aaa;">direccion@bygsoluciones.es</div></div></div>
-            <div class="apro-row"><div class="dot-o"></div><div><div style="font-size:12px;font-weight:500;">Comercial — Pendiente</div><div style="font-size:10px;color:#aaa;">comercial@bygsoluciones.es</div></div></div>
+            <div class="apro-row"><div class="dot-g"></div><div><div style="font-size:12px;font-weight:500;">Técnico - Validado</div><div style="font-size:10px;color:#aaa;" id="apro-tecnico-det">-</div></div></div>
+            <div class="apro-row"><div class="dot-o"></div><div><div style="font-size:12px;font-weight:500;">Dirección - Pendiente</div><div style="font-size:10px;color:#aaa;">direccion@bygsoluciones.es</div></div></div>
+            <div class="apro-row"><div class="dot-o"></div><div><div style="font-size:12px;font-weight:500;">Comercial - Pendiente</div><div style="font-size:10px;color:#aaa;">comercial@bygsoluciones.es</div></div></div>
           </div>
           <div class="card" style="background:#f9f9f6;" id="apro-action-det">
             <div style="font-size:12px;font-weight:500;margin-bottom:6px;">Tu aprobación</div>
@@ -378,7 +378,7 @@
     <h1>Clientes</h1>
     <div style="display:flex;gap:8px;">
       <button class="btn" onclick="imprimirListadoClientes()">Imprimir listado</button>
-      <button class="btn btn-primary" onclick="alert('Alta de nuevo cliente — próximamente')">+ Nuevo cliente</button>
+      <button class="btn btn-primary" onclick="alert('Alta de nuevo cliente - próximamente')">+ Nuevo cliente</button>
     </div>
   </div>
   <div class="card">
@@ -493,13 +493,88 @@
 <!-- PRL -->
 <div id="panel-prl" class="panel">
   <div class="topbar"><h1>PRL / Documentación subcontratas</h1></div>
-  <div class="card"><div class="empty">Módulo PRL — próximamente disponible</div></div>
+  <div class="card"><div class="empty">Módulo PRL - próximamente disponible</div></div>
 </div>
 
 <!-- ALERTAS -->
 <div id="panel-alertas" class="panel">
   <div class="topbar"><h1>Alertas y errores</h1></div>
   <div class="card" id="alertas-content"><div class="loading">Cargando...</div></div>
+</div>
+
+<!-- PANEL OFERTA EN CURSO -->
+<div id="panel-oferta-curso" class="panel">
+  <div class="topbar">
+    <h1 id="oc-title">Oferta en curso</h1>
+    <button class="btn btn-back" onclick="volverDesdeOfertaCurso()">Volver</button>
+  </div>
+
+  <!-- INFO PROYECTO -->
+  <div style="background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Proyecto</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oc-name">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Cliente</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oc-client">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Fecha límite cliente</div><div style="font-size:13px;font-weight:500;color:#A32D2D;" id="oc-deadline">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Estado</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oc-status">-</div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="proj-tabs" style="margin-bottom:1.5rem;">
+    <div class="proj-tab active" onclick="showOcTab('peticiones',this)">A. Peticiones a proveedores</div>
+    <div class="proj-tab" onclick="showOcTab('ofertas',this)">B. Ofertas recibidas</div>
+    <div class="proj-tab" onclick="showOcTab('montaje',this)">C. Montaje oferta al cliente</div>
+  </div>
+
+  <!-- TAB A: PETICIONES -->
+  <div id="oc-tab-peticiones">
+    <div class="alert-box" style="margin-bottom:1.5rem;">
+      <div class="alert-box-title">Lanzamiento de peticiones de oferta</div>
+      <div class="alert-box-desc">Revisa el email para cada gremio, fija las fechas clave y ordena el envío. Cada proveedor seleccionado recibirá el email con el Excel de partidas de su gremio adjunto.</div>
+    </div>
+    <div id="oc-gremios-peticiones"><div class="loading">Cargando gremios...</div></div>
+  </div>
+
+  <!-- TAB B: OFERTAS RECIBIDAS -->
+  <div id="oc-tab-ofertas" style="display:none;">
+    <div id="oc-ofertas-content"><div class="loading">Cargando ofertas...</div></div>
+  </div>
+
+  <!-- TAB C: MONTAJE -->
+  <div id="oc-tab-montaje" style="display:none;">
+    <div class="alert-box" style="margin-bottom:1.5rem;">
+      <div class="alert-box-title">Montaje de la oferta final al cliente</div>
+      <div class="alert-box-desc">Revisa las partidas seleccionadas, propón el margen de beneficio por partida y somete a aprobación de Comercial y Dirección antes de enviar al cliente.</div>
+    </div>
+    <div id="oc-montaje-content"><div class="loading">Cargando partidas...</div></div>
+    <div id="oc-aprobacion-margenes" style="display:none;margin-top:1rem;">
+      <div class="section-title">Aprobación de márgenes</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;">
+        <div class="card" style="text-align:center;">
+          <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Dept. Técnico</div>
+          <div id="aprov-tecnico-status"><button class="btn btn-success btn-sm" onclick="aprobarMargenes('tecnico')">Aprobar márgenes</button></div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Dept. Comercial</div>
+          <div id="aprov-comercial-status"><button class="btn btn-success btn-sm" onclick="aprobarMargenes('comercial')">Aprobar márgenes</button></div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Dirección</div>
+          <div id="aprov-direccion-status"><button class="btn btn-success btn-sm" onclick="aprobarMargenes('direccion')">Aprobar márgenes</button></div>
+        </div>
+      </div>
+      <div id="oc-envio-final" style="display:none;">
+        <div class="card" style="background:#EAF3DE;border:1px solid #C0DD97;">
+          <div style="font-size:13px;font-weight:500;color:#27500A;margin-bottom:8px;">Márgenes aprobados por los tres departamentos</div>
+          <div style="font-size:12px;color:#3B6D11;margin-bottom:1rem;">La oferta está lista para enviar al cliente. Revisa el email de envío y confirma.</div>
+          <textarea id="oc-email-cliente" style="width:100%;padding:10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;min-height:120px;resize:vertical;font-family:inherit;background:white;margin-bottom:10px;"></textarea>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-success" onclick="enviarOfertaCliente()">Enviar oferta al cliente y cerrar fase →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- PANEL PROYECTO EN ANALISIS -->
@@ -683,11 +758,11 @@ var currentProj = null;
 var currentFase = null;
 
 var deptConfig = {
-  tecnico:   { name:'Dept. Técnico',    email:'tecnico@bygsoluciones.es',   badge:'TÉCNICO',   desc:'Vista: Departamento Técnico — Supervisión y control de proyectos en curso' },
-  direccion: { name:'Dirección',        email:'direccion@bygsoluciones.es', badge:'DIRECCIÓN', desc:'Vista: Dirección — Seguimiento global y aprobaciones ejecutivas' },
-  comercial: { name:'Dept. Comercial',  email:'comercial@bygsoluciones.es', badge:'COMERCIAL', desc:'Vista: Departamento Comercial — Gestión de ofertas y relación con clientes' },
-  prl:       { name:'Dept. PRL',        email:'prl@bygsoluciones.es',       badge:'PRL',       desc:'Vista: Prevención de Riesgos Laborales — Documentación y cumplimiento' },
-  admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración — Datos maestros y gestión del sistema' }
+  tecnico:   { name:'Dept. Técnico',    email:'tecnico@bygsoluciones.es',   badge:'TÉCNICO',   desc:'Vista: Departamento Técnico - Supervisión y control de proyectos en curso' },
+  direccion: { name:'Dirección',        email:'direccion@bygsoluciones.es', badge:'DIRECCIÓN', desc:'Vista: Dirección - Seguimiento global y aprobaciones ejecutivas' },
+  comercial: { name:'Dept. Comercial',  email:'comercial@bygsoluciones.es', badge:'COMERCIAL', desc:'Vista: Departamento Comercial - Gestion de ofertas y relacion con clientes' },
+  prl:       { name:'Dept. PRL',        email:'prl@bygsoluciones.es',       badge:'PRL',       desc:'Vista: Prevencion de Riesgos Laborales - Documentacion y cumplimiento' },
+  admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración - Datos maestros y gestión del sistema' }
 };
 
 var badgeMap = {
@@ -891,6 +966,10 @@ async function abrirProyecto(id, nameEnc) {
     abrirAnalisis(id, nameEnc);
     return;
   }
+  if (stCode === 'oferta_en_curso') {
+    abrirOfertaCurso(id, nameEnc);
+    return;
+  }
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('panel-proyecto-detalle').classList.add('active');
   document.getElementById('det-title').textContent = name;
@@ -1068,7 +1147,7 @@ function abrirFichaCliente(id) {
     campos.map(function(f){
       return '<div style="display:flex;padding:10px 0;border-bottom:1px solid #f5f5f0;">' +
         '<div style="width:200px;font-size:12px;color:#888;font-weight:500;flex-shrink:0;">'+f.label+'</div>' +
-        '<div style="font-size:13px;color:#1a1a1a;">'+(f.val||'—')+'</div></div>';
+        '<div style="font-size:13px;color:#1a1a1a;">'+(f.val||'-')+'</div></div>';
     }).join('') + '</div>';
 }
 
@@ -1078,14 +1157,14 @@ function imprimirListadoClientes() {
     return '<tr><td>'+(c.internal_code||'-')+'</td><td>'+c.commercial_name+'</td>' +
       '<td>'+(c.commercial_email||'-')+'</td><td>'+(c.phone||'-')+'</td></tr>';
   }).join('');
-  win.document.write('<html><head><title>Listado de Clientes — EasyProject</title>' +
+  win.document.write('<html><head><title>Listado de Clientes - EasyProject</title>' +
     '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
     'h2{color:#1B3A6B;margin-bottom:0.5rem;}' +
     'p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
     'table{width:100%;border-collapse:collapse;}' +
     'th{text-align:left;padding:8px 12px;background:#f5f5f0;border-bottom:2px solid #ddd;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#666;}' +
     'td{padding:8px 12px;border-bottom:1px solid #eee;}</style></head><body>' +
-    '<h2>BYG Soluciones — Listado de Clientes</h2>' +
+    '<h2>BYG Soluciones - Listado de Clientes</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
     '<tbody>'+rows+'</tbody></table></body></html>');
@@ -1112,17 +1191,17 @@ function imprimirFichaCliente() {
     {label:'Última actualización', val:c.updated_at ? new Date(c.updated_at).toLocaleDateString('es-ES') : '-'}
   ];
   var win = window.open('','_blank');
-  win.document.write('<html><head><title>Ficha Cliente — '+c.commercial_name+'</title>' +
+  win.document.write('<html><head><title>Ficha Cliente - '+c.commercial_name+'</title>' +
     '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
     'h2{color:#1B3A6B;margin-bottom:0.25rem;}' +
     'p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
     '.row{display:flex;padding:10px 0;border-bottom:1px solid #eee;}' +
     '.lbl{width:200px;font-size:12px;color:#888;font-weight:600;flex-shrink:0;}' +
     '.val{font-size:13px;color:#1a1a1a;}</style></head><body>' +
-    '<h2>BYG Soluciones — Ficha de Cliente</h2>' +
+    '<h2>BYG Soluciones - Ficha de Cliente</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     campos.map(function(f){
-      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val||'—')+'</div></div>';
+      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val||'-')+'</div></div>';
     }).join('') +
     '</body></html>');
   win.document.close();
@@ -1287,13 +1366,13 @@ function imprimirListadoProveedores() {
       '<td>'+gremios+'</td><td>'+(s.commercial_email||'-')+'</td><td>'+(s.phone||'-')+'</td></tr>';
   }).join('');
   var win = window.open('','_blank');
-  win.document.write('<html><head><title>Listado de Proveedores — EasyProject</title>' +
+  win.document.write('<html><head><title>Listado de Proveedores - EasyProject</title>' +
     '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
     'h2{color:#1B3A6B;margin-bottom:0.25rem;}p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
     'table{width:100%;border-collapse:collapse;}' +
     'th{text-align:left;padding:8px 12px;background:#f5f5f0;border-bottom:2px solid #ddd;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#666;}' +
     'td{padding:8px 12px;border-bottom:1px solid #eee;}</style></head><body>' +
-    '<h2>BYG Soluciones — Listado de Proveedores</h2>' +
+    '<h2>BYG Soluciones - Listado de Proveedores</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Gremios</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
     '<tbody>'+rows+'</tbody></table></body></html>');
@@ -1332,16 +1411,16 @@ function imprimirFichaProveedor() {
     {label:'Última actualización',       val:p.updated_at?new Date(p.updated_at).toLocaleDateString('es-ES'):'-'}
   ];
   var win = window.open('','_blank');
-  win.document.write('<html><head><title>Ficha Proveedor — '+(p.commercial_name||'')+'</title>' +
+  win.document.write('<html><head><title>Ficha Proveedor - '+(p.commercial_name||'')+'</title>' +
     '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
     'h2{color:#1B3A6B;margin-bottom:0.25rem;}p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
     '.row{display:flex;padding:9px 0;border-bottom:1px solid #eee;}' +
     '.lbl{width:230px;font-size:11px;color:#888;font-weight:600;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;}' +
     '.val{font-size:13px;color:#1a1a1a;}</style></head><body>' +
-    '<h2>BYG Soluciones — Ficha de Proveedor</h2>' +
+    '<h2>BYG Soluciones - Ficha de Proveedor</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     campos.map(function(f){
-      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val||'—')+'</div></div>';
+      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val||'-')+'</div></div>';
     }).join('')+'</body></html>');
   win.document.close(); win.print();
 }
@@ -1516,13 +1595,13 @@ function imprimirListadoJefes() {
       '<td>'+(j.available?'Disponible':'Ocupado')+'</td></tr>';
   }).join('');
   var win = window.open('','_blank');
-  win.document.write('<html><head><title>Listado Jefes de Obra — EasyProject</title>' +
+  win.document.write('<html><head><title>Listado Jefes de Obra - EasyProject</title>' +
     '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
     'h2{color:#1B3A6B;margin-bottom:0.25rem;}p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
     'table{width:100%;border-collapse:collapse;}' +
     'th{text-align:left;padding:8px 12px;background:#f5f5f0;border-bottom:2px solid #ddd;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#666;}' +
     'td{padding:8px 12px;border-bottom:1px solid #eee;}</style></head><body>' +
-    '<h2>BYG Soluciones — Jefes de Obra</h2>' +
+    '<h2>BYG Soluciones - Jefes de Obra</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>ID</th><th>Nombre completo</th><th>Teléfono</th><th>Email</th><th>Proy. activos</th><th>Especialidades</th><th>Disponible</th></tr></thead>' +
     '<tbody>'+rows+'</tbody></table></body></html>');
@@ -1547,16 +1626,16 @@ function imprimirFichaJefe() {
     {label:'Última actualización', val:j.updated_at?new Date(j.updated_at).toLocaleDateString('es-ES'):'-'}
   ];
   var win = window.open('','_blank');
-  win.document.write('<html><head><title>Ficha Jefe de Obra — '+(j.full_name||'')+'</title>' +
+  win.document.write('<html><head><title>Ficha Jefe de Obra - '+(j.full_name||'')+'</title>' +
     '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
     'h2{color:#1B3A6B;margin-bottom:0.25rem;}p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
     '.row{display:flex;padding:9px 0;border-bottom:1px solid #eee;}' +
     '.lbl{width:200px;font-size:11px;color:#888;font-weight:600;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;}' +
     '.val{font-size:13px;color:#1a1a1a;}</style></head><body>' +
-    '<h2>BYG Soluciones — Ficha de Jefe de Obra</h2>' +
+    '<h2>BYG Soluciones - Ficha de Jefe de Obra</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     campos.map(function(f){
-      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val!=null?f.val:'—')+'</div></div>';
+      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val!=null?f.val:'-')+'</div></div>';
     }).join('')+'</body></html>');
   win.document.close(); win.print();
 }
@@ -1601,7 +1680,7 @@ async function abrirEvaluacion(id, nameEnc) {
   try {
     var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,project_statuses(code,name)').eq('id',id).single();
     evalProyecto = res.data;
-    document.getElementById('eval-title').textContent = 'Evaluación — '+(evalProyecto.name||evalProyecto.code||'#'+id);
+    document.getElementById('eval-title').textContent = 'Evaluación - '+(evalProyecto.name||evalProyecto.code||'#'+id);
     document.getElementById('eval-name').textContent = evalProyecto.name||evalProyecto.code||'#'+id;
     document.getElementById('eval-client').textContent = evalProyecto.contact_email||'-';
     document.getElementById('eval-cat').textContent = evalProyecto.category||'-';
@@ -1670,7 +1749,7 @@ function resetAlertaEval() {
   } else {
     alert.className = 'alert-box';
     alert.style.display = 'block';
-    alert.innerHTML = '<div class="alert-box-title">Evaluación en curso — '+aprobados.length+' de 3 departamentos han respondido</div>' +
+    alert.innerHTML = '<div class="alert-box-title">Evaluación en curso - '+aprobados.length+' de 3 departamentos han respondido</div>' +
       '<div class="alert-box-desc">Pendiente de respuesta de los departamentos restantes.</div>';
     resultado.style.display = 'none';
   }
@@ -1756,7 +1835,7 @@ async function abrirAnalisis(id, nameEnc) {
   try {
     var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,confidence,project_statuses(code,name)').eq('id',id).single();
     analisisProyecto = res.data;
-    document.getElementById('analisis-title').textContent = 'En Análisis — '+(analisisProyecto.name||analisisProyecto.code||'#'+id);
+    document.getElementById('analisis-title').textContent = 'En Análisis - '+(analisisProyecto.name||analisisProyecto.code||'#'+id);
     document.getElementById('an-name').textContent = analisisProyecto.name||analisisProyecto.code||'#'+id;
     document.getElementById('an-client').textContent = analisisProyecto.contact_email||'-';
     document.getElementById('an-cat').textContent = analisisProyecto.category||'-';
@@ -1821,7 +1900,7 @@ function cargarDocumentosAnalisis(projectId, categoria) {
     '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #FAC775;">' +
     '<span style="background:#EAF3DE;color:#3B6D11;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;">EXCEL</span>' +
     '<span style="font-size:12px;color:#1a1a1a;flex:1;">Peticion_oferta_'+cat+'.xlsx</span>' +
-    '<span style="font-size:11px;color:#aaa;">Generado por IA — partidas del gremio '+cat+'</span></div>' +
+    '<span style="font-size:11px;color:#aaa;">Generado por IA - partidas del gremio '+cat+'</span></div>' +
     '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">' +
     '<span style="background:#FCEBEB;color:#A32D2D;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;">PDF</span>' +
     '<span style="font-size:12px;color:#1a1a1a;flex:1;">Planos y memoria descriptiva</span>' +
@@ -1985,6 +2064,395 @@ function volverDesdeAnalisis() {
 
 function abrirDocumento(nombre) {
   alert('Abriendo ' + nombre + ' desde SharePoint...');
+}
+
+// ── OFERTA EN CURSO ──
+var ocProyecto = null;
+var ocGremios = [];
+var ocMargenes = {};
+var ocAprobaciones = {tecnico:false, comercial:false, direccion:false};
+
+async function abrirOfertaCurso(id, nameEnc) {
+  var name = decodeURIComponent(nameEnc);
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-oferta-curso').classList.add('active');
+  showOcTab('peticiones', document.querySelector('.proj-tab'));
+  ocAprobaciones = {tecnico:false, comercial:false, direccion:false};
+
+  try {
+    var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,project_statuses(code,name)').eq('id',id).single();
+    ocProyecto = res.data;
+    document.getElementById('oc-title').textContent = 'Oferta en curso - '+(ocProyecto.name||ocProyecto.code||'#'+id);
+    document.getElementById('oc-name').textContent = ocProyecto.name||ocProyecto.code||'#'+id;
+    document.getElementById('oc-client').textContent = ocProyecto.contact_email||'-';
+    document.getElementById('oc-deadline').textContent = 'Consultar petición cliente';
+    document.getElementById('oc-status').textContent = 'Oferta en curso';
+
+    // Cargar gremios del proyecto
+    var gremiosRes = await db.from('project_specialties').select('specialty_code,confidence').eq('project_id',id).order('confidence',{ascending:false});
+    ocGremios = gremiosRes.data ? gremiosRes.data.map(function(g){return g.specialty_code;}) : [ocProyecto.category||'ELECTRICIDAD'];
+
+    // Cargar peticiones existentes
+    var reqRes = await db.from('offer_requests').select('*,suppliers(commercial_name)').eq('project_id',id);
+    var peticionesExistentes = reqRes.data || [];
+
+    cargarPeticionesGremios(peticionesExistentes);
+  } catch(e) { console.error('Error abriendo oferta curso:',e); }
+}
+
+function showOcTab(tab, el) {
+  ['peticiones','ofertas','montaje'].forEach(function(t){
+    var el2 = document.getElementById('oc-tab-'+t);
+    if (el2) el2.style.display = 'none';
+  });
+  document.querySelectorAll('.proj-tab').forEach(function(t){t.classList.remove('active');});
+  var tabEl = document.getElementById('oc-tab-'+tab);
+  if (tabEl) tabEl.style.display = 'block';
+  if (el) el.classList.add('active');
+  if (tab === 'ofertas') cargarOfertasRecibidas();
+  if (tab === 'montaje') cargarMontajeOferta();
+}
+
+async function cargarPeticionesGremios(peticionesExistentes) {
+  var el = document.getElementById('oc-gremios-peticiones');
+  if (!ocProyecto) return;
+
+  try {
+    var provRes = await db.from('suppliers').select('id,commercial_name,specialty_code,tech_email,commercial_email,supplier_specialty_rel(specialty_code)').eq('status','active');
+    var todosProveedores = provRes.data || [];
+
+    // Cargar proveedores seleccionados por gremio
+    var selRes = await db.from('project_gremio_suppliers').select('specialty_code,supplier_id,suppliers(commercial_name,tech_email,commercial_email)').eq('project_id',ocProyecto.id).eq('selected',true);
+    var seleccionados = selRes.data || [];
+
+    var html = ocGremios.map(function(gremio) {
+      var provGremio = seleccionados.filter(function(s){return s.specialty_code===gremio;});
+      if (!provGremio.length) {
+        // Fallback: proveedores del fichero por gremio
+        provGremio = todosProveedores.filter(function(p){
+          var specs = p.supplier_specialty_rel ? p.supplier_specialty_rel.map(function(r){return r.specialty_code;}) : [p.specialty_code];
+          return specs.indexOf(gremio) > -1;
+        }).slice(0,3).map(function(p){return {supplier_id:p.id, specialty_code:gremio, suppliers:{commercial_name:p.commercial_name, tech_email:p.tech_email, commercial_email:p.commercial_email}};});
+      }
+
+      var petExistente = peticionesExistentes.find(function(p){return p.specialty_code===gremio;});
+      var yaEnviado = petExistente && petExistente.status === 'sent';
+
+      var emailBody = 'Estimado proveedor,
+
+Nos dirigimos a ustedes para solicitar oferta económica para el proyecto: ' + (ocProyecto.name||ocProyecto.code) + '.
+
+Adjuntamos el Excel con el desglose de partidas del gremio ' + gremio + ' para que procedan a su valoración.
+
+Les rogamos nos envíen su oferta antes de la fecha indicada, en el formato Excel adjunto o en el suyo propio.
+
+Quedamos a su disposición para cualquier consulta.
+
+Atentamente,
+Departamento Técnico
+BYG Soluciones S.L.';
+
+      var provList = provGremio.map(function(p){
+        return '<div style="font-size:12px;padding:4px 0;display:flex;align-items:center;gap:6px;">' +
+          '<span style="color:#3B6D11;">✓</span>' +
+          '<span style="font-weight:500;">'+(p.suppliers?p.suppliers.commercial_name:'#'+p.supplier_id)+'</span>' +
+          '<span style="color:#aaa;font-size:11px;">'+(p.suppliers&&p.suppliers.tech_email?'· '+p.suppliers.tech_email:'')+'</span></div>';
+      }).join('');
+
+      var statusBadge = yaEnviado ?
+        '<span class="badge b-adjudicado">Enviado</span>' :
+        '<span class="badge b-oferta_curso">Pendiente envío</span>';
+
+      return '<div class="card" style="margin-bottom:1rem;" data-gremio="'+gremio+'">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;flex-wrap:wrap;gap:8px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;"><span class="badge b-default">'+gremio+'</span>'+statusBadge+'</div>' +
+        '<div style="font-size:12px;color:#888;">'+provGremio.length+' proveedores seleccionados</div></div>' +
+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">' +
+        '<div><div style="font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:4px;">Proveedores destinatarios</div>'+provList+'</div>' +
+        '<div><div style="font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:8px;">Fechas clave</div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px;">' +
+        '<div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Fecha límite respuesta proveedor</label>' +
+        '<input type="date" id="deadline-'+gremio+'" style="width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;" value="'+(petExistente&&petExistente.deadline_date?petExistente.deadline_date:'')+'"></div>' +
+        '<div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Fecha recordatorio automático</label>' +
+        '<input type="date" id="reminder-'+gremio+'" style="width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;" value="'+(petExistente&&petExistente.reminder_date?petExistente.reminder_date:'')+'"></div>' +
+        '</div></div></div>' +
+
+        '<div style="margin-bottom:1rem;">' +
+        '<div style="font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:6px;">Texto del email <span style="font-weight:400;text-transform:none;color:#aaa;">(editable antes de enviar)</span></div>' +
+        '<textarea id="email-body-'+gremio+'" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:130px;resize:vertical;font-family:inherit;line-height:1.5;">'+emailBody+'</textarea></div>' +
+
+        (yaEnviado ?
+          '<div style="background:#EAF3DE;border-radius:6px;padding:8px 12px;font-size:12px;color:#3B6D11;">Petición enviada el '+(petExistente.sent_at?new Date(petExistente.sent_at).toLocaleDateString('es-ES'):'-')+'</div>' :
+          '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+          '<button class="btn btn-sm" onclick="guardarBorradorGremio(this)">Guardar borrador</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="enviarPeticionGremio(this)">Enviar petición de oferta</button></div>' 
+        ) +
+        '</div>';
+    }).join('');
+
+    el.innerHTML = html;
+  } catch(e) { console.error('Error cargando peticiones:',e); }
+}
+
+function guardarBorradorGremio(btn) {
+  var card = btn.closest('[data-gremio]');
+  if (card) guardarBorradorPeticion(card.getAttribute('data-gremio'));
+}
+function enviarPeticionGremio(btn) {
+  var card = btn.closest('[data-gremio]');
+  if (card) enviarPeticion(card.getAttribute('data-gremio'));
+}
+function verComparativoGremio(btn) {
+  var card = btn.closest('[data-gremio]');
+  if (card) verComparativo(card.getAttribute('data-gremio'));
+}
+
+async function guardarBorradorPeticion(gremio) {
+  if (!ocProyecto) return;
+  var deadline = document.getElementById('deadline-'+gremio) ? document.getElementById('deadline-'+gremio).value : null;
+  var reminder = document.getElementById('reminder-'+gremio) ? document.getElementById('reminder-'+gremio).value : null;
+  var body = document.getElementById('email-body-'+gremio) ? document.getElementById('email-body-'+gremio).value : '';
+  try {
+    var selRes = await db.from('project_gremio_suppliers').select('supplier_id').eq('project_id',ocProyecto.id).eq('specialty_code',gremio).eq('selected',true);
+    var proveedores = selRes.data || [];
+    for (var i=0; i<proveedores.length; i++) {
+      await db.from('offer_requests').upsert({
+        project_id: ocProyecto.id, specialty_code: gremio,
+        supplier_id: proveedores[i].supplier_id,
+        email_body: body, deadline_date: deadline||null, reminder_date: reminder||null,
+        status: 'pending', updated_at: new Date().toISOString()
+      }, {onConflict:'project_id,specialty_code,supplier_id'});
+    }
+    alert('Borrador guardado para '+gremio+'.');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function enviarPeticion(gremio) {
+  if (!ocProyecto) return;
+  var deadline = document.getElementById('deadline-'+gremio) ? document.getElementById('deadline-'+gremio).value : null;
+  var reminder = document.getElementById('reminder-'+gremio) ? document.getElementById('reminder-'+gremio).value : null;
+  if (!deadline) { alert('Debes indicar la fecha límite de respuesta antes de enviar.'); return; }
+  var body = document.getElementById('email-body-'+gremio) ? document.getElementById('email-body-'+gremio).value : '';
+  try {
+    var selRes = await db.from('project_gremio_suppliers').select('supplier_id').eq('project_id',ocProyecto.id).eq('specialty_code',gremio).eq('selected',true);
+    var proveedores = selRes.data || [];
+    for (var i=0; i<proveedores.length; i++) {
+      await db.from('offer_requests').upsert({
+        project_id: ocProyecto.id, specialty_code: gremio,
+        supplier_id: proveedores[i].supplier_id,
+        email_body: body, deadline_date: deadline||null, reminder_date: reminder||null,
+        status: 'sent', sent_at: new Date().toISOString(), updated_at: new Date().toISOString()
+      }, {onConflict:'project_id,specialty_code,supplier_id'});
+    }
+    alert('Petición de oferta enviada a '+proveedores.length+' proveedor(es) del gremio '+gremio+'.
+
+(En producción se enviará por Outlook con el Excel adjunto)');
+    abrirOfertaCurso(ocProyecto.id, encodeURIComponent(ocProyecto.name||ocProyecto.code));
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function cargarOfertasRecibidas() {
+  var el = document.getElementById('oc-ofertas-content');
+  if (!ocProyecto) { el.innerHTML = '<div class="empty">No hay proyecto seleccionado</div>'; return; }
+  el.innerHTML = '<div class="loading">Cargando ofertas...</div>';
+
+  try {
+    var reqRes = await db.from('offer_requests').select('*,suppliers(commercial_name,rating)').eq('project_id',ocProyecto.id);
+    var peticiones = reqRes.data || [];
+
+    if (!peticiones.length) {
+      el.innerHTML = '<div class="empty">No hay peticiones enviadas aún. Envía las peticiones en la pestaña A.</div>';
+      return;
+    }
+
+    // Agrupar por gremio
+    var porGremio = {};
+    peticiones.forEach(function(p) {
+      if (!porGremio[p.specialty_code]) porGremio[p.specialty_code] = [];
+      porGremio[p.specialty_code].push(p);
+    });
+
+    var html = Object.keys(porGremio).map(function(gremio) {
+      var provs = porGremio[gremio];
+      var enviados = provs.filter(function(p){return p.status==='sent'||p.status==='responded';}).length;
+      var respondidos = provs.filter(function(p){return p.status==='responded';}).length;
+
+      var filas = provs.map(function(p) {
+        var statusBadge = p.status==='responded' ?
+          '<span class="badge b-adjudicado">Recibida</span>' :
+          p.status==='sent' ? '<span class="badge b-oferta_enviada">Esperando</span>' :
+          '<span class="badge b-default">Pendiente</span>';
+        var deadline = p.deadline_date ? new Date(p.deadline_date).toLocaleDateString('es-ES') : '-';
+        return '<tr>' +
+          '<td style="font-weight:500;">'+(p.suppliers?p.suppliers.commercial_name:'-')+'</td>' +
+          '<td>'+statusBadge+'</td>' +
+          '<td>'+deadline+'</td>' +
+          '<td>'+(p.status==='responded'?'<button class="btn btn-sm btn-primary" onclick="verOfertaRecibida('+p.id+')">Ver oferta</button>':'<span style="font-size:11px;color:#aaa;">Sin respuesta</span>')+'</td>' +
+          '</tr>';
+      }).join('');
+
+      return '<div class="card" style="margin-bottom:1rem;" data-gremio="'+gremio+'">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">' +
+        '<div style="display:flex;align-items:center;gap:8px;"><span class="badge b-default">'+gremio+'</span>' +
+        '<span style="font-size:12px;color:#888;">'+respondidos+' de '+enviados+' ofertas recibidas</span></div>' +
+        (respondidos >= 2 ? '<button class="btn btn-primary btn-sm" onclick="verComparativoGremio(this)">Ver comparativo IA</button>' : '') +
+        '</div>' +
+        '<table class="data-table"><thead><tr><th>Proveedor</th><th>Estado</th><th>Fecha límite</th><th>Acción</th></tr></thead>' +
+        '<tbody>'+filas+'</tbody></table>' +
+
+        (respondidos === 0 ?
+          '<div style="background:#FAEEDA;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:12px;color:#854F0B;">Sin respuestas aún. Si se acerca la fecha límite, el sistema enviará el recordatorio automático.</div>' : '') +
+        '</div>';
+    }).join('');
+
+    el.innerHTML = html;
+  } catch(e) { console.error('Error:', e); el.innerHTML='<div class="empty">Error cargando ofertas</div>'; }
+}
+
+function verOfertaRecibida(reqId) {
+  alert('En producción: muestra el detalle de la oferta recibida y sus partidas normalizadas por la IA.');
+}
+
+function verComparativo(gremio) {
+  alert('En producción: la IA genera el cuadro comparativo de las ofertas recibidas para '+gremio+', normaliza partidas y recomienda el mejor proveedor.');
+}
+
+async function cargarMontajeOferta() {
+  var el = document.getElementById('oc-montaje-content');
+  if (!ocProyecto) return;
+  el.innerHTML = '<div class="loading">Cargando partidas...</div>';
+
+  // Datos simulados de partidas con coste de proveedor
+  var gremiosData2 = {
+    ELECTRICIDAD: [
+      {code:'E-001', desc:'Cuadro eléctrico general CGD', unit:'Ud', qty:1, cost:4200},
+      {code:'E-002', desc:'Línea alimentación fuerza desde CGD', unit:'m', qty:45, cost:1800},
+      {code:'E-003', desc:'Puntos de luz LED empotrado', unit:'Ud', qty:32, cost:3840},
+      {code:'E-004', desc:'Toma de corriente 16A', unit:'Ud', qty:18, cost:720}
+    ],
+    CLIMATIZACION: [
+      {code:'C-001', desc:'Unidad interior VRF cassette 4 vías', unit:'Ud', qty:3, cost:9600},
+      {code:'C-002', desc:'Unidad exterior VRF 10 HP', unit:'Ud', qty:1, cost:12400},
+      {code:'C-003', desc:'Red de tuberías refrigerantes', unit:'m', qty:28, cost:2800}
+    ]
+  };
+
+  var todasPartidas = [];
+  ocGremios.forEach(function(g) {
+    var partidas = gremiosData2[g] || [];
+    partidas.forEach(function(p) {
+      p.gremio = g;
+      if (!ocMargenes[p.code]) ocMargenes[p.code] = 15;
+      todasPartidas.push(p);
+    });
+  });
+
+  if (!todasPartidas.length) {
+    el.innerHTML = '<div class="empty">No hay partidas disponibles. Asegúrate de haber recibido al menos una oferta de proveedor.</div>';
+    return;
+  }
+
+  var totalCoste = 0;
+  var totalVenta = 0;
+
+  var filas = todasPartidas.map(function(p) {
+    var margen = ocMargenes[p.code] || 15;
+    var precioFinal = p.cost * (1 + margen/100);
+    totalCoste += p.cost;
+    totalVenta += precioFinal;
+    return '<tr>' +
+      '<td><span class="badge b-default" style="font-size:9px;">'+p.gremio+'</span></td>' +
+      '<td style="font-size:11px;color:#888;">'+p.code+'</td>' +
+      '<td>'+p.desc+'</td>' +
+      '<td style="text-align:center;">'+p.qty+' '+p.unit+'</td>' +
+      '<td style="text-align:right;">'+(p.cost).toLocaleString('es-ES',{minimumFractionDigits:2})+'€</td>' +
+      '<td style="text-align:center;width:80px;"><input type="number" value="'+margen+'" min="0" max="100" step="0.5" '+
+      'onchange="actualizarMargen(''+p.code+'',this.value)" '+
+      'style="width:60px;padding:3px 5px;border:1px solid #ddd;border-radius:4px;font-size:12px;text-align:center;"> %</td>' +
+      '<td style="text-align:right;font-weight:500;color:#3B6D11;">'+(precioFinal).toLocaleString('es-ES',{minimumFractionDigits:2})+'€</td>' +
+      '</tr>';
+  }).join('');
+
+  el.innerHTML =
+    '<div style="overflow-x:auto;">' +
+    '<table class="data-table" style="min-width:700px;">' +
+    '<thead><tr>' +
+    '<th>Gremio</th><th>Código</th><th>Descripción</th><th style="text-align:center;">Cantidad</th>' +
+    '<th style="text-align:right;">Coste prov.</th><th style="text-align:center;">Margen %</th>' +
+    '<th style="text-align:right;">Precio venta</th>' +
+    '</tr></thead><tbody>'+filas+'</tbody>' +
+    '<tfoot><tr style="background:#f9f9f6;font-weight:500;">' +
+    '<td colspan="4" style="padding:10px 12px;font-size:13px;">TOTALES</td>' +
+    '<td style="text-align:right;padding:10px 12px;font-size:13px;">'+totalCoste.toLocaleString('es-ES',{minimumFractionDigits:2})+'€</td>' +
+    '<td></td>' +
+    '<td style="text-align:right;padding:10px 12px;font-size:13px;color:#3B6D11;">'+totalVenta.toLocaleString('es-ES',{minimumFractionDigits:2})+'€</td>' +
+    '</tr></tfoot>' +
+    '</table></div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">' +
+    '<button class="btn" onclick="cargarMontajeOferta()">Recalcular</button>' +
+    '<button class="btn btn-primary" onclick="someterAprobacionMargenes()">Someter a aprobación de márgenes →</button>' +
+    '</div>';
+
+  document.getElementById('oc-aprobacion-margenes').style.display = 'none';
+}
+
+function actualizarMargen(code, valor) {
+  ocMargenes[code] = parseFloat(valor) || 0;
+}
+
+function someterAprobacionMargenes() {
+  document.getElementById('oc-aprobacion-margenes').style.display = 'block';
+  document.getElementById('oc-aprobacion-margenes').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function aprobarMargenes(dept) {
+  ocAprobaciones[dept] = true;
+  var el = document.getElementById('aprov-'+dept+'-status');
+  if (el) el.innerHTML = '<div style="color:#3B6D11;font-size:13px;">✓ Aprobado</div>';
+
+  if (ocAprobaciones.tecnico && ocAprobaciones.comercial && ocAprobaciones.direccion) {
+    document.getElementById('oc-envio-final').style.display = 'block';
+    var emailCliente = 'Estimado cliente,
+
+Nos complace presentarles nuestra propuesta económica para el proyecto ' +
+      (ocProyecto?ocProyecto.name||ocProyecto.code:'') + '.
+
+Adjuntamos nuestra oferta detallada por partidas y gremios para su revisión.
+
+' +
+      'Quedamos a su disposición para cualquier aclaración o modificación que precisen.
+
+Atentamente,
+Departamento Técnico
+BYG Soluciones S.L.';
+    document.getElementById('oc-email-cliente').value = emailCliente;
+    document.getElementById('oc-envio-final').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+async function enviarOfertaCliente() {
+  if (!ocProyecto) return;
+  try {
+    var stRes = await db.from('project_statuses').select('id').eq('code','oferta_enviada').single();
+    if (stRes.data) {
+      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',ocProyecto.id);
+      alert('Oferta enviada al cliente correctamente.
+
+El proyecto pasa a estado "Oferta enviada".
+
+(En producción se enviará por Outlook con el PDF/Excel adjunto)');
+      ocProyecto = null;
+      await showProyectosFase('oferta_en_curso');
+      loadDashboard();
+    }
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+function volverDesdeOfertaCurso() {
+  ocProyecto = null;
+  if (currentFase) showProyectosFase(currentFase);
+  else showPanel('dashboard');
 }
 
 loadDashboard();
