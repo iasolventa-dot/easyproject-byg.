@@ -502,6 +502,99 @@
   <div class="card" id="alertas-content"><div class="loading">Cargando...</div></div>
 </div>
 
+<!-- PANEL EVALUACION PROYECTO SOLICITADO -->
+<div id="panel-evaluacion" class="panel">
+  <div class="topbar">
+    <h1 id="eval-title">Evaluación de proyecto</h1>
+    <button class="btn btn-back" onclick="volverDesdeEvaluacion()">Volver</button>
+  </div>
+
+  <!-- INFO PROYECTO -->
+  <div style="background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Proyecto</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="eval-name">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Cliente</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="eval-client">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Gremio</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="eval-cat">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Recibido</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="eval-date">-</div></div>
+    </div>
+  </div>
+
+  <!-- ALERTA ESTADO -->
+  <div id="eval-alert" class="alert-box" style="margin-bottom:1.5rem;">
+    <div class="alert-box-title">Evaluación simultánea requerida</div>
+    <div class="alert-box-desc">Los tres departamentos deben evaluar este proyecto de forma independiente. Si cualquier departamento lo rechaza, el proyecto queda cancelado y se notifica al resto.</div>
+  </div>
+
+  <!-- GRID 3 DEPARTAMENTOS -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+
+    <!-- TÉCNICO -->
+    <div class="card" id="eval-card-tecnico">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
+        <div style="width:32px;height:32px;border-radius:8px;background:#f0f0ea;display:flex;align-items:center;justify-content:center;font-size:14px;">⚙️</div>
+        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dpto. Técnico</div><div style="font-size:11px;color:#888;">Capacidad y viabilidad técnica</div></div>
+      </div>
+      <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
+        Evalúa si ByG dispone de los recursos técnicos, experiencia y capacidad de ejecución para este proyecto.
+      </div>
+      <div id="eval-estado-tecnico" style="margin-bottom:0.75rem;"></div>
+      <div id="eval-form-tecnico">
+        <textarea id="eval-reason-tecnico" placeholder="Observaciones técnicas (obligatorio si rechaza)..."
+          style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:80px;resize:vertical;margin-bottom:8px;font-family:inherit;"></textarea>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluacion('tecnico','rejected')">Rechazar</button>
+          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluacion('tecnico','approved')">Aprobar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMERCIAL -->
+    <div class="card" id="eval-card-comercial">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
+        <div style="width:32px;height:32px;border-radius:8px;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:14px;">💼</div>
+        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dpto. Comercial</div><div style="font-size:11px;color:#888;">Interés estratégico y margen</div></div>
+      </div>
+      <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
+        Evalúa si el cliente es estratégico, el margen comercial es interesante y la operación encaja en la estrategia de ByG.
+      </div>
+      <div id="eval-estado-comercial" style="margin-bottom:0.75rem;"></div>
+      <div id="eval-form-comercial">
+        <textarea id="eval-reason-comercial" placeholder="Observaciones comerciales (obligatorio si rechaza)..."
+          style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:80px;resize:vertical;margin-bottom:8px;font-family:inherit;"></textarea>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluacion('comercial','rejected')">Rechazar</button>
+          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluacion('comercial','approved')">Aprobar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIRECCIÓN -->
+    <div class="card" id="eval-card-direccion">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
+        <div style="width:32px;height:32px;border-radius:8px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:14px;">🏢</div>
+        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dirección</div><div style="font-size:11px;color:#888;">Visto bueno ejecutivo</div></div>
+      </div>
+      <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
+        Aprobación final de Dirección para que el proyecto entre en fase de análisis y presupuestación.
+      </div>
+      <div id="eval-estado-direccion" style="margin-bottom:0.75rem;"></div>
+      <div id="eval-form-direccion">
+        <textarea id="eval-reason-direccion" placeholder="Observaciones de dirección (obligatorio si rechaza)..."
+          style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:80px;resize:vertical;margin-bottom:8px;font-family:inherit;"></textarea>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluacion('direccion','rejected')">Rechazar</button>
+          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluacion('direccion','approved')">Aprobar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RESULTADO FINAL -->
+  <div id="eval-resultado" style="display:none;"></div>
+
+</div>
+
 </div><!-- /main -->
 
 <script>
@@ -709,6 +802,12 @@ async function showProyectosFase(fase) {
 
 async function abrirProyecto(id, nameEnc) {
   var name = decodeURIComponent(nameEnc);
+  // Si el proyecto está en estado solicitado, ir a evaluación
+  var stCheck = await db.from('projects').select('project_statuses(code)').eq('id',id).single();
+  if (stCheck.data && stCheck.data.project_statuses && stCheck.data.project_statuses.code === 'solicitado') {
+    abrirEvaluacion(id, nameEnc);
+    return;
+  }
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('panel-proyecto-detalle').classList.add('active');
   document.getElementById('det-title').textContent = name;
@@ -1404,6 +1503,151 @@ async function loadAlertas() {
           '<td>'+fmt(e.created_at)+'</td></tr>';
       }).join('')+'</tbody></table>';
   } catch(e){console.error(e);}
+}
+
+// ── EVALUACIÓN DE PROYECTOS SOLICITADOS ──
+var evalProyecto = null;
+var evalDecisiones = {};
+
+async function abrirEvaluacion(id, nameEnc) {
+  var name = decodeURIComponent(nameEnc);
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-evaluacion').classList.add('active');
+  evalDecisiones = {};
+
+  try {
+    var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,project_statuses(code,name)').eq('id',id).single();
+    evalProyecto = res.data;
+    document.getElementById('eval-title').textContent = 'Evaluación — '+(evalProyecto.name||evalProyecto.code||'#'+id);
+    document.getElementById('eval-name').textContent = evalProyecto.name||evalProyecto.code||'#'+id;
+    document.getElementById('eval-client').textContent = evalProyecto.contact_email||'-';
+    document.getElementById('eval-cat').textContent = evalProyecto.category||'-';
+    document.getElementById('eval-date').textContent = evalProyecto.received_at?new Date(evalProyecto.received_at).toLocaleDateString('es-ES'):'-';
+
+    // Cargar evaluaciones existentes
+    var evals = await db.from('project_evaluations').select('*').eq('project_id',id);
+    if (evals.data && evals.data.length) {
+      evals.data.forEach(function(e) {
+        evalDecisiones[e.department] = e;
+        mostrarEstadoEval(e.department, e.decision, e.rejection_reason, e.evaluated_by);
+      });
+    }
+    resetAlertaEval();
+  } catch(e) { console.error('Error abriendo evaluacion:',e); }
+}
+
+function mostrarEstadoEval(dept, decision, reason, by) {
+  var el = document.getElementById('eval-estado-'+dept);
+  var form = document.getElementById('eval-form-'+dept);
+  if (!el) return;
+  if (decision === 'approved') {
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:#EAF3DE;border-radius:6px;">' +
+      '<span style="color:#3B6D11;font-size:14px;">✓</span>' +
+      '<div><div style="font-size:12px;font-weight:500;color:#3B6D11;">Aprobado</div>' +
+      '<div style="font-size:10px;color:#3B6D11;opacity:0.8;">'+(by||'')+'</div></div></div>';
+    if (form) form.style.display = 'none';
+  } else if (decision === 'rejected') {
+    el.innerHTML = '<div style="padding:8px 10px;background:#FCEBEB;border-radius:6px;">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
+      '<span style="color:#A32D2D;font-size:14px;">✗</span>' +
+      '<div style="font-size:12px;font-weight:500;color:#A32D2D;">Rechazado</div></div>' +
+      '<div style="font-size:11px;color:#A32D2D;line-height:1.4;">'+(reason||'')+'</div></div>';
+    if (form) form.style.display = 'none';
+  }
+}
+
+function resetAlertaEval() {
+  var depts = ['tecnico','comercial','direccion'];
+  var aprobados = depts.filter(function(d){return evalDecisiones[d] && evalDecisiones[d].decision==='approved';});
+  var rechazados = depts.filter(function(d){return evalDecisiones[d] && evalDecisiones[d].decision==='rejected';});
+  var alert = document.getElementById('eval-alert');
+  var resultado = document.getElementById('eval-resultado');
+
+  if (rechazados.length > 0) {
+    alert.className = 'alert-box';
+    alert.style.display = 'block';
+    alert.innerHTML = '<div class="alert-box-title">Proyecto rechazado por '+rechazados.join(', ')+'</div>' +
+      '<div class="alert-box-desc">Se ha notificado al resto de departamentos. El proyecto quedará cancelado.</div>';
+    resultado.style.display = 'block';
+    resultado.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:10px;padding:1.5rem;text-align:center;">' +
+      '<div style="font-size:28px;margin-bottom:8px;">✗</div>' +
+      '<div style="font-size:15px;font-weight:600;color:#A32D2D;margin-bottom:6px;">Proyecto no aceptado</div>' +
+      '<div style="font-size:12px;color:#A32D2D;">Al menos un departamento ha rechazado el proyecto. Se notifica automáticamente al equipo.</div></div>';
+  } else if (aprobados.length === 3) {
+    alert.className = 'alert-box alert-box-success';
+    alert.style.display = 'block';
+    alert.innerHTML = '<div class="alert-box-title">Los tres departamentos han aprobado el proyecto</div>' +
+      '<div class="alert-box-desc">El proyecto pasará automáticamente a fase En Análisis.</div>';
+    resultado.style.display = 'block';
+    resultado.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:10px;padding:1.5rem;text-align:center;">' +
+      '<div style="font-size:28px;margin-bottom:8px;">✓</div>' +
+      '<div style="font-size:15px;font-weight:600;color:#3B6D11;margin-bottom:6px;">Proyecto aceptado</div>' +
+      '<div style="font-size:12px;color:#3B6D11;margin-bottom:1rem;">Los tres departamentos han aprobado. El proyecto avanza a fase En Análisis.</div>' +
+      '<button class="btn btn-success" onclick="avanzarAAnalisis()">Confirmar y avanzar a En Análisis</button></div>';
+  } else {
+    alert.className = 'alert-box';
+    alert.style.display = 'block';
+    alert.innerHTML = '<div class="alert-box-title">Evaluación en curso — '+aprobados.length+' de 3 departamentos han respondido</div>' +
+      '<div class="alert-box-desc">Pendiente de respuesta de los departamentos restantes.</div>';
+    resultado.style.display = 'none';
+  }
+}
+
+async function registrarEvaluacion(dept, decision) {
+  if (!evalProyecto) return;
+  var reason = document.getElementById('eval-reason-'+dept) ? document.getElementById('eval-reason-'+dept).value.trim() : '';
+  if (decision === 'rejected' && !reason) {
+    document.getElementById('eval-reason-'+dept).style.borderColor = '#A32D2D';
+    document.getElementById('eval-reason-'+dept).focus();
+    alert('El campo de observaciones es obligatorio al rechazar.');
+    return;
+  }
+  var deptNames = {tecnico:'Dept. Técnico', comercial:'Dept. Comercial', direccion:'Dirección'};
+  var evalData = {
+    project_id:       evalProyecto.id,
+    department:       dept,
+    decision:         decision,
+    rejection_reason: reason || null,
+    evaluated_by:     deptNames[dept],
+    evaluated_at:     new Date().toISOString()
+  };
+  try {
+    await db.from('project_evaluations').upsert(evalData, {onConflict:'project_id,department'});
+    evalDecisiones[dept] = evalData;
+    mostrarEstadoEval(dept, decision, reason, deptNames[dept]);
+
+    // Si rechazado, actualizar estado proyecto a cancelado
+    if (decision === 'rejected') {
+      var cancelId = await db.from('project_statuses').select('id').eq('code','cancelled').single();
+      if (cancelId.data) {
+        await db.from('projects').update({project_status_id:cancelId.data.id, updated_at:new Date().toISOString()}).eq('id',evalProyecto.id);
+      }
+    }
+    resetAlertaEval();
+  } catch(e) { alert('Error al registrar: '+e.message); }
+}
+
+async function avanzarAAnalisis() {
+  if (!evalProyecto) return;
+  try {
+    var stRes = await db.from('project_statuses').select('id').eq('code','en_analisis').single();
+    if (stRes.data) {
+      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',evalProyecto.id);
+      alert('Proyecto avanzado a En Análisis correctamente.');
+      showPanel('dashboard');
+      loadDashboard();
+    }
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+function volverDesdeEvaluacion() {
+  evalProyecto = null;
+  evalDecisiones = {};
+  if (currentFase) {
+    showProyectosFase(currentFase);
+  } else {
+    showPanel('dashboard');
+  }
 }
 
 loadDashboard();
