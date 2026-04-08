@@ -1872,8 +1872,14 @@ function quitarProveedor(gremio, provId) {
 }
 
 function quitarProveedorPorId(gremioId, provId) {
+  console.log('quitarProveedorPorId llamado:', gremioId, provId);
+  console.log('_gremioMap actual:', JSON.stringify(_gremioMap));
   var gremio = _gremioMap[gremioId];
-  if (!gremio) { console.error('Gremio no encontrado:',gremioId,_gremioMap); return; }
+  console.log('gremio encontrado:', gremio);
+  if (!gremio) {
+    alert('DEBUG: gremioId=' + gremioId + ' mapa=' + JSON.stringify(_gremioMap));
+    return;
+  }
   quitarProveedor(gremio, provId);
 }
 
