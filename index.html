@@ -1803,7 +1803,7 @@ function cargarDocumentosAnalisis(projectId) {
         '<span style="font-size:13px;color:#1a1a1a;flex:1;">'+d.name+'</span>' +
         '<span style="font-size:11px;color:#aaa;">'+d.size+'</span>' +
         '<span style="font-size:11px;color:#aaa;">'+d.date+'</span>' +
-        '<button class="btn btn-sm" onclick="alert('Abriendo '+d.name+' desde SharePoint...')">Abrir</button></div>';
+        '<button class="btn btn-sm" onclick="abrirDocumento(d.name)">Abrir</button></div>';
     }).join('') + '</div>' +
     '<div style="font-size:11px;color:#aaa;margin-top:8px;font-style:italic;">Los archivos se abrirán desde SharePoint cuando estén conectadas las credenciales Microsoft 365.</div>';
 }
@@ -1842,23 +1842,24 @@ async function cargarGremiosAnalisis(categoria) {
         return '<option value="'+p.id+'">'+p.commercial_name+' ('+p.specialty_code+')</option>';
       }).join('');
 
+      var gremioId = gremio.replace(/[^a-zA-Z0-9]/g,'_');
       return '<div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #f0f0ea;">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">' +
         '<span class="badge b-default" style="font-size:11px;">'+gremio+'</span>' +
         '<span style="font-size:12px;color:#888;">'+propuestos.length+' proveedores propuestos por IA</span></div>' +
-        '<div id="prov-list-'+gremio+'" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">' +
-        propuestos.map(function(p, idx){
-          var stars = p.rating ? '★'.repeat(p.rating) : '';
-          return '<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f9f9f6;border-radius:6px;border:1px solid #e5e5e0;">' +
+        '<div id="prov-list-'+gremioId+'" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">' +
+        propuestos.map(function(p){
+          var stars = p.rating ? '\u2605'.repeat(p.rating) : '';
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f9f9f6;border-radius:6px;border:1px solid #e5e5e0;" data-gremio="'+gremio+'" data-provid="'+p.id+'">' +
             '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:2px 6px;border-radius:4px;font-weight:600;">IA</span>' +
             '<span style="font-size:13px;font-weight:500;flex:1;">'+p.commercial_name+'</span>' +
             '<span style="font-size:11px;color:#EF9F27;">'+stars+'</span>' +
-            '<button class="btn btn-sm" style="color:#A32D2D;border-color:#F7C1C1;" onclick="quitarProveedor(''+gremio+'','+p.id+')">Quitar</button></div>';
+            '<button class="btn btn-sm" style="color:#A32D2D;border-color:#F7C1C1;" data-action="quitar" data-gremio="'+gremio+'" data-provid="'+p.id+'">Quitar</button></div>';
         }).join('') + '</div>' +
         '<div style="display:flex;gap:6px;align-items:center;">' +
-        '<select id="add-prov-'+gremio+'" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">'+
+        '<select id="add-prov-'+gremioId+'" data-gremio="'+gremio+'" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">'+
         '<option value="">+ Añadir proveedor manualmente...</option>'+opcionesSelect+'</select>' +
-        '<button class="btn btn-sm btn-primary" onclick="añadirProveedorGremio(''+gremio+'')">Añadir</button></div></div>';
+        '<button class="btn btn-sm btn-primary" data-action="anadir" data-gremio="'+gremio+'" data-selectid="add-prov-'+gremioId+'">Anadir</button></div></div>';
     }).join('');
 
   } catch(e) { console.error('Error cargando gremios:',e); el.innerHTML='<div class="empty">Error cargando proveedores</div>'; }
@@ -1869,8 +1870,9 @@ function quitarProveedor(gremio, provId) {
   cargarGremiosAnalisis(analisisProyecto.category);
 }
 
-function añadirProveedorGremio(gremio) {
-  var sel = document.getElementById('add-prov-'+gremio);
+function anyadirProveedorGremio(gremio, selectId) {
+  var sel = document.getElementById(selectId);
+  if (!sel) return;
   var val = parseInt(sel.value);
   if (!val) return;
   if (!gremiosSeleccionados[gremio]) gremiosSeleccionados[gremio] = [];
@@ -1879,6 +1881,20 @@ function añadirProveedorGremio(gremio) {
     cargarGremiosAnalisis(analisisProyecto.category);
   }
 }
+
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  var action = btn.getAttribute('data-action');
+  var gremio = btn.getAttribute('data-gremio');
+  if (action === 'quitar') {
+    var provId = parseInt(btn.getAttribute('data-provid'));
+    quitarProveedor(gremio, provId);
+  } else if (action === 'anadir') {
+    var selectId = btn.getAttribute('data-selectid');
+    anyadirProveedorGremio(gremio, selectId);
+  }
+});
 
 async function marcarDocsRevisados(checked) {
   if (!analisisProyecto) return;
@@ -1941,6 +1957,10 @@ function volverDesdeAnalisis() {
   analisisData = null;
   if (currentFase) showProyectosFase(currentFase);
   else showPanel('dashboard');
+}
+
+function abrirDocumento(nombre) {
+  alert('Abriendo ' + nombre + ' desde SharePoint...');
 }
 
 loadDashboard();
