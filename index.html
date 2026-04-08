@@ -441,17 +441,41 @@
   </div>
 </div>
 
-<!-- JEFES DE OBRA -->
+<!-- JEFES DE OBRA LISTADO -->
 <div id="panel-jefes" class="panel">
   <div class="topbar">
     <h1>Jefes de obra</h1>
-    <button class="btn btn-primary" onclick="alert('Alta de nuevo jefe de obra — próximamente')">+ Nuevo jefe de obra</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="imprimirListadoJefes()">Imprimir listado</button>
+      <button class="btn btn-primary" onclick="abrirFichaJefe(null)">+ Nuevo jefe de obra</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem;">
+    <input id="jefes-search" type="text" placeholder="Buscar por nombre, email, teléfono, especialidad..."
+      style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;color:#1a1a1a;"
+      oninput="filtrarJefes(this.value)">
   </div>
   <div class="card">
     <table class="data-table">
-      <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Disponible</th><th>Proyectos activos</th></tr></thead>
-      <tbody id="jefes-tbody"><tr><td colspan="5" class="loading">Cargando...</td></tr></tbody>
+      <thead><tr><th>ID</th><th>Nombre completo</th><th>Teléfono</th><th>Email</th><th>Proyectos activos</th><th>Especialidades</th><th>Disponible</th><th></th></tr></thead>
+      <tbody id="jefes-tbody"><tr><td colspan="8" class="loading">Cargando...</td></tr></tbody>
     </table>
+  </div>
+</div>
+
+<!-- JEFE DE OBRA FICHA -->
+<div id="panel-jefe-detalle" class="panel">
+  <div class="topbar">
+    <h1 id="jefe-det-title">Ficha de jefe de obra</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="imprimirFichaJefe()">Imprimir ficha</button>
+      <button class="btn btn-primary" id="btn-editar-jefe" onclick="toggleEditarJefe()">Editar</button>
+      <button class="btn btn-success" id="btn-guardar-jefe" style="display:none;" onclick="guardarJefe()">Guardar</button>
+      <button class="btn btn-back" onclick="showPanel('jefes')">Volver</button>
+    </div>
+  </div>
+  <div class="card" id="jefe-ficha-content" style="max-width:700px;">
+    <div class="loading">Cargando...</div>
   </div>
 </div>
 
@@ -1140,18 +1164,202 @@ function imprimirFichaProveedor() {
   win.document.close(); win.print();
 }
 
+var jefesData = [];
+var jefeActual = null;
+var modoEdicionJefe = false;
+
 async function loadJefes() {
-  var tbody=document.getElementById('jefes-tbody');
-  tbody.innerHTML='<tr><td colspan="5" class="loading">Cargando...</td></tr>';
+  var tbody = document.getElementById('jefes-tbody');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">Cargando...</td></tr>';
   try {
-    var res=await db.from('project_managers').select('*').order('full_name');
-    if (!res.data||!res.data.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No hay jefes de obra registrados</td></tr>';return;}
-    tbody.innerHTML=res.data.map(function(j){
-      return '<tr><td>'+j.full_name+'</td><td>'+(j.email||'-')+'</td><td>'+(j.phone||'-')+'</td>' +
-        '<td>'+(j.available?'<span class="badge b-green">Disponible</span>':'<span class="badge b-review">Ocupado</span>')+'</td>' +
-        '<td>'+j.current_projects+'</td></tr>';
-    }).join('');
-  } catch(e){console.error(e);}
+    var res = await db.from('project_managers').select('*').order('full_name');
+    jefesData = res.data || [];
+    renderTablaJefes(jefesData);
+  } catch(e) { console.error(e); }
+}
+
+function renderTablaJefes(data) {
+  var tbody = document.getElementById('jefes-tbody');
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay jefes de obra registrados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(function(j) {
+    var specs = Array.isArray(j.specialties) ? j.specialties.join(', ') : (j.specialties || '-');
+    return '<tr onclick="abrirFichaJefe('+j.id+')" style="cursor:pointer;">' +
+      '<td style="color:#aaa;font-size:11px;">#'+j.id+'</td>' +
+      '<td style="font-weight:500;">'+j.full_name+'</td>' +
+      '<td>'+(j.phone||'-')+'</td>' +
+      '<td>'+(j.email||'-')+'</td>' +
+      '<td style="text-align:center;">'+j.current_projects+'</td>' +
+      '<td>'+(specs)+'</td>' +
+      '<td>'+(j.available ?
+        '<span class="badge b-green">Disponible</span>' :
+        '<span class="badge b-review">Ocupado</span>')+'</td>' +
+      '<td><span class="item-arr">Ver ficha</span></td></tr>';
+  }).join('');
+}
+
+function filtrarJefes(q) {
+  if (!q.trim()) { renderTablaJefes(jefesData); return; }
+  var lower = q.toLowerCase();
+  var filtered = jefesData.filter(function(j) {
+    var specs = Array.isArray(j.specialties) ? j.specialties.join(' ') : (j.specialties||'');
+    return (j.full_name||'').toLowerCase().includes(lower) ||
+      (j.email||'').toLowerCase().includes(lower) ||
+      (j.phone||'').toLowerCase().includes(lower) ||
+      specs.toLowerCase().includes(lower);
+  });
+  renderTablaJefes(filtered);
+}
+
+function abrirFichaJefe(id) {
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-jefe-detalle').classList.add('active');
+  modoEdicionJefe = false;
+  document.getElementById('btn-editar-jefe').style.display = 'inline-block';
+  document.getElementById('btn-guardar-jefe').style.display = 'none';
+  if (!id) {
+    jefeActual = {};
+    document.getElementById('jefe-det-title').textContent = 'Nuevo jefe de obra';
+    renderFichaJefe(jefeActual, true);
+    return;
+  }
+  jefeActual = jefesData.find(function(x){return x.id===id;}) || {};
+  document.getElementById('jefe-det-title').textContent = jefeActual.full_name || 'Ficha de jefe de obra';
+  renderFichaJefe(jefeActual, false);
+}
+
+function renderFichaJefe(j, editable) {
+  var specs = Array.isArray(j.specialties) ? j.specialties.join(', ') : (j.specialties||'');
+  var campos = [
+    {label:'ID',                    key:'_id',            val:j.id?'#'+j.id:'-',          readonly:true},
+    {label:'Nombre completo',       key:'full_name',       val:j.full_name},
+    {label:'Email',                 key:'email',           val:j.email},
+    {label:'Teléfono',             key:'phone',           val:j.phone},
+    {label:'Especialidades',        key:'_specs',          val:specs,                        readonly:false, isSpecs:true},
+    {label:'Proyectos activos',     key:'current_projects',val:j.current_projects!=null?j.current_projects:'0'},
+    {label:'Disponible',           key:'_available',      val:j.available?'Sí':'No',        readonly:false, isBool:true},
+    {label:'Activo en empresa',     key:'_active',         val:j.active!==false?'Sí':'No',  readonly:false, isBool:true},
+    {label:'Notas',                key:'notes',           val:j.notes},
+    {label:'Alta en sistema',       key:'_created',        val:j.created_at?new Date(j.created_at).toLocaleDateString('es-ES'):'-', readonly:true},
+    {label:'Última actualización',  key:'_updated',        val:j.updated_at?new Date(j.updated_at).toLocaleDateString('es-ES'):'-', readonly:true}
+  ];
+
+  document.getElementById('jefe-ficha-content').innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:0;">' +
+    campos.map(function(f) {
+      var isReadonly = f.readonly || !editable;
+      var inputStyle = isReadonly ?
+        'background:#f9f9f6;border:1px solid transparent;' :
+        'background:white;border:1px solid #ddd;';
+      var inputEl;
+      if (f.isBool && editable) {
+        inputEl = '<select id="jefe-field-'+f.key+'" style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;color:#1a1a1a;'+inputStyle+'">' +
+          '<option value="true"'+(f.val==='Sí'?' selected':'')+'>Sí</option>' +
+          '<option value="false"'+(f.val==='No'?' selected':'')+'>No</option></select>';
+      } else {
+        inputEl = '<input id="jefe-field-'+f.key+'" value="'+(f.val||'')+'" '+(isReadonly?'readonly':'')+
+          ' style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;color:#1a1a1a;'+inputStyle+'">';
+      }
+      return '<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
+        '<div style="width:200px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">'+f.label+'</div>' +
+        inputEl+'</div>';
+    }).join('') + '</div>';
+}
+
+function toggleEditarJefe() {
+  modoEdicionJefe = true;
+  document.getElementById('btn-editar-jefe').style.display = 'none';
+  document.getElementById('btn-guardar-jefe').style.display = 'inline-block';
+  renderFichaJefe(jefeActual, true);
+}
+
+async function guardarJefe() {
+  var specsRaw = document.getElementById('jefe-field-_specs') ? document.getElementById('jefe-field-_specs').value : '';
+  var specsArr = specsRaw ? specsRaw.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+  var availEl = document.getElementById('jefe-field-_available');
+  var activeEl = document.getElementById('jefe-field-_active');
+  var data = {
+    full_name:        (document.getElementById('jefe-field-full_name')||{}).value || null,
+    email:            (document.getElementById('jefe-field-email')||{}).value || null,
+    phone:            (document.getElementById('jefe-field-phone')||{}).value || null,
+    specialties:      specsArr,
+    current_projects: parseInt((document.getElementById('jefe-field-current_projects')||{}).value)||0,
+    available:        availEl ? availEl.value === 'true' : true,
+    active:           activeEl ? activeEl.value === 'true' : true,
+    notes:            (document.getElementById('jefe-field-notes')||{}).value || null,
+    updated_at:       new Date().toISOString()
+  };
+  try {
+    if (jefeActual.id) {
+      await db.from('project_managers').update(data).eq('id', jefeActual.id);
+    } else {
+      await db.from('project_managers').insert(data);
+    }
+    alert('Jefe de obra guardado correctamente.');
+    modoEdicionJefe = false;
+    document.getElementById('btn-editar-jefe').style.display = 'inline-block';
+    document.getElementById('btn-guardar-jefe').style.display = 'none';
+    await loadJefes();
+    var updated = jefesData.find(function(x){return x.full_name===data.full_name;});
+    if (updated) { jefeActual = updated; renderFichaJefe(updated, false); }
+  } catch(e) { alert('Error al guardar: '+e.message); }
+}
+
+function imprimirListadoJefes() {
+  var rows = jefesData.map(function(j) {
+    var specs = Array.isArray(j.specialties) ? j.specialties.join(', ') : (j.specialties||'-');
+    return '<tr><td>#'+j.id+'</td><td>'+j.full_name+'</td>' +
+      '<td>'+(j.phone||'-')+'</td><td>'+(j.email||'-')+'</td>' +
+      '<td style="text-align:center;">'+j.current_projects+'</td>' +
+      '<td>'+specs+'</td>' +
+      '<td>'+(j.available?'Disponible':'Ocupado')+'</td></tr>';
+  }).join('');
+  var win = window.open('','_blank');
+  win.document.write('<html><head><title>Listado Jefes de Obra — EasyProject</title>' +
+    '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
+    'h2{color:#1B3A6B;margin-bottom:0.25rem;}p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th{text-align:left;padding:8px 12px;background:#f5f5f0;border-bottom:2px solid #ddd;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#666;}' +
+    'td{padding:8px 12px;border-bottom:1px solid #eee;}</style></head><body>' +
+    '<h2>BYG Soluciones — Jefes de Obra</h2>' +
+    '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
+    '<table><thead><tr><th>ID</th><th>Nombre completo</th><th>Teléfono</th><th>Email</th><th>Proy. activos</th><th>Especialidades</th><th>Disponible</th></tr></thead>' +
+    '<tbody>'+rows+'</tbody></table></body></html>');
+  win.document.close(); win.print();
+}
+
+function imprimirFichaJefe() {
+  var j = jefeActual;
+  if (!j) return;
+  var specs = Array.isArray(j.specialties) ? j.specialties.join(', ') : (j.specialties||'-');
+  var campos = [
+    {label:'ID',                   val:j.id?'#'+j.id:'-'},
+    {label:'Nombre completo',      val:j.full_name},
+    {label:'Email',                val:j.email},
+    {label:'Teléfono',            val:j.phone},
+    {label:'Especialidades',       val:specs},
+    {label:'Proyectos activos',    val:j.current_projects},
+    {label:'Disponible',          val:j.available?'Sí':'No'},
+    {label:'Activo en empresa',    val:j.active!==false?'Sí':'No'},
+    {label:'Notas',               val:j.notes},
+    {label:'Alta en sistema',      val:j.created_at?new Date(j.created_at).toLocaleDateString('es-ES'):'-'},
+    {label:'Última actualización', val:j.updated_at?new Date(j.updated_at).toLocaleDateString('es-ES'):'-'}
+  ];
+  var win = window.open('','_blank');
+  win.document.write('<html><head><title>Ficha Jefe de Obra — '+(j.full_name||'')+'</title>' +
+    '<style>body{font-family:Arial,sans-serif;padding:2rem;font-size:13px;}' +
+    'h2{color:#1B3A6B;margin-bottom:0.25rem;}p{color:#888;font-size:11px;margin-bottom:1.5rem;}' +
+    '.row{display:flex;padding:9px 0;border-bottom:1px solid #eee;}' +
+    '.lbl{width:200px;font-size:11px;color:#888;font-weight:600;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;}' +
+    '.val{font-size:13px;color:#1a1a1a;}</style></head><body>' +
+    '<h2>BYG Soluciones — Ficha de Jefe de Obra</h2>' +
+    '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
+    campos.map(function(f){
+      return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val!=null?f.val:'—')+'</div></div>';
+    }).join('')+'</body></html>');
+  win.document.close(); win.print();
 }
 
 async function loadGremios() {
