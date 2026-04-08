@@ -1843,7 +1843,7 @@ async function cargarGremiosAnalisis(categoria) {
       }).join('');
 
       var gremioId = gremio.replace(/[^a-zA-Z0-9]/g,'_');
-      window['_gremioKey_'+gremioId] = gremio;
+      window['_gkey_'+gremioId] = gremio;
       return '<div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #f0f0ea;">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">' +
         '<span class="badge b-default" style="font-size:11px;">'+gremio+'</span>' +
@@ -1851,17 +1851,16 @@ async function cargarGremiosAnalisis(categoria) {
         '<div id="prov-list-'+gremioId+'" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">' +
         propuestos.map(function(p){
           var stars = p.rating ? '\u2605'.repeat(p.rating) : '';
-          var gId = JSON.stringify(gremio);
           return '<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f9f9f6;border-radius:6px;border:1px solid #e5e5e0;">' +
             '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:2px 6px;border-radius:4px;font-weight:600;">IA</span>' +
             '<span style="font-size:13px;font-weight:500;flex:1;">'+p.commercial_name+'</span>' +
             '<span style="font-size:11px;color:#EF9F27;">'+stars+'</span>' +
-            '<button class="btn btn-sm" style="color:#A32D2D;border-color:#F7C1C1;" onclick="quitarProveedor('+gId+','+p.id+')">Quitar</button></div>';
+            '<button class="btn btn-sm" style="color:#A32D2D;border-color:#F7C1C1;" onclick="quitarProveedorPorId(\''+gremioId+'\','+p.id+')">Quitar</button></div>';
         }).join('') + '</div>' +
         '<div style="display:flex;gap:6px;align-items:center;">' +
         '<select id="add-prov-'+gremioId+'" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">'+
         '<option value="">+ Añadir proveedor manualmente...</option>'+opcionesSelect+'</select>' +
-        '<button class="btn btn-sm btn-primary" onclick="anyadirProveedorGremio('+JSON.stringify(gremio)+',\'add-prov-'+gremioId+'\')">Añadir</button></div></div>';
+        '<button class="btn btn-sm btn-primary" onclick="anyadirProveedorGremio(\''+gremioId+'\',\'add-prov-'+gremioId+'\')">Añadir</button></div></div>';
     }).join('');
 
   } catch(e) { console.error('Error cargando gremios:',e); el.innerHTML='<div class="empty">Error cargando proveedores</div>'; }
@@ -1872,7 +1871,14 @@ function quitarProveedor(gremio, provId) {
   cargarGremiosAnalisis(analisisProyecto.category);
 }
 
-function anyadirProveedorGremio(gremio, selectId) {
+function quitarProveedorPorId(gremioId, provId) {
+  var gremio = window['_gkey_'+gremioId];
+  if (!gremio) return;
+  quitarProveedor(gremio, provId);
+}
+
+function anyadirProveedorGremio(gremioId, selectId) {
+  var gremio = window['_gkey_'+gremioId] || gremioId;
   var sel = document.getElementById(selectId);
   if (!sel) return;
   var val = parseInt(sel.value);
