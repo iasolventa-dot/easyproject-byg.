@@ -2650,9 +2650,7 @@ async function registrarAdjudicacion() {
       await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',oeProyecto.id);
     }
 
-    alert('Proyecto adjudicado correctamente.
-
-El proyecto pasa a estado "Adjudicado".');
+    alert('Proyecto adjudicado correctamente. El proyecto pasa a estado Adjudicado.');
     oeProyecto = null;
     await showProyectosFase('oferta_enviada');
     loadDashboard();
