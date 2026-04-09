@@ -2634,8 +2634,10 @@ async function registrarAdjudicacion() {
     // Guardar en project_awards
     await db.from('project_awards').insert({
       project_id: oeProyecto.id,
+      specialty: oeProyecto.category || 'GENERAL',
       award_type: 'adjudicado',
-      award_date: date,
+      award_date_new: date,
+      award_date: new Date().toISOString(),
       awarded_amount: amount,
       confirmation_method: method,
       contact_name: contact,
@@ -2665,8 +2667,9 @@ async function registrarRechazo() {
   try {
     await db.from('project_awards').insert({
       project_id: oeProyecto.id,
+      specialty: oeProyecto.category || 'GENERAL',
       award_type: 'rechazado',
-      award_date: new Date().toISOString().split('T')[0],
+      award_date: new Date().toISOString(),
       notes: reason,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -2691,8 +2694,9 @@ async function registrarNegociacion() {
   try {
     await db.from('project_awards').insert({
       project_id: oeProyecto.id,
+      specialty: oeProyecto.category || 'GENERAL',
       award_type: 'negociando',
-      award_date: new Date().toISOString().split('T')[0],
+      award_date: new Date().toISOString(),
       notes: notes,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -2729,7 +2733,9 @@ async function guardarDatosCompetencia() {
     } else {
       await db.from('project_awards').insert({
         project_id: oeProyecto.id,
+        specialty: oeProyecto.category || 'GENERAL',
         award_type: 'rechazado',
+        award_date: new Date().toISOString(),
         competitor_name: name,
         competitor_amount: amount,
         competitor_notes: notes,
