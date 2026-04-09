@@ -1348,7 +1348,7 @@ function renderProyectosRecientes(data) {
       var st = p.project_statuses?p.project_statuses.code:'default';
       var badge = badgeMap[st]||'<span class="badge b-default">'+st+'</span>';
       var conf = p.confidence?Math.round(p.confidence*100)+'%':'';
-      return '<div class="item-row" onclick="abrirProyecto('+p.id+',encodeURIComponent('+JSON.stringify(p.name||'')+'))">' +
+      return '<div class="item-row" onclick="abrirProyectoById('+p.id+')">' +
         '<div style="flex:1;min-width:0"><div class="item-name">'+(p.name||p.code||'#'+p.id)+'</div>' +
         '<div class="item-meta">'+(p.contact_email||'-')+(p.category?' - '+p.category:'')+(conf?' - IA: '+conf:'')+'</div></div>' +
         badge+'<div style="font-size:10px;color:#aaa;white-space:nowrap">'+fmt(p.received_at)+'</div>' +
