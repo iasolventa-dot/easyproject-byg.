@@ -1122,6 +1122,10 @@ function setDept(dept, btn) {
   loadDashboard();
 }
 
+function irAFaseAnalisis() { showProyectosFase('en_analisis'); }
+function irAFaseSolicitado() { showProyectosFase('solicitado'); }
+function irAFaseEjecucion() { showProyectosFase('en_ejecucion'); }
+
 async function loadDashboard() {
   var dept = currentDept || 'tecnico';
   if (dept === 'direccion') {
