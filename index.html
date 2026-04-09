@@ -3098,19 +3098,21 @@ async function cargarDocumentoAdjudicacion(projectId) {
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
         '<span class="badge b-default">' + gremio + '</span></div>' +
         '<table class="data-table"><thead><tr>' +
-        '<th>Cod.</th><th>Descripcion</th><th>Ud.</th><th style="text-align:right;">Coste prov.</th>' +
+        '<th>Cod.</th><th>Descripcion</th><th style="text-align:center;">Cant.</th><th>Ud.</th><th style="text-align:right;">Coste prov.</th>' +
         '<th style="text-align:center;">Margen</th><th style="text-align:right;">Precio venta</th>' +
         '<th style="text-align:right;">Margen EUR</th>' +
         '</tr></thead><tbody>' +
         partidas.map(function(p) {
-          var coste = parseFloat(p.supplier_cost) || 0;
-          var venta = parseFloat(p.final_price) || 0;
+          var qty = parseFloat(p.quantity) || 1;
+          var coste = (parseFloat(p.supplier_cost) || 0) * qty;
+          var venta = (parseFloat(p.final_price) || 0) * qty;
           var margen = parseFloat(p.margin_pct) || 0;
           var margenEur = venta - coste;
           var margenColor = margen >= 15 ? '#3B6D11' : margen >= 10 ? '#854F0B' : '#A32D2D';
           return '<tr>' +
             '<td style="font-size:11px;color:#888;">' + (p.item_code||'-') + '</td>' +
             '<td>' + p.description + '</td>' +
+            '<td style="text-align:center;color:#888;">' + qty + '</td>' +
             '<td style="color:#888;">' + (p.unit||'-') + '</td>' +
             '<td style="text-align:right;">' + coste.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
             '<td style="text-align:center;color:' + margenColor + ';font-weight:500;">' + margen + '%</td>' +
