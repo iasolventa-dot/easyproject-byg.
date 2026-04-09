@@ -1126,105 +1126,150 @@ function irAFaseAnalisis() { showProyectosFase('en_analisis'); }
 function irAFaseSolicitado() { showProyectosFase('solicitado'); }
 function irAFaseEjecucion() { showProyectosFase('en_ejecucion'); }
 
+var currentDept = 'tecnico';
+
 async function loadDashboard() {
   var dept = currentDept || 'tecnico';
-  if (dept === 'direccion') {
-    await loadDashboardDireccion();
+  resetDashboardUI();
+  document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
+
+  try {
+    var pr  = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)',{count:'exact'}).order('created_at',{ascending:false}).limit(6);
+    var er  = await db.from('ingested_emails').select('id,sender,subject,received_at',{count:'exact'}).order('received_at',{ascending:false}).limit(4);
+    var err = await db.from('automation_errors').select('id,flow_name,node_name,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(4);
+
+    document.getElementById('m-total').textContent  = pr.count||0;
+    document.getElementById('m-emails').textContent = er.count||0;
+    document.getElementById('m-errors').textContent = err.count||0;
+
+    // Metricas y alertas por departamento
+    await cargarMetricasDept(dept);
+
+    // Pipeline
+    await cargarFasesCounts();
+
+    // Proyectos recientes
+    renderProyectosRecientes(pr.data);
+    renderEmails(er.data);
+    renderErrores(err.data);
+
+  } catch(e) { console.error('Error dashboard:',e); }
+}
+
+async function cargarMetricasDept(dept) {
+  var banner = document.getElementById('dept-alertas-banner');
+  var mReview = document.getElementById('m-review');
+  var labels = document.querySelectorAll('.metric-label');
+  var panelBloqueos = document.getElementById('panel-bloqueos');
+  if (panelBloqueos) panelBloqueos.remove();
+
+  if (dept === 'tecnico') {
+    if (labels[2]) labels[2].textContent = 'Pendiente revision';
+    try {
+      var stCodes = ['en_analisis','oferta_en_curso','pending_tech_review'];
+      var stRes = await db.from('project_statuses').select('id').in('code', stCodes);
+      var ids = stRes.data ? stRes.data.map(function(s){return s.id;}) : [];
+      var cnt = ids.length ? await db.from('projects').select('id',{count:'exact'}).in('project_status_id', ids) : {count:0};
+      var n = cnt.count||0;
+      mReview.textContent = n;
+      if (banner) {
+        if (n > 0) {
+          banner.style.display = 'block';
+          banner.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="irAFaseAnalisis()">' +
+            '<div style="display:flex;align-items:center;gap:12px;">' +
+            '<div class="notif-bell"><span style="font-size:14px;color:white;font-weight:bold;">!</span></div>' +
+            '<div><div style="font-size:13px;font-weight:600;color:#A32D2D;">' + n + ' proyecto(s) requieren tu atencion</div>' +
+            '<div style="font-size:11px;color:#A32D2D;opacity:0.8;">Proyectos en analisis u oferta en curso pendientes de accion</div></div></div>' +
+            '<span style="font-size:12px;color:#A32D2D;font-weight:500;">Ver proyectos</span></div>';
+        } else {
+          banner.style.display = 'none';
+        }
+      }
+    } catch(e) { console.error(e); }
+
+  } else if (dept === 'direccion') {
+    if (labels[2]) labels[2].textContent = 'Importe adjudicado';
+    try {
+      var adjRes = await db.from('project_awards').select('awarded_amount').eq('award_type','adjudicado');
+      var totalAdj = adjRes.data ? adjRes.data.reduce(function(acc,a){return acc+(parseFloat(a.awarded_amount)||0);},0) : 0;
+      mReview.textContent = totalAdj > 0 ? totalAdj.toLocaleString('es-ES',{maximumFractionDigits:0}) + ' EUR' : '0 EUR';
+      await cargarProyectosBloqueados();
+    } catch(e) { console.error(e); }
+    if (banner) banner.style.display = 'none';
+
   } else if (dept === 'comercial') {
-    await loadDashboardComercial();
-  } else if (dept === 'tecnico') {
-    await loadDashboardTecnico();
+    if (labels[1]) labels[1].textContent = 'Ofertas pendientes';
+    if (labels[2]) labels[2].textContent = 'Proyectos perdidos';
+    try {
+      var stOE = await db.from('project_statuses').select('id').eq('code','oferta_enviada').single();
+      var oeCount = 0;
+      if (stOE.data) {
+        var oeRes = await db.from('projects').select('id',{count:'exact'}).eq('project_status_id',stOE.data.id);
+        oeCount = oeRes.count||0;
+      }
+      var perdidos = await db.from('project_awards').select('id',{count:'exact'}).eq('award_type','rechazado');
+      document.getElementById('m-emails').textContent = oeCount;
+      mReview.textContent = perdidos.count||0;
+      if (banner) {
+        if (oeCount > 0) {
+          banner.style.display = 'block';
+          banner.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="irAFaseAnalisis()">' +
+            '<div style="display:flex;align-items:center;gap:12px;">' +
+            '<div class="notif-bell"><span style="font-size:14px;color:white;font-weight:bold;">!</span></div>' +
+            '<div><div style="font-size:13px;font-weight:600;color:#A32D2D;">' + oeCount + ' oferta(s) pendientes de respuesta del cliente</div>' +
+            '<div style="font-size:11px;color:#A32D2D;opacity:0.8;">Hay ofertas enviadas esperando respuesta</div></div></div>' +
+            '<span style="font-size:12px;color:#A32D2D;font-weight:500;">Ver ofertas</span></div>';
+        } else {
+          banner.style.display = 'none';
+        }
+      }
+    } catch(e) { console.error(e); }
+
   } else if (dept === 'prl') {
-    await loadDashboardPRL();
+    if (labels[2]) labels[2].textContent = 'Obras en ejecucion';
+    try {
+      var stEj = await db.from('project_statuses').select('id').eq('code','en_ejecucion').single();
+      var ejCount = 0;
+      if (stEj.data) {
+        var ejRes = await db.from('projects').select('id',{count:'exact'}).eq('project_status_id',stEj.data.id);
+        ejCount = ejRes.count||0;
+      }
+      mReview.textContent = ejCount;
+      if (banner) {
+        if (ejCount > 0) {
+          banner.style.display = 'block';
+          banner.innerHTML = '<div style="background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="irAFaseEjecucion()">' +
+            '<div style="display:flex;align-items:center;gap:12px;">' +
+            '<div class="notif-bell orange"><span style="font-size:14px;color:white;font-weight:bold;">!</span></div>' +
+            '<div><div style="font-size:13px;font-weight:600;color:#854F0B;">' + ejCount + ' obra(s) en ejecucion requieren documentacion PRL</div>' +
+            '<div style="font-size:11px;color:#854F0B;opacity:0.8;">Revisa la documentacion de seguridad de las obras activas</div></div></div>' +
+            '<span style="font-size:12px;color:#854F0B;font-weight:500;">Ver obras</span></div>';
+        } else {
+          banner.style.display = 'none';
+        }
+      }
+    } catch(e) { console.error(e); }
+
   } else if (dept === 'admin') {
-    await loadDashboardAdmin();
+    if (labels[1]) labels[1].textContent = 'Clientes registrados';
+    if (labels[2]) labels[2].textContent = 'Proveedores registrados';
+    try {
+      var clRes = await db.from('clients').select('id',{count:'exact'});
+      var prRes = await db.from('suppliers').select('id',{count:'exact'});
+      document.getElementById('m-emails').textContent = clRes.count||0;
+      mReview.textContent = prRes.count||0;
+    } catch(e) { console.error(e); }
+    if (banner) banner.style.display = 'none';
   } else {
-    await loadDashboardTecnico();
+    mReview.textContent = '-';
+    if (banner) banner.style.display = 'none';
   }
 }
 
-async function loadDashboardTecnico() {
-  resetDashboardUI();
-  document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
-  try {
-    var pr  = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)',{count:'exact'}).order('created_at',{ascending:false}).limit(6);
-    var er  = await db.from('ingested_emails').select('id,sender,subject,received_at',{count:'exact'}).order('received_at',{ascending:false}).limit(4);
-    var err = await db.from('automation_errors').select('id,flow_name,node_name,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(4);
-
-    // Contar proyectos pendientes de accion tecnica
-    var stCodes = ['en_analisis','oferta_en_curso','pending_tech_review'];
-    var pendingRes = await db.from('project_statuses').select('id').in('code', stCodes);
-    var pendingIds = pendingRes.data ? pendingRes.data.map(function(s){return s.id;}) : [];
-    var pendingCount = 0;
-    if (pendingIds.length) {
-      var pc = await db.from('projects').select('id',{count:'exact'}).in('project_status_id', pendingIds);
-      pendingCount = pc.count || 0;
-    }
-
-    document.getElementById('m-total').textContent  = pr.count||0;
-    document.getElementById('m-emails').textContent = er.count||0;
-    document.getElementById('m-review').textContent = pendingCount;
-    document.getElementById('m-errors').textContent = err.count||0;
-
-    // Alerta si hay pendientes
-    var banner = document.getElementById('dept-alertas-banner');
-    if (pendingCount > 0 && banner) {
-      banner.style.display = 'block';
-      banner.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="irAFaseAnalisis()">\' +
-        '<div style="display:flex;align-items:center;gap:10px;">' +
-        '<div class="notif-bell"><span style="font-size:14px;color:white;font-weight:bold;line-height:1;">!</span></div>' +
-        '<div><div style="font-size:13px;font-weight:600;color:#A32D2D;">' + pendingCount + ' proyecto(s) requieren tu atencion</div>' +
-        '<div style="font-size:11px;color:#A32D2D;opacity:0.8;">Tienes proyectos en analisis u oferta en curso pendientes de accion</div></div></div>' +
-        '<span style="font-size:12px;color:#A32D2D;font-weight:500;">Ver proyectos</span></div>';
-    } else if (banner) {
-      banner.style.display = 'none';
-    }
-
-    await cargarFasesCounts();
-    renderProyectosRecientes(pr.data);
-    renderEmails(er.data);
-    renderErrores(err.data);
-  } catch(e) { console.error('Error dashboard tecnico:',e); }
-}
-
-async function loadDashboardDireccion() {
-  resetDashboardUI();
-  document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
-  try {
-    var pr  = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)',{count:'exact'}).order('created_at',{ascending:false}).limit(6);
-    var er  = await db.from('ingested_emails').select('id,sender,subject,received_at',{count:'exact'}).order('received_at',{ascending:false}).limit(4);
-    var err = await db.from('automation_errors').select('id,flow_name,node_name,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(4);
-
-    // KPIs financieros
-    var adjRes = await db.from('project_awards').select('awarded_amount').eq('award_type','adjudicado');
-    var totalAdj = adjRes.data ? adjRes.data.reduce(function(acc,a){return acc+(parseFloat(a.awarded_amount)||0);},0) : 0;
-
-    document.getElementById('m-total').textContent  = pr.count||0;
-    document.getElementById('m-emails').textContent = er.count||0;
-    document.getElementById('m-review').textContent = totalAdj > 0 ? totalAdj.toLocaleString('es-ES',{maximumFractionDigits:0}) + ' EUR' : '0 EUR';
-    document.getElementById('m-errors').textContent = err.count||0;
-
-    // Cambiar labels de metricas
-    document.querySelectorAll('.metric-label')[2].textContent = 'Importe adjudicado';
-
-    // Limpiar banner
-    var banner = document.getElementById('dept-alertas-banner');
-    if (banner) banner.style.display = 'none';
-    // Proyectos bloqueados
-    await cargarProyectosBloqueados();
-    await cargarFasesCounts();
-    renderProyectosRecientes(pr.data);
-    renderEmails(er.data);
-    renderErrores(err.data);
-  } catch(e) { console.error('Error dashboard direccion:',e); }
-}
-
 async function cargarProyectosBloqueados() {
-  // Proyectos en estados que requieren decision de algun departamento
   var stBloqueo = ['pending_tech_review','pending_mgmt_approval','en_analisis','oferta_en_curso'];
   var stRes = await db.from('project_statuses').select('id,code,name').in('code', stBloqueo);
   if (!stRes.data || !stRes.data.length) return;
-
   var bloqueados = [];
   for (var i=0; i<stRes.data.length; i++) {
     var st = stRes.data[i];
@@ -1233,154 +1278,24 @@ async function cargarProyectosBloqueados() {
       pr.data.forEach(function(p) {
         var quien = st.code === 'pending_tech_review' ? 'Dpto. Tecnico' :
                     st.code === 'pending_mgmt_approval' ? 'Direccion' :
-                    st.code === 'en_analisis' ? 'Dpto. Tecnico' :
-                    st.code === 'oferta_en_curso' ? 'Dpto. Tecnico' : '-';
+                    st.code === 'en_analisis' ? 'Dpto. Tecnico' : 'Dpto. Tecnico';
         bloqueados.push({proyecto: p.name||p.code||'#'+p.id, estado: st.name, quien: quien, id: p.id});
       });
     }
   }
-
-  var alertEl = document.getElementById('dept-indicator');
-  if (bloqueados.length > 0) {
-    alertEl.innerHTML = deptConfig['direccion'].desc +
-      ' <strong style="color:#A32D2D;">| ' + bloqueados.length + ' proyecto(s) pendientes de decision</strong>';
-
-    // Insertar panel de bloqueos antes de las metricas
-    var metricsEl = document.querySelector('.metrics');
-    var existingPanel = document.getElementById('panel-bloqueos');
-    if (existingPanel) existingPanel.remove();
-
-    var panelHtml = '<div id="panel-bloqueos" class="card" style="margin-bottom:1rem;border:1px solid #F7C1C1;background:#FDFAFA;">' +
-      '<div style="font-size:13px;font-weight:600;color:#A32D2D;margin-bottom:0.75rem;">Proyectos pendientes de decision</div>' +
-      '<table class="data-table"><thead><tr><th>Proyecto</th><th>Estado actual</th><th>Pendiente de</th><th></th></tr></thead><tbody>' +
-      bloqueados.map(function(b) {
-        return '<tr><td style="font-weight:500;">' + b.proyecto + '</td>' +
-          '<td><span class="badge b-review">' + b.estado + '</span></td>' +
-          '<td style="color:#A32D2D;font-weight:500;">' + b.quien + '</td>' +
-          '<td><span class="item-arr" onclick="abrirProyecto('+b.id+',\''+encodeURIComponent(b.proyecto)+'\')">Ver</span></td></tr>';
-      }).join('') +
-      '</tbody></table></div>';
-
-    metricsEl.insertAdjacentHTML('beforebegin', panelHtml);
-  }
-}
-
-async function loadDashboardComercial() {
-  resetDashboardUI();
-  document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
-  try {
-    var pr  = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)',{count:'exact'}).order('created_at',{ascending:false}).limit(6);
-    var er  = await db.from('ingested_emails').select('id,sender,subject,received_at',{count:'exact'}).order('received_at',{ascending:false}).limit(4);
-    var err = await db.from('automation_errors').select('id,flow_name,node_name,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(4);
-
-    // Ofertas enviadas pendientes
-    var stOE = await db.from('project_statuses').select('id').eq('code','oferta_enviada').single();
-    var oeCount = 0;
-    if (stOE.data) {
-      var oeRes = await db.from('projects').select('id',{count:'exact'}).eq('project_status_id',stOE.data.id);
-      oeCount = oeRes.count || 0;
-    }
-
-    // Proyectos perdidos
-    var perdidosRes = await db.from('project_awards').select('id',{count:'exact'}).eq('award_type','rechazado');
-
-    document.getElementById('m-total').textContent  = pr.count||0;
-    document.getElementById('m-emails').textContent = oeCount;
-    document.getElementById('m-review').textContent = perdidosRes.count||0;
-    document.getElementById('m-errors').textContent = err.count||0;
-
-    document.querySelectorAll('.metric-label')[1].textContent = 'Ofertas pendientes respuesta';
-    document.querySelectorAll('.metric-label')[2].textContent = 'Proyectos perdidos';
-
-    // Alerta evaluaciones pendientes
-    var banner = document.getElementById('dept-alertas-banner');
-    var evalPend = await db.from('project_evaluations').select('id',{count:'exact'}).eq('department','comercial').is('decision',null);
-    if (evalPend.count > 0 && banner) {
-      banner.style.display = 'block';
-      banner.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="irAFaseSolicitado()">' +
-        '<div style="display:flex;align-items:center;gap:10px;">' +
-        '<div class="notif-bell"><span style="font-size:14px;color:white;font-weight:bold;line-height:1;">!</span></div>' +
-        '<div><div style="font-size:13px;font-weight:600;color:#A32D2D;">' + evalPend.count + ' evaluacion(es) pendientes de tu aprobacion</div>' +
-        '<div style="font-size:11px;color:#A32D2D;opacity:0.8;">Hay proyectos solicitados esperando tu valoracion comercial</div></div></div>' +
-        '<span style="font-size:12px;color:#A32D2D;font-weight:500;">Ver proyectos</span></div>';
-    } else if (banner) {
-      banner.style.display = 'none';
-    }
-
-    await cargarFasesCounts();
-    renderProyectosRecientes(pr.data);
-    renderEmails(er.data);
-    renderErrores(err.data);
-  } catch(e) { console.error('Error dashboard comercial:',e); }
-}
-
-async function loadDashboardPRL() {
-  resetDashboardUI();
-  document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
-  try {
-    var pr  = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)',{count:'exact'}).order('created_at',{ascending:false}).limit(6);
-    var er  = await db.from('ingested_emails').select('id,sender,subject,received_at',{count:'exact'}).order('received_at',{ascending:false}).limit(4);
-    var err = await db.from('automation_errors').select('id,flow_name,node_name,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(4);
-
-    // Proyectos en ejecucion
-    var stEj = await db.from('project_statuses').select('id').eq('code','en_ejecucion').single();
-    var ejCount = 0;
-    if (stEj.data) {
-      var ejRes = await db.from('projects').select('id',{count:'exact'}).eq('project_status_id',stEj.data.id);
-      ejCount = ejRes.count || 0;
-    }
-
-    document.getElementById('m-total').textContent  = pr.count||0;
-    document.getElementById('m-emails').textContent = ejCount;
-    document.getElementById('m-review').textContent = ejCount;
-    document.getElementById('m-errors').textContent = err.count||0;
-
-    document.querySelectorAll('.metric-label')[1].textContent = 'En ejecucion';
-    document.querySelectorAll('.metric-label')[2].textContent = 'Pendientes PRL';
-
-    var banner = document.getElementById('dept-alertas-banner');
-    if (ejCount > 0 && banner) {
-      banner.style.display = 'block';
-      banner.innerHTML = '<div style="background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="irAFaseEjecucion()">' +
-        '<div style="display:flex;align-items:center;gap:10px;">' +
-        '<div class="notif-bell orange"><span style="font-size:14px;color:white;font-weight:bold;line-height:1;">!</span></div>' +
-        '<div><div style="font-size:13px;font-weight:600;color:#854F0B;">' + ejCount + ' obra(s) en ejecucion requieren documentacion PRL</div>' +
-        '<div style="font-size:11px;color:#854F0B;opacity:0.8;">Revisa la documentacion de seguridad de las obras activas</div></div></div>' +
-        '<span style="font-size:12px;color:#854F0B;font-weight:500;">Ver obras</span></div>';
-    } else if (banner) {
-      banner.style.display = 'none';
-    }
-
-    await cargarFasesCounts();
-    renderProyectosRecientes(pr.data);
-    renderEmails(er.data);
-    renderErrores(err.data);
-  } catch(e) { console.error('Error dashboard prl:',e); }
-}
-
-async function loadDashboardAdmin() {
-  resetDashboardUI();
-  document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
-  try {
-    var pr  = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)',{count:'exact'}).order('created_at',{ascending:false}).limit(6);
-    var er  = await db.from('ingested_emails').select('id,sender,subject,received_at',{count:'exact'}).order('received_at',{ascending:false}).limit(4);
-    var err = await db.from('automation_errors').select('id,flow_name,node_name,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(4);
-    var clRes = await db.from('clients').select('id',{count:'exact'});
-    var prRes = await db.from('suppliers').select('id',{count:'exact'});
-
-    document.getElementById('m-total').textContent  = pr.count||0;
-    document.getElementById('m-emails').textContent = clRes.count||0;
-    document.getElementById('m-review').textContent = prRes.count||0;
-    document.getElementById('m-errors').textContent = err.count||0;
-
-    document.querySelectorAll('.metric-label')[1].textContent = 'Clientes registrados';
-    document.querySelectorAll('.metric-label')[2].textContent = 'Proveedores registrados';
-
-    await cargarFasesCounts();
-    renderProyectosRecientes(pr.data);
-    renderEmails(er.data);
-    renderErrores(err.data);
-  } catch(e) { console.error('Error dashboard admin:',e); }
+  if (!bloqueados.length) return;
+  var metricsEl = document.querySelector('.metrics');
+  var panelHtml = '<div id="panel-bloqueos" class="card" style="margin-bottom:1rem;border:1px solid #F7C1C1;background:#FDFAFA;">' +
+    '<div style="font-size:13px;font-weight:600;color:#A32D2D;margin-bottom:0.75rem;">Proyectos pendientes de decision</div>' +
+    '<table class="data-table"><thead><tr><th>Proyecto</th><th>Estado actual</th><th>Pendiente de</th><th></th></tr></thead><tbody>' +
+    bloqueados.map(function(b) {
+      return '<tr><td style="font-weight:500;">' + b.proyecto + '</td>' +
+        '<td><span class="badge b-review">' + b.estado + '</span></td>' +
+        '<td style="color:#A32D2D;font-weight:500;">' + b.quien + '</td>' +
+        '<td><span class="item-arr" style="cursor:pointer;" onclick="abrirProyecto(' + b.id + ',encodeURIComponent(' + JSON.stringify(b.proyecto) + '))">Ver</span></td></tr>';
+    }).join('') +
+    '</tbody></table></div>';
+  if (metricsEl) metricsEl.insertAdjacentHTML('beforebegin', panelHtml);
 }
 
 function resetDashboardUI() {
@@ -1392,31 +1307,30 @@ function resetDashboardUI() {
   document.getElementById('m-emails').textContent='-';
   document.getElementById('m-review').textContent='-';
   document.getElementById('m-errors').textContent='-';
-  // Restaurar labels
   var labels = document.querySelectorAll('.metric-label');
   if (labels[0]) labels[0].textContent = 'Proyectos activos';
   if (labels[1]) labels[1].textContent = 'Emails procesados';
   if (labels[2]) labels[2].textContent = 'Pendiente revision';
   if (labels[3]) labels[3].textContent = 'Errores registrados';
-  // Eliminar panel de bloqueos si existe
   var bp = document.getElementById('panel-bloqueos');
   if (bp) bp.remove();
-  // Limpiar banner de alertas
   var banner = document.getElementById('dept-alertas-banner');
   if (banner) banner.style.display = 'none';
 }
 
 async function cargarFasesCounts() {
-  var statusRes = await db.from('project_statuses').select('id,code');
-  if (statusRes.data) {
-    for (var j=0; j<statusRes.data.length; j++) {
-      var st = statusRes.data[j];
-      var cnt = await db.from('projects').select('id',{count:'exact'}).eq('project_status_id',st.id);
-      var elId = 'fc-'+st.code;
-      var el = document.getElementById(elId);
-      if (el) el.textContent = cnt.count||0;
+  try {
+    var statusRes = await db.from('project_statuses').select('id,code');
+    if (statusRes.data) {
+      for (var j=0; j<statusRes.data.length; j++) {
+        var st = statusRes.data[j];
+        var cnt = await db.from('projects').select('id',{count:'exact'}).eq('project_status_id',st.id);
+        var elId = 'fc-'+st.code;
+        var el = document.getElementById(elId);
+        if (el) el.textContent = cnt.count||0;
+      }
     }
-  }
+  } catch(e) { console.error(e); }
 }
 
 function renderProyectosRecientes(data) {
@@ -1427,7 +1341,7 @@ function renderProyectosRecientes(data) {
       var st = p.project_statuses?p.project_statuses.code:'default';
       var badge = badgeMap[st]||'<span class="badge b-default">'+st+'</span>';
       var conf = p.confidence?Math.round(p.confidence*100)+'%':'';
-      return '<div class="item-row" onclick="abrirProyecto('+p.id+',\''+encodeURIComponent(p.name||'')+'\')">' +
+      return '<div class="item-row" onclick="abrirProyecto('+p.id+',encodeURIComponent('+JSON.stringify(p.name||'')+'))">' +
         '<div style="flex:1;min-width:0"><div class="item-name">'+(p.name||p.code||'#'+p.id)+'</div>' +
         '<div class="item-meta">'+(p.contact_email||'-')+(p.category?' - '+p.category:'')+(conf?' - IA: '+conf:'')+'</div></div>' +
         badge+'<div style="font-size:10px;color:#aaa;white-space:nowrap">'+fmt(p.received_at)+'</div>' +
