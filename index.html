@@ -206,6 +206,7 @@
   <div class="nav-item sub" id="nav-oferta_curso" onclick="showProyectosFase('oferta_en_curso')">Oferta en curso</div>
   <div class="nav-item sub" id="nav-oferta_enviada" onclick="showProyectosFase('oferta_enviada')">Ofertas enviadas</div>
   <div class="nav-item sub" id="nav-adjudicados" onclick="showProyectosFase('adjudicado')">Adjudicados</div>
+  <div class="nav-item sub" id="nav-pendiente_lanzamiento" onclick="showProyectosFase('pendiente_lanzamiento')">Pendiente lanzamiento</div>
   <div class="nav-item sub" id="nav-ejecucion" onclick="showProyectosFase('en_ejecucion')">En ejecución</div>
 
   <div class="nav-section">Datos maestros</div>
@@ -500,6 +501,98 @@
 <div id="panel-alertas" class="panel">
   <div class="topbar"><h1>Alertas y errores</h1></div>
   <div class="card" id="alertas-content"><div class="loading">Cargando...</div></div>
+</div>
+
+<!-- PANEL ADJUDICADO -->
+<div id="panel-adjudicado" class="panel">
+  <div class="topbar">
+    <h1 id="adj-title">Proyecto adjudicado</h1>
+    <button class="btn btn-back" onclick="volverDesdeAdjudicado()">Volver</button>
+  </div>
+
+  <!-- INFO PROYECTO -->
+  <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+      <div><div style="font-size:10px;color:#3B6D11;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Proyecto</div><div style="font-size:13px;font-weight:500;color:#27500A;" id="adj-name">-</div></div>
+      <div><div style="font-size:10px;color:#3B6D11;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Cliente</div><div style="font-size:13px;font-weight:500;color:#27500A;" id="adj-client">-</div></div>
+      <div><div style="font-size:10px;color:#3B6D11;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Código</div><div style="font-size:13px;font-weight:500;color:#27500A;" id="adj-code">-</div></div>
+      <div><div style="font-size:10px;color:#3B6D11;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Importe adjudicado</div><div style="font-size:13px;font-weight:500;color:#27500A;" id="adj-amount">-</div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="proj-tabs" style="margin-bottom:1.5rem;">
+    <div class="proj-tab active" onclick="showAdjTab('asignacion',this)">Asignacion Jefe/a de Obra</div>
+    <div class="proj-tab" onclick="showAdjTab('documento',this)">Documento de adjudicacion</div>
+    <div class="proj-tab" onclick="showAdjTab('historial',this)">Historial</div>
+  </div>
+
+  <!-- TAB ASIGNACION -->
+  <div id="adj-tab-asignacion">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Asignar Jefe/a de Obra</div></div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Jefe/a de Obra</label>
+            <select id="adj-manager" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+              <option value="">Seleccionar Jefe/a de Obra...</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Fecha prevista de inicio</label>
+            <input type="date" id="adj-start-date" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Instrucciones para el/la Jefe/a de Obra</label>
+            <textarea id="adj-manager-notes" placeholder="Condiciones especiales, accesos, contactos en obra..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:90px;resize:vertical;font-family:inherit;"></textarea>
+          </div>
+          <div id="adj-current-manager" style="display:none;padding:10px;background:#f9f9f6;border-radius:6px;border:1px solid #e5e5e0;font-size:12px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-success" style="flex:1;" onclick="asignarJefeObra()">Asignar y pasar a Pendiente lanzamiento</button>
+          </div>
+          <div id="adj-reasignar-area" style="display:none;border-top:1px solid #f0f0ea;padding-top:12px;">
+            <div style="font-size:11px;color:#888;margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;">Cambiar Jefe/a de Obra</div>
+            <textarea id="adj-change-reason" placeholder="Motivo del cambio (enfermedad, disponibilidad...)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:60px;resize:vertical;font-family:inherit;margin-bottom:8px;"></textarea>
+            <button class="btn btn-sm" style="border-color:#EF9F27;color:#854F0B;background:#FEF6EE;" onclick="cambiarJefeObra()">Confirmar cambio de Jefe/a de Obra</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="background:#f9f9f6;">
+        <div class="card-header"><div class="card-title">Estado de lanzamiento</div></div>
+        <div id="adj-launch-status">
+          <div style="font-size:12px;color:#888;margin-bottom:1rem;">Pendiente de asignar Jefe/a de Obra y fijar fecha de inicio.</div>
+        </div>
+        <div id="adj-launch-actions" style="display:none;margin-top:1rem;border-top:1px solid #e5e5e0;padding-top:1rem;">
+          <div style="font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:8px;">Requisitos previos al lanzamiento</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:1rem;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="adj-req-contrato"> Contrato con cliente firmado</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="adj-req-permisos"> Permisos y licencias obtenidos</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="adj-req-financiero"> Confirmacion financiera recibida</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="adj-req-subcontratas"> Subcontratas confirmadas</label>
+          </div>
+          <button class="btn btn-primary" onclick="confirmarInicioObra()">Confirmar inicio de obra</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB DOCUMENTO -->
+  <div id="adj-tab-documento" style="display:none;">
+    <div class="alert-box" style="margin-bottom:1rem;background:#E6F1FB;border-color:#B5D4F4;">
+      <div class="alert-box-title" style="color:#0C447C;">Documento de adjudicacion para el/la Jefe/a de Obra</div>
+      <div class="alert-box-desc" style="color:#185FA5;">Este documento muestra los precios de venta contratados con el cliente, los costes de cada gremio y el margen de maniobra disponible en cada partida.</div>
+    </div>
+    <div id="adj-doc-content"><div class="loading">Cargando documento...</div></div>
+  </div>
+
+  <!-- TAB HISTORIAL -->
+  <div id="adj-tab-historial" style="display:none;">
+    <div id="adj-historial-content"><div class="loading">Cargando historial...</div></div>
+  </div>
 </div>
 
 <!-- PANEL OFERTA ENVIADA -->
@@ -1097,6 +1190,10 @@ async function abrirProyecto(id, nameEnc) {
   }
   if (stCode === 'oferta_enviada') {
     abrirOfertaEnviada(id, nameEnc);
+    return;
+  }
+  if (stCode === 'adjudicado' || stCode === 'pendiente_lanzamiento') {
+    abrirAdjudicado(id, nameEnc);
     return;
   }
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
@@ -2787,6 +2884,279 @@ async function cargarHistorialAdjudicacion(projectId) {
 
 function volverDesdeOfertaEnviada() {
   oeProyecto = null;
+  if (currentFase) showProyectosFase(currentFase);
+  else showPanel('dashboard');
+}
+
+// -- ADJUDICADO --
+var adjProyecto = null;
+var adjManagerActual = null;
+
+async function abrirAdjudicado(id, nameEnc) {
+  var name = decodeURIComponent(nameEnc);
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-adjudicado').classList.add('active');
+  showAdjTab('asignacion', document.querySelector('.proj-tab'));
+
+  try {
+    var res = await db.from('projects').select('id,name,code,project_code,contact_email,category,project_manager_id,project_statuses(code,name)').eq('id',id).single();
+    adjProyecto = res.data;
+
+    document.getElementById('adj-title').textContent = 'Adjudicado - '+(adjProyecto.name||adjProyecto.code||'#'+id);
+    document.getElementById('adj-name').textContent = adjProyecto.name||adjProyecto.code||'#'+id;
+    document.getElementById('adj-client').textContent = adjProyecto.contact_email||'-';
+    document.getElementById('adj-code').textContent = adjProyecto.project_code||'-';
+
+    // Cargar importe de adjudicacion
+    var awardRes = await db.from('project_awards').select('awarded_amount').eq('project_id',id).eq('award_type','adjudicado').order('created_at',{ascending:false}).limit(1);
+    if (awardRes.data && awardRes.data.length && awardRes.data[0].awarded_amount) {
+      document.getElementById('adj-amount').textContent = parseFloat(awardRes.data[0].awarded_amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR';
+    } else {
+      document.getElementById('adj-amount').textContent = 'No especificado';
+    }
+
+    // Cargar jefes de obra disponibles
+    var jefesRes = await db.from('project_managers').select('id,full_name,available,current_projects').order('full_name');
+    var sel = document.getElementById('adj-manager');
+    sel.innerHTML = '<option value="">Seleccionar Jefe/a de Obra...</option>';
+    if (jefesRes.data) {
+      jefesRes.data.forEach(function(j) {
+        var opt = document.createElement('option');
+        opt.value = j.id;
+        opt.textContent = j.full_name + (j.available ? ' (Disponible)' : ' - ' + j.current_projects + ' proyectos activos');
+        sel.appendChild(opt);
+      });
+    }
+
+    // Verificar si ya tiene Jefe/a de Obra asignado
+    var asignRes = await db.from('project_manager_assignments').select('*,project_managers(full_name)').eq('project_id',id).eq('is_current',true).limit(1);
+    if (asignRes.data && asignRes.data.length) {
+      adjManagerActual = asignRes.data[0];
+      var el = document.getElementById('adj-current-manager');
+      el.style.display = 'block';
+      el.innerHTML = '<strong>Jefe/a de Obra actual:</strong> ' + adjManagerActual.project_managers.full_name +
+        '<br><span style="font-size:11px;color:#888;">Asignado/a el ' + new Date(adjManagerActual.assigned_at).toLocaleDateString('es-ES') + '</span>';
+      document.getElementById('adj-reasignar-area').style.display = 'block';
+
+      // Si ya tiene asignacion mostrar panel de lanzamiento
+      var statusCode = adjProyecto.project_statuses ? adjProyecto.project_statuses.code : '';
+      if (statusCode === 'pendiente_lanzamiento') {
+        document.getElementById('adj-launch-actions').style.display = 'block';
+        document.getElementById('adj-launch-status').innerHTML =
+          '<div style="font-size:12px;color:#3B6D11;font-weight:500;margin-bottom:4px;">Jefe/a de Obra asignado/a</div>' +
+          '<div style="font-size:12px;color:#888;">' + adjManagerActual.project_managers.full_name + '</div>';
+      }
+    }
+
+    cargarDocumentoAdjudicacion(id);
+    cargarHistorialAsignaciones(id);
+
+  } catch(e) { console.error('Error abriendo adjudicado:',e); }
+}
+
+function showAdjTab(tab, el) {
+  ['asignacion','documento','historial'].forEach(function(t){
+    var el2 = document.getElementById('adj-tab-'+t);
+    if (el2) el2.style.display = 'none';
+  });
+  document.querySelectorAll('.proj-tab').forEach(function(t){t.classList.remove('active');});
+  var tabEl = document.getElementById('adj-tab-'+tab);
+  if (tabEl) tabEl.style.display = 'block';
+  if (el) el.classList.add('active');
+}
+
+async function asignarJefeObra() {
+  if (!adjProyecto) return;
+  var managerId = parseInt(document.getElementById('adj-manager').value);
+  var startDate = document.getElementById('adj-start-date').value;
+  var notes = document.getElementById('adj-manager-notes').value;
+
+  if (!managerId) { alert('Selecciona un/a Jefe/a de Obra.'); return; }
+  if (!startDate) { alert('Indica la fecha prevista de inicio.'); return; }
+
+  try {
+    // Desactivar asignacion anterior si existe
+    if (adjManagerActual) {
+      await db.from('project_manager_assignments').update({is_current:false, unassigned_at:new Date().toISOString()}).eq('id',adjManagerActual.id);
+    }
+
+    // Crear nueva asignacion
+    await db.from('project_manager_assignments').insert({
+      project_id: adjProyecto.id,
+      manager_id: managerId,
+      assigned_at: new Date().toISOString(),
+      assigned_by: 'Direccion',
+      is_current: true
+    });
+
+    // Actualizar proyecto con jefe de obra y fecha
+    await db.from('projects').update({
+      project_manager_id: managerId,
+      updated_at: new Date().toISOString()
+    }).eq('id', adjProyecto.id);
+
+    // Cambiar estado a pendiente_lanzamiento
+    var stRes = await db.from('project_statuses').select('id').eq('code','pendiente_lanzamiento').single();
+    if (stRes.data) {
+      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',adjProyecto.id);
+    }
+
+    alert('Jefe/a de Obra asignado/a correctamente. El proyecto pasa a estado Pendiente lanzamiento.');
+    await abrirAdjudicado(adjProyecto.id, encodeURIComponent(adjProyecto.name||adjProyecto.code));
+    loadDashboard();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function cambiarJefeObra() {
+  if (!adjProyecto) return;
+  var managerId = parseInt(document.getElementById('adj-manager').value);
+  var reason = document.getElementById('adj-change-reason').value.trim();
+
+  if (!managerId) { alert('Selecciona el nuevo/a Jefe/a de Obra.'); return; }
+  if (!reason) { alert('Indica el motivo del cambio.'); return; }
+
+  try {
+    // Desactivar asignacion actual
+    if (adjManagerActual) {
+      await db.from('project_manager_assignments').update({
+        is_current: false,
+        unassigned_at: new Date().toISOString(),
+        reason: reason
+      }).eq('id', adjManagerActual.id);
+    }
+
+    // Nueva asignacion
+    await db.from('project_manager_assignments').insert({
+      project_id: adjProyecto.id,
+      manager_id: managerId,
+      assigned_at: new Date().toISOString(),
+      assigned_by: 'Direccion',
+      is_current: true
+    });
+
+    await db.from('projects').update({project_manager_id:managerId, updated_at:new Date().toISOString()}).eq('id',adjProyecto.id);
+    alert('Jefe/a de Obra cambiado/a correctamente.');
+    await abrirAdjudicado(adjProyecto.id, encodeURIComponent(adjProyecto.name||adjProyecto.code));
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function confirmarInicioObra() {
+  if (!adjProyecto) return;
+  try {
+    var stRes = await db.from('project_statuses').select('id').eq('code','en_ejecucion').single();
+    if (stRes.data) {
+      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',adjProyecto.id);
+      alert('Inicio de obra confirmado. El proyecto pasa a En Ejecucion.');
+      adjProyecto = null;
+      await showProyectosFase('pendiente_lanzamiento');
+      loadDashboard();
+    }
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function cargarDocumentoAdjudicacion(projectId) {
+  var el = document.getElementById('adj-doc-content');
+  if (!el) return;
+
+  try {
+    // Cargar partidas de offer_items o usar datos simulados
+    var itemsRes = await db.from('offer_items').select('*').eq('project_id',projectId).order('specialty_code');
+    var items = itemsRes.data || [];
+
+    if (!items.length) {
+      // Datos simulados para demo
+      items = [
+        {specialty_code:'ELECTRICIDAD', item_code:'E-001', description:'Cuadro electrico general CGD', unit:'Ud', quantity:1, supplier_cost:4200, margin_pct:15, final_price:4830},
+        {specialty_code:'ELECTRICIDAD', item_code:'E-002', description:'Linea alimentacion fuerza', unit:'m', quantity:45, supplier_cost:1800, margin_pct:15, final_price:2070},
+        {specialty_code:'CLIMATIZACION', item_code:'C-001', description:'Unidad interior VRF cassette', unit:'Ud', quantity:3, supplier_cost:9600, margin_pct:12, final_price:10752},
+        {specialty_code:'CLIMATIZACION', item_code:'C-002', description:'Unidad exterior VRF 10 HP', unit:'Ud', quantity:1, supplier_cost:12400, margin_pct:12, final_price:13888}
+      ];
+    }
+
+    var totalCoste = items.reduce(function(acc,i){return acc+(parseFloat(i.supplier_cost)||0)*( parseFloat(i.quantity)||1);},0);
+    var totalVenta = items.reduce(function(acc,i){return acc+(parseFloat(i.final_price)||0)*(parseFloat(i.quantity)||1);},0);
+    var margenGlobal = totalCoste > 0 ? ((totalVenta-totalCoste)/totalVenta*100).toFixed(1) : 0;
+
+    // Agrupar por gremio
+    var porGremio = {};
+    items.forEach(function(item) {
+      var g = item.specialty_code || 'GENERAL';
+      if (!porGremio[g]) porGremio[g] = [];
+      porGremio[g].push(item);
+    });
+
+    var html = '<div style="background:#f9f9f6;border:1px solid #e5e5e0;border-radius:8px;padding:1rem;margin-bottom:1rem;">' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">' +
+      '<div><div style="font-size:11px;color:#888;margin-bottom:4px;">Coste total proveedores</div><div style="font-size:20px;font-weight:500;color:#1a1a1a;">' + totalCoste.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
+      '<div><div style="font-size:11px;color:#888;margin-bottom:4px;">Precio venta al cliente</div><div style="font-size:20px;font-weight:500;color:#3B6D11;">' + totalVenta.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
+      '<div><div style="font-size:11px;color:#888;margin-bottom:4px;">Margen global</div><div style="font-size:20px;font-weight:500;color:#185FA5;">' + margenGlobal + '%</div></div>' +
+      '</div></div>';
+
+    Object.keys(porGremio).forEach(function(gremio) {
+      var partidas = porGremio[gremio];
+      html += '<div style="margin-bottom:1rem;">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+        '<span class="badge b-default">' + gremio + '</span></div>' +
+        '<table class="data-table"><thead><tr>' +
+        '<th>Cod.</th><th>Descripcion</th><th>Ud.</th><th style="text-align:right;">Coste prov.</th>' +
+        '<th style="text-align:center;">Margen</th><th style="text-align:right;">Precio venta</th>' +
+        '<th style="text-align:right;">Margen EUR</th>' +
+        '</tr></thead><tbody>' +
+        partidas.map(function(p) {
+          var coste = parseFloat(p.supplier_cost) || 0;
+          var venta = parseFloat(p.final_price) || 0;
+          var margen = parseFloat(p.margin_pct) || 0;
+          var margenEur = venta - coste;
+          var margenColor = margen >= 15 ? '#3B6D11' : margen >= 10 ? '#854F0B' : '#A32D2D';
+          return '<tr>' +
+            '<td style="font-size:11px;color:#888;">' + (p.item_code||'-') + '</td>' +
+            '<td>' + p.description + '</td>' +
+            '<td style="color:#888;">' + (p.unit||'-') + '</td>' +
+            '<td style="text-align:right;">' + coste.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
+            '<td style="text-align:center;color:' + margenColor + ';font-weight:500;">' + margen + '%</td>' +
+            '<td style="text-align:right;font-weight:500;color:#3B6D11;">' + venta.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
+            '<td style="text-align:right;color:' + margenColor + ';">' + margenEur.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    });
+
+    html += '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:12px;margin-top:1rem;font-size:12px;color:#3B6D11;">' +
+      'Este documento es confidencial y de uso interno. El/la Jefe/a de Obra debe mantener los costes de ejecucion dentro de los margenes indicados para garantizar la rentabilidad del proyecto.' +
+      '</div>';
+
+    el.innerHTML = html;
+  } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando documento</div>'; }
+}
+
+async function cargarHistorialAsignaciones(projectId) {
+  var el = document.getElementById('adj-historial-content');
+  if (!el || !projectId) return;
+
+  try {
+    var res = await db.from('project_manager_assignments').select('*,project_managers(full_name)').eq('project_id',projectId).order('assigned_at',{ascending:false});
+    if (!res.data || !res.data.length) {
+      el.innerHTML = '<div class="empty">No hay asignaciones registradas.</div>';
+      return;
+    }
+    el.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;">' +
+      res.data.map(function(a) {
+        return '<div class="card" style="padding:0.875rem 1rem;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<span style="font-size:13px;font-weight:500;">' + (a.project_managers?a.project_managers.full_name:'-') + '</span>' +
+          (a.is_current ? '<span class="badge b-adjudicado">Actual</span>' : '<span class="badge b-default">Anterior</span>') +
+          '</div>' +
+          '<div style="font-size:11px;color:#888;">Asignado/a el ' + new Date(a.assigned_at).toLocaleDateString('es-ES') + (a.assigned_by?' por '+a.assigned_by:'') + '</div>' +
+          (a.unassigned_at ? '<div style="font-size:11px;color:#888;">Desasignado/a el ' + new Date(a.unassigned_at).toLocaleDateString('es-ES') + '</div>' : '') +
+          (a.reason ? '<div style="font-size:11px;color:#888;margin-top:4px;">Motivo: ' + a.reason + '</div>' : '') +
+          '</div>';
+      }).join('') + '</div>';
+  } catch(e) { console.error(e); }
+}
+
+function volverDesdeAdjudicado() {
+  adjProyecto = null;
+  adjManagerActual = null;
   if (currentFase) showProyectosFase(currentFase);
   else showPanel('dashboard');
 }
