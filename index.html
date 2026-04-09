@@ -2632,11 +2632,10 @@ async function registrarAdjudicacion() {
 
   try {
     // Guardar en project_awards
-    await db.from('project_awards').insert({
+    var insRes = await db.from('project_awards').insert({
       project_id: oeProyecto.id,
       specialty: oeProyecto.category || 'GENERAL',
       award_type: 'adjudicado',
-      award_date_new: date,
       award_date: new Date().toISOString(),
       awarded_amount: amount,
       confirmation_method: method,
@@ -2645,6 +2644,11 @@ async function registrarAdjudicacion() {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });
+    
+    if (insRes.error) {
+      alert('Error guardando adjudicacion: ' + JSON.stringify(insRes.error));
+      return;
+    }
 
     // Actualizar estado del proyecto a adjudicado
     var stRes = await db.from('project_statuses').select('id').eq('code','adjudicado').single();
