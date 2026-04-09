@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -1266,6 +1266,13 @@ async function cargarMetricasDept(dept) {
   }
 }
 
+function abrirProyectoById(id) {
+  db.from('projects').select('name').eq('id',id).single().then(function(res) {
+    var name = res.data ? res.data.name : '';
+    abrirProyecto(id, encodeURIComponent(name));
+  });
+}
+
 async function cargarProyectosBloqueados() {
   var stBloqueo = ['pending_tech_review','pending_mgmt_approval','en_analisis','oferta_en_curso'];
   var stRes = await db.from('project_statuses').select('id,code,name').in('code', stBloqueo);
@@ -1292,7 +1299,7 @@ async function cargarProyectosBloqueados() {
       return '<tr><td style="font-weight:500;">' + b.proyecto + '</td>' +
         '<td><span class="badge b-review">' + b.estado + '</span></td>' +
         '<td style="color:#A32D2D;font-weight:500;">' + b.quien + '</td>' +
-        '<td><span class="item-arr" style="cursor:pointer;" onclick="abrirProyecto(' + b.id + ',encodeURIComponent(' + JSON.stringify(b.proyecto) + '))">Ver</span></td></tr>';
+        '<td><span class="item-arr" style="cursor:pointer;" onclick="abrirProyectoById(' + b.id + ')">Ver</span></td></tr>';
     }).join('') +
     '</tbody></table></div>';
   if (metricsEl) metricsEl.insertAdjacentHTML('beforebegin', panelHtml);
