@@ -539,7 +539,7 @@
       <!-- Adjudicación -->
       <div class="card" style="border:1px solid #C0DD97;background:#FAFEF6;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #e5f5d0;">
-          <div style="width:32px;height:32px;border-radius:8px;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:16px;">✓</div>
+          <div style="width:32px;height:32px;border-radius:8px;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:16px;">OK</div>
           <div><div style="font-size:13px;font-weight:600;color:#27500A;">Registrar adjudicación</div><div style="font-size:11px;color:#3B6D11;">El cliente acepta nuestra oferta</div></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px;">
@@ -568,7 +568,7 @@
             <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Notas</label>
             <textarea id="oe-award-notes" placeholder="Condiciones especiales, plazos acordados..." style="width:100%;padding:7px 10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
           </div>
-          <button class="btn btn-success" onclick="registrarAdjudicacion()">Confirmar adjudicación y pasar a Adjudicado →</button>
+          <button class="btn btn-success" onclick="registrarAdjudicacion()">Confirmar adjudicación y pasar a Adjudicado </button>
         </div>
       </div>
 
@@ -576,7 +576,7 @@
       <div style="display:flex;flex-direction:column;gap:1rem;">
         <div class="card" style="border:1px solid #F7C1C1;background:#FDFAFA;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #fde8e8;">
-            <div style="width:32px;height:32px;border-radius:8px;background:#FCEBEB;display:flex;align-items:center;justify-content:center;font-size:16px;">✗</div>
+            <div style="width:32px;height:32px;border-radius:8px;background:#FCEBEB;display:flex;align-items:center;justify-content:center;font-size:16px;">X</div>
             <div><div style="font-size:13px;font-weight:600;color:#A32D2D;">Registrar rechazo</div><div style="font-size:11px;color:#A32D2D;">El cliente no acepta nuestra oferta</div></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;">
@@ -590,7 +590,7 @@
 
         <div class="card" style="border:1px solid #FAC775;background:#FEFAF4;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #fde8c0;">
-            <div style="width:32px;height:32px;border-radius:8px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:16px;">↔</div>
+            <div style="width:32px;height:32px;border-radius:8px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:16px;">~</div>
             <div><div style="font-size:13px;font-weight:600;color:#854F0B;">En negociación</div><div style="font-size:11px;color:#854F0B;">El cliente pide cambios o contraoferta</div></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;">
@@ -694,7 +694,7 @@
           <div style="font-size:12px;color:#3B6D11;margin-bottom:1rem;">La oferta está lista para enviar al cliente. Revisa el email de envío y confirma.</div>
           <textarea id="oc-email-cliente" style="width:100%;padding:10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;min-height:120px;resize:vertical;font-family:inherit;background:white;margin-bottom:10px;"></textarea>
           <div style="display:flex;gap:8px;justify-content:flex-end;">
-            <button class="btn btn-success" onclick="enviarOfertaCliente()">Enviar oferta al cliente y cerrar fase →</button>
+            <button class="btn btn-success" onclick="enviarOfertaCliente()">Enviar oferta al cliente y cerrar fase </button>
           </div>
         </div>
       </div>
@@ -775,7 +775,7 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-danger" onclick="accionAnalisis('cancelled')">Cancelar proyecto</button>
       <button class="btn" style="border-color:#EF9F27;color:#854F0B;background:#FAEEDA;" onclick="accionAnalisis('info_requested')">Solicitar aclaraciones al cliente</button>
-      <button class="btn btn-success" onclick="accionAnalisis('oferta_en_curso')" style="margin-left:auto;">Confirmar y pasar a Oferta en curso →</button>
+      <button class="btn btn-success" onclick="accionAnalisis('oferta_en_curso')" style="margin-left:auto;">Confirmar y pasar a Oferta en curso </button>
     </div>
   </div>
 </div>
@@ -1863,7 +1863,7 @@ function resetAlertaEval() {
       '<div class="alert-box-desc">Se ha notificado al resto de departamentos. El proyecto quedará cancelado.</div>';
     resultado.style.display = 'block';
     resultado.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:10px;padding:1.5rem;text-align:center;">' +
-      '<div style="font-size:28px;margin-bottom:8px;">✗</div>' +
+      '<div style="font-size:28px;margin-bottom:8px;">X</div>' +
       '<div style="font-size:15px;font-weight:600;color:#A32D2D;margin-bottom:6px;">Proyecto no aceptado</div>' +
       '<div style="font-size:12px;color:#A32D2D;">Al menos un departamento ha rechazado el proyecto. Se notifica automáticamente al equipo.</div></div>';
   } else if (aprobados.length === 3) {
@@ -1873,7 +1873,7 @@ function resetAlertaEval() {
       '<div class="alert-box-desc">El proyecto pasará automáticamente a fase En Análisis.</div>';
     resultado.style.display = 'block';
     resultado.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:10px;padding:1.5rem;text-align:center;">' +
-      '<div style="font-size:28px;margin-bottom:8px;">✓</div>' +
+      '<div style="font-size:28px;margin-bottom:8px;">OK</div>' +
       '<div style="font-size:15px;font-weight:600;color:#3B6D11;margin-bottom:6px;">Proyecto aceptado</div>' +
       '<div style="font-size:12px;color:#3B6D11;margin-bottom:1rem;">Los tres departamentos han aprobado. El proyecto avanza a fase En Análisis.</div>' +
       '<button class="btn btn-success" onclick="avanzarAAnalisis()">Confirmar y avanzar a En Análisis</button></div>';
@@ -2509,7 +2509,7 @@ async function cargarMontajeOferta() {
     '</table></div>' +
     '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">' +
     '<button class="btn" onclick="cargarMontajeOferta()">Recalcular</button>' +
-    '<button class="btn btn-primary" onclick="someterAprobacionMargenes()">Someter a aprobación de márgenes →</button>' +
+    '<button class="btn btn-primary" onclick="someterAprobacionMargenes()">Someter a aprobación de márgenes </button>' +
     '</div>';
 
   document.getElementById('oc-aprobacion-margenes').style.display = 'none';
