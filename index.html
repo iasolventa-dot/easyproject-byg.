@@ -1125,7 +1125,7 @@ function renderWizard(statusCode) {
   if (activeIdx===-1) activeIdx=0;
   track.innerHTML = wizardSteps.map(function(s,i){
     var cls = i<activeIdx?'done':i===activeIdx?'active':'';
-    var dotTxt = i<activeIdx?'✓':(i+1);
+    var dotTxt = i<activeIdx?'OK':(i+1);
     return '<div class="wz-step '+cls+'"><div class="wz-dot '+cls+'">'+dotTxt+'</div>' +
       '<div class="wz-label"><strong>'+s.label+'</strong></div></div>';
   }).join('');
@@ -1798,7 +1798,7 @@ async function loadAlertas() {
   } catch(e){console.error(e);}
 }
 
-// ── EVALUACIÓN DE PROYECTOS SOLICITADOS ──
+// -- EVALUACIÓN DE PROYECTOS SOLICITADOS --
 var evalProyecto = null;
 var evalDecisiones = {};
 
@@ -1835,14 +1835,14 @@ function mostrarEstadoEval(dept, decision, reason, by) {
   if (!el) return;
   if (decision === 'approved') {
     el.innerHTML = '<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:#EAF3DE;border-radius:6px;">' +
-      '<span style="color:#3B6D11;font-size:14px;">✓</span>' +
+      '<span style="color:#3B6D11;font-size:14px;">OK</span>' +
       '<div><div style="font-size:12px;font-weight:500;color:#3B6D11;">Aprobado</div>' +
       '<div style="font-size:10px;color:#3B6D11;opacity:0.8;">'+(by||'')+'</div></div></div>';
     if (form) form.style.display = 'none';
   } else if (decision === 'rejected') {
     el.innerHTML = '<div style="padding:8px 10px;background:#FCEBEB;border-radius:6px;">' +
       '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
-      '<span style="color:#A32D2D;font-size:14px;">✗</span>' +
+      '<span style="color:#A32D2D;font-size:14px;">X</span>' +
       '<div style="font-size:12px;font-weight:500;color:#A32D2D;">Rechazado</div></div>' +
       '<div style="font-size:11px;color:#A32D2D;line-height:1.4;">'+(reason||'')+'</div></div>';
     if (form) form.style.display = 'none';
@@ -1945,7 +1945,7 @@ function volverDesdeEvaluacion() {
   }
 }
 
-// ── PROYECTO EN ANÁLISIS ──
+// -- PROYECTO EN ANÁLISIS --
 var analisisProyecto = null;
 var analisisData = null;
 var gremiosSeleccionados = {};
@@ -2004,7 +2004,7 @@ function cargarDocumentosAnalisis(projectId, categoria) {
   el.innerHTML =
     '<div style="background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;">' +
     '<div style="display:flex;align-items:flex-start;gap:10px;">' +
-    '<div style="font-size:20px;flex-shrink:0;">📁</div>' +
+    '<div style="font-size:20px;flex-shrink:0;"></div>' +
     '<div>' +
     '<div style="font-size:13px;font-weight:600;color:#0C447C;margin-bottom:4px;">Documentación adjunta al proyecto</div>' +
     '<div style="font-size:12px;color:#185FA5;line-height:1.6;">' +
@@ -2016,7 +2016,7 @@ function cargarDocumentosAnalisis(projectId, categoria) {
 
     '<div style="background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;">' +
     '<div style="display:flex;align-items:flex-start;gap:10px;">' +
-    '<div style="font-size:20px;flex-shrink:0;">⚠️</div>' +
+    '<div style="font-size:20px;flex-shrink:0;">!</div>' +
     '<div>' +
     '<div style="font-size:13px;font-weight:600;color:#633806;margin-bottom:4px;">Conexión SharePoint pendiente</div>' +
     '<div style="font-size:12px;color:#854F0B;line-height:1.6;">' +
@@ -2197,7 +2197,7 @@ function abrirDocumento(nombre) {
   alert('Abriendo ' + nombre + ' desde SharePoint...');
 }
 
-// ── OFERTA EN CURSO ──
+// -- OFERTA EN CURSO --
 var ocProyecto = null;
 var ocGremios = [];
 var ocMargenes = {};
@@ -2274,7 +2274,7 @@ async function cargarPeticionesGremios(peticionesExistentes) {
 
       var provList = provGremio.map(function(p){
         return '<div style="font-size:12px;padding:4px 0;display:flex;align-items:center;gap:6px;">' +
-          '<span style="color:#3B6D11;">✓</span>' +
+          '<span style="color:#3B6D11;">OK</span>' +
           '<span style="font-weight:500;">'+(p.suppliers?p.suppliers.commercial_name:'#'+p.supplier_id)+'</span>' +
           '<span style="color:#aaa;font-size:11px;">'+(p.suppliers&&p.suppliers.tech_email?'· '+p.suppliers.tech_email:'')+'</span></div>';
       }).join('');
@@ -2528,7 +2528,7 @@ function someterAprobacionMargenes() {
 function aprobarMargenes(dept) {
   ocAprobaciones[dept] = true;
   var el = document.getElementById('aprov-'+dept+'-status');
-  if (el) el.innerHTML = '<div style="color:#3B6D11;font-size:13px;">✓ Aprobado</div>';
+  if (el) el.innerHTML = '<div style="color:#3B6D11;font-size:13px;">OK Aprobado</div>';
 
   if (ocAprobaciones.tecnico && ocAprobaciones.comercial && ocAprobaciones.direccion) {
     document.getElementById('oc-envio-final').style.display = 'block';
@@ -2559,7 +2559,7 @@ function volverDesdeOfertaCurso() {
   else showPanel('dashboard');
 }
 
-// ── OFERTA ENVIADA ──
+// -- OFERTA ENVIADA --
 var oeProyecto = null;
 
 async function abrirOfertaEnviada(id, nameEnc) {
