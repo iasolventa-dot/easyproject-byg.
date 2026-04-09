@@ -502,6 +502,131 @@
   <div class="card" id="alertas-content"><div class="loading">Cargando...</div></div>
 </div>
 
+<!-- PANEL OFERTA ENVIADA -->
+<div id="panel-oferta-enviada" class="panel">
+  <div class="topbar">
+    <h1 id="oe-title">Oferta enviada</h1>
+    <button class="btn btn-back" onclick="volverDesdeOfertaEnviada()">Volver</button>
+  </div>
+
+  <!-- INFO PROYECTO -->
+  <div style="background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Proyecto</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oe-name">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Cliente</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oe-client">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Código expediente</div><div style="font-size:13px;font-weight:500;color:#0C447C;" id="oe-code">-</div></div>
+      <div><div style="font-size:10px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Estado</div><div id="oe-status-badge">-</div></div>
+    </div>
+  </div>
+
+  <!-- ALERTA ESTADO -->
+  <div id="oe-alert" class="alert-box" style="margin-bottom:1.5rem;">
+    <div class="alert-box-title">Pendiente de respuesta del cliente</div>
+    <div class="alert-box-desc">La oferta ha sido enviada. En cuanto el cliente confirme o rechace, registra la respuesta aquí.</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="proj-tabs" style="margin-bottom:1.5rem;">
+    <div class="proj-tab active" onclick="showOeTab('respuesta',this)">Respuesta del cliente</div>
+    <div class="proj-tab" onclick="showOeTab('competencia',this)">Control de competencia</div>
+    <div class="proj-tab" onclick="showOeTab('historial',this)">Historial</div>
+  </div>
+
+  <!-- TAB RESPUESTA -->
+  <div id="oe-tab-respuesta">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+
+      <!-- Adjudicación -->
+      <div class="card" style="border:1px solid #C0DD97;background:#FAFEF6;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #e5f5d0;">
+          <div style="width:32px;height:32px;border-radius:8px;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:16px;">✓</div>
+          <div><div style="font-size:13px;font-weight:600;color:#27500A;">Registrar adjudicación</div><div style="font-size:11px;color:#3B6D11;">El cliente acepta nuestra oferta</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Método de confirmación</label>
+            <select id="oe-method" style="width:100%;padding:7px 10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;">
+              <option value="email">Email de confirmación</option>
+              <option value="documento">Documento / Pedido firmado</option>
+              <option value="verbal">Confirmación verbal (llamada)</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Fecha de adjudicación</label>
+            <input type="date" id="oe-award-date" style="width:100%;padding:7px 10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Importe adjudicado (€)</label>
+            <input type="number" id="oe-award-amount" placeholder="0.00" style="width:100%;padding:7px 10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Contacto que confirmó</label>
+            <input type="text" id="oe-contact" placeholder="Nombre y cargo del contacto" style="width:100%;padding:7px 10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Notas</label>
+            <textarea id="oe-award-notes" placeholder="Condiciones especiales, plazos acordados..." style="width:100%;padding:7px 10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
+          </div>
+          <button class="btn btn-success" onclick="registrarAdjudicacion()">Confirmar adjudicación y pasar a Adjudicado →</button>
+        </div>
+      </div>
+
+      <!-- Rechazo / Negociación -->
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="card" style="border:1px solid #F7C1C1;background:#FDFAFA;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #fde8e8;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#FCEBEB;display:flex;align-items:center;justify-content:center;font-size:16px;">✗</div>
+            <div><div style="font-size:13px;font-weight:600;color:#A32D2D;">Registrar rechazo</div><div style="font-size:11px;color:#A32D2D;">El cliente no acepta nuestra oferta</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>
+              <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Motivo del rechazo</label>
+              <textarea id="oe-reject-reason" placeholder="Precio, plazos, cambio de proveedor..." style="width:100%;padding:7px 10px;border:1px solid #F7C1C1;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="registrarRechazo()">Registrar como rechazado</button>
+          </div>
+        </div>
+
+        <div class="card" style="border:1px solid #FAC775;background:#FEFAF4;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #fde8c0;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:16px;">↔</div>
+            <div><div style="font-size:13px;font-weight:600;color:#854F0B;">En negociación</div><div style="font-size:11px;color:#854F0B;">El cliente pide cambios o contraoferta</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>
+              <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Notas de negociación</label>
+              <textarea id="oe-negoc-notes" placeholder="Qué pide el cliente, en qué punto estamos..." style="width:100%;padding:7px 10px;border:1px solid #FAC775;border-radius:6px;font-size:12px;min-height:60px;resize:vertical;font-family:inherit;"></textarea>
+            </div>
+            <button class="btn btn-sm" style="border-color:#FAC775;color:#854F0B;background:#FEF6EE;" onclick="registrarNegociacion()">Marcar en negociación</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB COMPETENCIA -->
+  <div id="oe-tab-competencia" style="display:none;">
+    <div class="alert-box" style="margin-bottom:1.5rem;">
+      <div class="alert-box-title">Control de competencia</div>
+      <div class="alert-box-desc">Si el proyecto fue adjudicado a otra empresa, registra los datos del competidor. Esta información es estratégica para futuros proyectos.</div>
+    </div>
+    <div class="card" style="max-width:600px;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="form-field"><label>Empresa competidora</label><input type="text" id="oe-comp-name" placeholder="Nombre de la empresa que ganó el concurso"></div>
+        <div class="form-field"><label>Importe por el que ganó (€)</label><input type="number" id="oe-comp-amount" placeholder="0.00"></div>
+        <div class="form-field"><label>Notas sobre el competidor</label><textarea id="oe-comp-notes" placeholder="Por qué ganaron, qué diferencia había en el precio, referencias..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:90px;resize:vertical;font-family:inherit;"></textarea></div>
+        <button class="btn btn-primary" onclick="guardarDatosCompetencia()">Guardar datos de competencia</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB HISTORIAL -->
+  <div id="oe-tab-historial" style="display:none;">
+    <div id="oe-historial-content"><div class="loading">Cargando historial...</div></div>
+  </div>
+</div>
+
 <!-- PANEL OFERTA EN CURSO -->
 <div id="panel-oferta-curso" class="panel">
   <div class="topbar">
@@ -968,6 +1093,10 @@ async function abrirProyecto(id, nameEnc) {
   }
   if (stCode === 'oferta_en_curso') {
     abrirOfertaCurso(id, nameEnc);
+    return;
+  }
+  if (stCode === 'oferta_enviada') {
+    abrirOfertaEnviada(id, nameEnc);
     return;
   }
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
@@ -2426,6 +2555,230 @@ async function enviarOfertaCliente() {
 
 function volverDesdeOfertaCurso() {
   ocProyecto = null;
+  if (currentFase) showProyectosFase(currentFase);
+  else showPanel('dashboard');
+}
+
+// ── OFERTA ENVIADA ──
+var oeProyecto = null;
+
+async function abrirOfertaEnviada(id, nameEnc) {
+  var name = decodeURIComponent(nameEnc);
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-oferta-enviada').classList.add('active');
+  showOeTab('respuesta', document.querySelector('.proj-tab'));
+
+  try {
+    var res = await db.from('projects').select('id,name,code,project_code,contact_email,category,received_at,project_statuses(code,name)').eq('id',id).single();
+    oeProyecto = res.data;
+
+    document.getElementById('oe-title').textContent = 'Oferta enviada - '+(oeProyecto.name||oeProyecto.code||'#'+id);
+    document.getElementById('oe-name').textContent = oeProyecto.name||oeProyecto.code||'#'+id;
+    document.getElementById('oe-client').textContent = oeProyecto.contact_email||'-';
+    document.getElementById('oe-code').textContent = oeProyecto.project_code||'-';
+    document.getElementById('oe-status-badge').innerHTML = '<span class="badge b-oferta_enviada">Oferta enviada</span>';
+
+    // Poner fecha de hoy por defecto
+    document.getElementById('oe-award-date').value = new Date().toISOString().split('T')[0];
+
+    // Cargar historial
+    cargarHistorialAdjudicacion(id);
+
+    // Verificar si ya hay adjudicación registrada
+    var awardRes = await db.from('project_awards').select('*').eq('project_id',id).order('created_at',{ascending:false}).limit(1);
+    if (awardRes.data && awardRes.data.length) {
+      var award = awardRes.data[0];
+      var alertEl = document.getElementById('oe-alert');
+      if (award.award_type === 'adjudicado') {
+        alertEl.className = 'alert-box alert-box-success';
+        alertEl.innerHTML = '<div class="alert-box-title">Proyecto adjudicado el '+new Date(award.award_date||award.created_at).toLocaleDateString('es-ES')+'</div>' +
+          '<div class="alert-box-desc">Confirmado por '+award.confirmation_method+'. Importe: '+(award.awarded_amount?award.awarded_amount.toLocaleString('es-ES')+'€':'no especificado')+'</div>';
+      } else if (award.award_type === 'rechazado') {
+        alertEl.className = 'alert-box';
+        alertEl.innerHTML = '<div class="alert-box-title">Oferta rechazada</div>' +
+          '<div class="alert-box-desc">'+(award.notes||'Sin motivo registrado')+'</div>';
+      } else if (award.award_type === 'negociando') {
+        alertEl.className = 'alert-box';
+        alertEl.style.background = '#FEF6EE';
+        alertEl.style.borderColor = '#FAC775';
+        alertEl.innerHTML = '<div class="alert-box-title" style="color:#633806;">En negociación</div>' +
+          '<div class="alert-box-desc">'+(award.notes||'')+'</div>';
+      }
+    }
+  } catch(e) { console.error('Error abriendo oferta enviada:',e); }
+}
+
+function showOeTab(tab, el) {
+  ['respuesta','competencia','historial'].forEach(function(t){
+    var el2 = document.getElementById('oe-tab-'+t);
+    if (el2) el2.style.display = 'none';
+  });
+  document.querySelectorAll('.proj-tab').forEach(function(t){t.classList.remove('active');});
+  var tabEl = document.getElementById('oe-tab-'+tab);
+  if (tabEl) tabEl.style.display = 'block';
+  if (el) el.classList.add('active');
+  if (tab === 'historial') cargarHistorialAdjudicacion(oeProyecto ? oeProyecto.id : null);
+}
+
+async function registrarAdjudicacion() {
+  if (!oeProyecto) return;
+  var method = document.getElementById('oe-method').value;
+  var date = document.getElementById('oe-award-date').value;
+  var amount = parseFloat(document.getElementById('oe-award-amount').value) || null;
+  var contact = document.getElementById('oe-contact').value;
+  var notes = document.getElementById('oe-award-notes').value;
+
+  if (!date) { alert('Indica la fecha de adjudicación.'); return; }
+
+  try {
+    // Guardar en project_awards
+    await db.from('project_awards').insert({
+      project_id: oeProyecto.id,
+      award_type: 'adjudicado',
+      award_date: date,
+      awarded_amount: amount,
+      confirmation_method: method,
+      contact_name: contact,
+      notes: notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    // Actualizar estado del proyecto a adjudicado
+    var stRes = await db.from('project_statuses').select('id').eq('code','adjudicado').single();
+    if (stRes.data) {
+      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',oeProyecto.id);
+    }
+
+    alert('Proyecto adjudicado correctamente.
+
+El proyecto pasa a estado "Adjudicado".');
+    oeProyecto = null;
+    await showProyectosFase('oferta_enviada');
+    loadDashboard();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function registrarRechazo() {
+  if (!oeProyecto) return;
+  var reason = document.getElementById('oe-reject-reason').value.trim();
+  if (!reason) { alert('Indica el motivo del rechazo.'); return; }
+
+  try {
+    await db.from('project_awards').insert({
+      project_id: oeProyecto.id,
+      award_type: 'rechazado',
+      award_date: new Date().toISOString().split('T')[0],
+      notes: reason,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    var stRes = await db.from('project_statuses').select('id').eq('code','cancelled').single();
+    if (stRes.data) {
+      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',oeProyecto.id);
+    }
+
+    alert('Oferta registrada como rechazada.');
+    oeProyecto = null;
+    await showProyectosFase('oferta_enviada');
+    loadDashboard();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function registrarNegociacion() {
+  if (!oeProyecto) return;
+  var notes = document.getElementById('oe-negoc-notes').value.trim();
+
+  try {
+    await db.from('project_awards').insert({
+      project_id: oeProyecto.id,
+      award_type: 'negociando',
+      award_date: new Date().toISOString().split('T')[0],
+      notes: notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    var alertEl = document.getElementById('oe-alert');
+    alertEl.style.background = '#FEF6EE';
+    alertEl.style.borderColor = '#FAC775';
+    alertEl.innerHTML = '<div class="alert-box-title" style="color:#633806;">Marcado en negociación</div>' +
+      '<div class="alert-box-desc">'+(notes||'Sin notas')+'</div>';
+
+    alert('Estado actualizado a "En negociación".');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function guardarDatosCompetencia() {
+  if (!oeProyecto) return;
+  var name = document.getElementById('oe-comp-name').value.trim();
+  var amount = parseFloat(document.getElementById('oe-comp-amount').value) || null;
+  var notes = document.getElementById('oe-comp-notes').value.trim();
+
+  if (!name) { alert('Indica el nombre del competidor.'); return; }
+
+  try {
+    // Buscar si hay una adjudicación existente para actualizar
+    var existing = await db.from('project_awards').select('id').eq('project_id',oeProyecto.id).order('created_at',{ascending:false}).limit(1);
+    if (existing.data && existing.data.length) {
+      await db.from('project_awards').update({
+        competitor_name: name,
+        competitor_amount: amount,
+        competitor_notes: notes,
+        updated_at: new Date().toISOString()
+      }).eq('id', existing.data[0].id);
+    } else {
+      await db.from('project_awards').insert({
+        project_id: oeProyecto.id,
+        award_type: 'rechazado',
+        competitor_name: name,
+        competitor_amount: amount,
+        competitor_notes: notes,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    }
+    alert('Datos de competencia guardados correctamente.');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function cargarHistorialAdjudicacion(projectId) {
+  var el = document.getElementById('oe-historial-content');
+  if (!el || !projectId) return;
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+
+  try {
+    var res = await db.from('project_awards').select('*').eq('project_id',projectId).order('created_at',{ascending:false});
+    if (!res.data || !res.data.length) {
+      el.innerHTML = '<div class="empty">No hay registros de respuesta del cliente aún.</div>';
+      return;
+    }
+
+    var badgeMap2 = {
+      adjudicado: '<span class="badge b-adjudicado">Adjudicado</span>',
+      rechazado: '<span class="badge b-red">Rechazado</span>',
+      negociando: '<span class="badge b-oferta_curso">En negociación</span>'
+    };
+
+    el.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;">' +
+      res.data.map(function(a) {
+        return '<div class="card" style="padding:0.875rem 1rem;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+          (badgeMap2[a.award_type]||'<span class="badge b-default">'+a.award_type+'</span>') +
+          '<span style="font-size:11px;color:#aaa;">'+(a.award_date?new Date(a.award_date).toLocaleDateString('es-ES'):new Date(a.created_at).toLocaleDateString('es-ES'))+'</span></div>' +
+          (a.awarded_amount?'<div style="font-size:13px;font-weight:500;color:#3B6D11;margin-bottom:4px;">'+a.awarded_amount.toLocaleString('es-ES')+'€</div>':'') +
+          (a.confirmation_method?'<div style="font-size:11px;color:#888;margin-bottom:4px;">Método: '+a.confirmation_method+'</div>':'') +
+          (a.contact_name?'<div style="font-size:11px;color:#888;margin-bottom:4px;">Contacto: '+a.contact_name+'</div>':'') +
+          (a.notes?'<div style="font-size:12px;color:#555;">'+a.notes+'</div>':'') +
+          (a.competitor_name?'<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0ea;font-size:11px;color:#888;">Competidor: <strong>'+a.competitor_name+'</strong>'+(a.competitor_amount?' · '+a.competitor_amount.toLocaleString('es-ES')+'€':'')+'</div>':'') +
+          '</div>';
+      }).join('') + '</div>';
+  } catch(e) { console.error(e); }
+}
+
+function volverDesdeOfertaEnviada() {
+  oeProyecto = null;
   if (currentFase) showProyectosFase(currentFase);
   else showPanel('dashboard');
 }
