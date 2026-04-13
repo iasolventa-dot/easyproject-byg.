@@ -460,8 +460,8 @@
   </div>
   <div class="card">
     <table class="data-table" id="clientes-table">
-      <thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Email contacto</th><th>Teléfono</th><th></th></tr></thead>
-      <tbody id="clientes-tbody"><tr><td colspan="5" class="loading">Cargando...</td></tr></tbody>
+      <thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Contacto principal</th><th>Email contacto</th><th>Teléfono</th><th></th></tr></thead>
+      <tbody id="clientes-tbody"><tr><td colspan="6" class="loading">Cargando...</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -496,8 +496,8 @@
   </div>
   <div class="card">
     <table class="data-table" id="proveedores-table">
-      <thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Gremios</th><th>Email contacto</th><th>Teléfono</th><th></th></tr></thead>
-      <tbody id="proveedores-tbody"><tr><td colspan="6" class="loading">Cargando...</td></tr></tbody>
+      <thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Contacto principal</th><th>Gremios</th><th>Email contacto</th><th>Teléfono</th><th></th></tr></thead>
+      <tbody id="proveedores-tbody"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -1632,11 +1632,12 @@ async function loadClientes() {
   try {
     var res=await db.from('clients').select('*').order('commercial_name');
     clientesData = res.data || [];
-    if (!clientesData.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No hay clientes dados de alta</td></tr>';return;}
+    if (!clientesData.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No hay clientes dados de alta</td></tr>';return;}
     tbody.innerHTML=clientesData.map(function(c){
       return '<tr onclick="abrirFichaCliente('+c.id+')" style="cursor:pointer;">' +
         '<td>'+(c.internal_code||'-')+'</td>' +
         '<td style="font-weight:500;">'+c.commercial_name+'</td>' +
+        '<td>'+(c.contact_name||'-')+'</td>' +
         '<td>'+(c.commercial_email||'-')+'</td>' +
         '<td>'+(c.phone||'-')+'</td>' +
         '<td><span class="item-arr">Ver ficha</span></td></tr>';
@@ -1651,19 +1652,26 @@ function abrirFichaCliente(id) {
   document.getElementById('panel-cliente-detalle').classList.add('active');
   document.getElementById('cliente-det-title').textContent = c.commercial_name;
   var campos = [
-    {label:'Código interno',    val:c.internal_code},
-    {label:'Acrónimo cliente',  val:c.client_code},
-    {label:'Nombre comercial',  val:c.commercial_name},
-    {label:'Razón social',      val:c.legal_name},
-    {label:'CIF / NIF',         val:c.cif},
-    {label:'Email contacto',    val:c.commercial_email},
-    {label:'Teléfono',          val:c.phone},
-    {label:'Dirección',         val:c.address},
-    {label:'Ciudad',            val:c.city},
-    {label:'Tipo de cliente',   val:c.client_type},
-    {label:'Notas',             val:c.notes},
-    {label:'Alta en sistema',   val:c.created_at ? new Date(c.created_at).toLocaleDateString('es-ES') : '-'},
-    {label:'Última actualización', val:c.updated_at ? new Date(c.updated_at).toLocaleDateString('es-ES') : '-'}
+    {label:'Código interno',         val:c.internal_code},
+    {label:'Acrónimo cliente',       val:c.client_code},
+    {label:'Nombre comercial',       val:c.commercial_name},
+    {label:'Razón social',           val:c.legal_name},
+    {label:'CIF / NIF',              val:c.cif},
+    {label:'Contacto principal',     val:c.contact_name},
+    {label:'Email principal',        val:c.commercial_email},
+    {label:'Teléfono principal',     val:c.phone},
+    {label:'Contacto técnico',       val:c.contact_name_tech},
+    {label:'Email técnico',          val:c.email_tecnico},
+    {label:'Teléfono técnico',       val:c.phone_tecnico},
+    {label:'Contacto administración',val:c.contact_name_admin},
+    {label:'Email administración',   val:c.email_admin},
+    {label:'Teléfono administración',val:c.phone_admin},
+    {label:'Dirección',              val:c.address},
+    {label:'Ciudad',                 val:c.city},
+    {label:'Tipo de cliente',        val:c.client_type},
+    {label:'Notas',                  val:c.notes},
+    {label:'Alta en sistema',        val:c.created_at ? new Date(c.created_at).toLocaleDateString('es-ES') : '-'},
+    {label:'Última actualización',   val:c.updated_at ? new Date(c.updated_at).toLocaleDateString('es-ES') : '-'}
   ];
   document.getElementById('cliente-ficha-content').innerHTML =
     '<div style="display:flex;flex-direction:column;gap:0;">' +
@@ -1764,6 +1772,7 @@ function renderTablaProveedores(data) {
     return '<tr onclick="abrirFichaProveedor('+s.id+')" style="cursor:pointer;">' +
       '<td>'+(s.internal_code||'-')+'</td>' +
       '<td style="font-weight:500;">'+s.commercial_name+'</td>' +
+      '<td>'+(s.contact_name||'-')+'</td>' +
       '<td>'+(gremsHtml||'-')+'</td>' +
       '<td>'+(s.commercial_email||'-')+'</td>' +
       '<td>'+(s.phone||'-')+'</td>' +
