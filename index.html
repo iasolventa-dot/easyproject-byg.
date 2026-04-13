@@ -1152,6 +1152,7 @@ function setDept(dept, btn) {
 }
 
 function irAFaseAnalisis() { showProyectosFase('en_analisis'); }
+function showProyectosPendientesTecnico() { showProyectosFaseMultiple(['en_analisis','oferta_en_curso','pending_tech_review'], 'Proyectos pendientes de accion tecnica'); }
 function irAFaseSolicitado() { showProyectosFase('solicitado'); }
 function irAFaseEjecucion() { showProyectosFase('en_ejecucion'); }
 
@@ -1204,7 +1205,7 @@ async function cargarMetricasDept(dept) {
       if (banner) {
         if (n > 0) {
           banner.style.display = 'block';
-          banner.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosFase(\'all\')">' +
+          banner.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosPendientesTecnico()">' +
             '<div style="display:flex;align-items:center;gap:12px;">' +
             '<div class="notif-bell"><span style="font-size:14px;color:white;font-weight:bold;">!</span></div>' +
             '<div><div style="font-size:13px;font-weight:600;color:#A32D2D;">' + n + ' proyecto(s) requieren tu atencion</div>' +
@@ -1407,6 +1408,30 @@ function renderErrores(data) {
     }).join('');
 }
 
+
+async function showProyectosFaseMultiple(fases, titulo) {
+  currentFase = null;
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-proyectos').classList.add('active');
+  document.getElementById('proyectos-title').textContent = titulo || 'Proyectos';
+  var tbody = document.getElementById('proyectos-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Cargando...</td></tr>';
+  try {
+    var stRes = await db.from('project_statuses').select('id,code').in('code', fases);
+    var ids = stRes.data ? stRes.data.map(function(s){return s.id;}) : [];
+    if (!ids.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay proyectos</td></tr>'; return; }
+    var res = await db.from('projects').select('id,name,code,contact_email,category,confidence,received_at,project_statuses(code,name)').in('project_status_id', ids).order('created_at',{ascending:false});
+    if (!res.data || !res.data.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay proyectos pendientes</td></tr>'; return; }
+    tbody.innerHTML = res.data.map(function(p){
+      var st = p.project_statuses?p.project_statuses.code:'default';
+      var badge = badgeMap[st]||'<span class="badge b-default">'+st+'</span>';
+      var conf = p.confidence?Math.round(p.confidence*100)+'%':'-';
+      return '<tr onclick="abrirProyectoById('+p.id+')"><td>'+(p.name||p.code||'#'+p.id)+'</td>' +
+        '<td>'+(p.contact_email||'-')+'</td><td>'+(p.category||'-')+'</td><td>'+conf+'</td>' +
+        '<td>'+badge+'</td><td>'+fmt(p.received_at)+'</td><td><span class="item-arr">Ver</span></td></tr>';
+    }).join('');
+  } catch(e) { console.error(e); }
+}
 
 async function showProyectosFase(fase) {
   currentFase = fase;
