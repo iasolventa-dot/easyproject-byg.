@@ -579,6 +579,68 @@
   <div class="card" id="alertas-content"><div class="loading">Cargando...</div></div>
 </div>
 
+<!-- PANEL EN EJECUCION -->
+<div id="panel-ejecucion" class="panel">
+  <div class="topbar">
+    <h1 id="ej-title">En ejecucion</h1>
+    <button class="btn btn-back" onclick="volverDesdeEjecucion()">Volver</button>
+  </div>
+
+  <!-- INFO PROYECTO -->
+  <div style="background:#E1F5EE;border:1px solid #A7DEC9;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;">
+      <div><div style="font-size:10px;color:#0F6E56;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Proyecto</div><div style="font-size:13px;font-weight:500;color:#065F46;" id="ej-name">-</div></div>
+      <div><div style="font-size:10px;color:#0F6E56;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Jefe/a de Obra</div><div style="font-size:13px;font-weight:500;color:#065F46;" id="ej-manager">-</div></div>
+      <div><div style="font-size:10px;color:#0F6E56;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Inicio</div><div style="font-size:13px;font-weight:500;color:#065F46;" id="ej-start">-</div></div>
+      <div><div style="font-size:10px;color:#0F6E56;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Fin previsto</div><div style="font-size:13px;font-weight:500;color:#065F46;" id="ej-end">-</div></div>
+      <div><div style="font-size:10px;color:#0F6E56;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Avance</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;height:8px;background:#A7DEC9;border-radius:4px;overflow:hidden;">
+            <div id="ej-progress-bar" style="height:100%;background:#0F6E56;border-radius:4px;width:0%;transition:width 0.5s;"></div>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:#065F46;" id="ej-progress-pct">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="proj-tabs" style="margin-bottom:1.5rem;">
+    <div class="proj-tab active" onclick="showEjTab('hitos',this)">Hitos de obra</div>
+    <div class="proj-tab" onclick="showEjTab('economico',this)">Estado economico</div>
+    <div class="proj-tab" onclick="showEjTab('gastos',this)">Gastos</div>
+    <div class="proj-tab" onclick="showEjTab('certificaciones',this)">Certificaciones</div>
+  </div>
+
+  <!-- TAB HITOS -->
+  <div id="ej-tab-hitos">
+    <div id="ej-hitos-content"><div class="loading">Cargando hitos...</div></div>
+  </div>
+
+  <!-- TAB ECONOMICO -->
+  <div id="ej-tab-economico" style="display:none;">
+    <div id="ej-economico-content"><div class="loading">Cargando datos economicos...</div></div>
+  </div>
+
+  <!-- TAB GASTOS -->
+  <div id="ej-tab-gastos" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-size:13px;color:#888;">Albaranes, facturas y otros gastos registrados en obra</div>
+      <button class="btn btn-primary btn-sm" onclick="simularCargaGasto()">+ Registrar gasto</button>
+    </div>
+    <div id="ej-gastos-content"><div class="loading">Cargando gastos...</div></div>
+  </div>
+
+  <!-- TAB CERTIFICACIONES -->
+  <div id="ej-tab-certificaciones" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-size:13px;color:#888;">Certificaciones economicas emitidas al cliente</div>
+      <button class="btn btn-primary btn-sm" onclick="alert('En produccion: crear nueva certificacion')">+ Nueva certificacion</button>
+    </div>
+    <div id="ej-certs-content"><div class="loading">Cargando certificaciones...</div></div>
+  </div>
+</div>
+
 <!-- PANEL ADJUDICADO -->
 <div id="panel-adjudicado" class="panel">
   <div class="topbar">
@@ -1490,6 +1552,10 @@ async function abrirProyecto(id, nameEnc) {
   }
   if (stCode === 'adjudicado' || stCode === 'pendiente_lanzamiento') {
     abrirAdjudicado(id, nameEnc);
+    return;
+  }
+  if (stCode === 'en_ejecucion') {
+    abrirEjecucion(id, nameEnc);
     return;
   }
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
@@ -3586,6 +3652,189 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   checkSession();
 });
+
+// -- EN EJECUCION --
+var ejProyecto = null;
+
+async function abrirEjecucion(id, nameEnc) {
+  var name = decodeURIComponent(nameEnc);
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-ejecucion').classList.add('active');
+  showEjTab('hitos', document.querySelector('.proj-tab'));
+
+  try {
+    var res = await db.from('projects').select('id,name,code,project_code,contact_email,category,project_manager_id,project_statuses(code,name)').eq('id',id).single();
+    ejProyecto = res.data;
+    document.getElementById('ej-title').textContent = 'En ejecucion - '+(ejProyecto.name||ejProyecto.code||'#'+id);
+    document.getElementById('ej-name').textContent = ejProyecto.name||ejProyecto.code||'#'+id;
+
+    if (ejProyecto.project_manager_id) {
+      var mgr = await db.from('project_managers').select('full_name,phone').eq('id',ejProyecto.project_manager_id).single();
+      if (mgr.data) document.getElementById('ej-manager').textContent = mgr.data.full_name + (mgr.data.phone ? ' - ' + mgr.data.phone : '');
+    } else {
+      document.getElementById('ej-manager').textContent = 'Sin asignar';
+    }
+
+    var execRes = await db.from('project_execution').select('*').eq('project_id',id).single();
+    if (execRes.data) {
+      var exec = execRes.data;
+      document.getElementById('ej-start').textContent = exec.start_date ? new Date(exec.start_date).toLocaleDateString('es-ES') : '-';
+      document.getElementById('ej-end').textContent = exec.planned_end_date ? new Date(exec.planned_end_date).toLocaleDateString('es-ES') : '-';
+      var pct = parseFloat(exec.progress_pct) || 0;
+      document.getElementById('ej-progress-bar').style.width = pct + '%';
+      document.getElementById('ej-progress-pct').textContent = pct + '%';
+    }
+
+    cargarHitos(id);
+    cargarEconomico(id);
+    cargarGastos(id);
+    cargarCertificaciones(id);
+
+  } catch(e) { console.error('Error abriendo ejecucion:',e); }
+}
+
+function showEjTab(tab, el) {
+  ['hitos','economico','gastos','certificaciones'].forEach(function(t){
+    var el2 = document.getElementById('ej-tab-'+t);
+    if (el2) el2.style.display = 'none';
+  });
+  document.querySelectorAll('.proj-tab').forEach(function(t){t.classList.remove('active');});
+  var tabEl = document.getElementById('ej-tab-'+tab);
+  if (tabEl) tabEl.style.display = 'block';
+  if (el) el.classList.add('active');
+}
+
+async function cargarHitos(projectId) {
+  var el = document.getElementById('ej-hitos-content');
+  if (!el) return;
+  try {
+    var res = await db.from('project_milestones').select('*').eq('project_id',projectId).order('planned_date');
+    if (!res.data || !res.data.length) { el.innerHTML = '<div class="empty">No hay hitos registrados</div>'; return; }
+    var completados = res.data.filter(function(m){return m.completed;}).length;
+    var total = res.data.length;
+    el.innerHTML = '<div style="margin-bottom:1rem;font-size:12px;color:#888;">' + completados + ' de ' + total + ' hitos completados</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;">' +
+      res.data.map(function(m, idx) {
+        var completado = m.completed;
+        var bg = completado ? '#E1F5EE' : 'white';
+        var border = completado ? '#A7DEC9' : '#e5e5e0';
+        var fecha = m.actual_date ? new Date(m.actual_date).toLocaleDateString('es-ES') : (m.planned_date ? 'Previsto: ' + new Date(m.planned_date).toLocaleDateString('es-ES') : '-');
+        var retraso = (!completado && m.planned_date && new Date(m.planned_date) < new Date()) ?
+          '<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:2px 6px;border-radius:4px;margin-left:8px;">Retrasado</span>' : '';
+        return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:'+bg+';border:1px solid '+border+';border-radius:8px;">' +
+          '<div style="width:28px;height:28px;border-radius:50%;background:'+(completado?'#0F6E56':'#ddd')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+          '<span style="font-size:11px;color:white;font-weight:700;">'+(completado?'OK':(idx+1))+'</span></div>' +
+          '<div style="flex:1;">' +
+          '<div style="font-size:13px;font-weight:500;color:'+(completado?'#065F46':'#1a1a1a')+';display:flex;align-items:center;">' + m.milestone_name + retraso + '</div>' +
+          '<div style="font-size:11px;color:#888;margin-top:2px;">' + fecha + '</div>' +
+          '</div>' +
+          (completado ? '<span class="badge b-adjudicado">Completado</span>' : '<button class="btn btn-sm btn-success" onclick="marcarHitoCompletado('+m.id+','+projectId+')">Marcar completado</button>') +
+          '</div>';
+      }).join('') + '</div>';
+  } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando hitos</div>'; }
+}
+
+async function marcarHitoCompletado(hitoId, projectId) {
+  try {
+    await db.from('project_milestones').update({completed:true, actual_date:new Date().toISOString().split('T')[0]}).eq('id',hitoId);
+    cargarHitos(projectId);
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function cargarEconomico(projectId) {
+  var el = document.getElementById('ej-economico-content');
+  if (!el) return;
+  try {
+    var gastos = await db.from('project_expenses').select('amount,approved').eq('project_id',projectId);
+    var certs = await db.from('project_certifications').select('amount,cumulative_amount,invoiced').eq('project_id',projectId).order('cert_number',{ascending:false});
+    var items = await db.from('offer_items').select('supplier_cost,final_price,quantity').eq('project_id',projectId);
+
+    var totalPresupuesto = items.data ? items.data.reduce(function(acc,i){return acc+(parseFloat(i.final_price)||0)*(parseFloat(i.quantity)||1);},0) : 0;
+    var totalCoste = items.data ? items.data.reduce(function(acc,i){return acc+(parseFloat(i.supplier_cost)||0)*(parseFloat(i.quantity)||1);},0) : 0;
+    var totalGastado = gastos.data ? gastos.data.filter(function(g){return g.approved;}).reduce(function(acc,g){return acc+(parseFloat(g.amount)||0);},0) : 0;
+    var totalCertificado = certs.data && certs.data.length ? parseFloat(certs.data[0].cumulative_amount)||0 : 0;
+    var margenTeorico = totalPresupuesto > 0 ? ((totalPresupuesto-totalCoste)/totalPresupuesto*100).toFixed(1) : 0;
+    var margenReal = totalPresupuesto > 0 ? ((totalPresupuesto-totalGastado)/totalPresupuesto*100).toFixed(1) : 0;
+    var colorMargen = parseFloat(margenReal) >= parseFloat(margenTeorico)*0.8 ? '#0F6E56' : '#A32D2D';
+
+    el.innerHTML =
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">' +
+      '<div class="card" style="text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:6px;">Presupuesto venta</div><div style="font-size:22px;font-weight:600;">' + totalPresupuesto.toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</div><div style="font-size:11px;color:#aaa;margin-top:4px;">Precio contratado con cliente</div></div>' +
+      '<div class="card" style="text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:6px;">Gasto real acumulado</div><div style="font-size:22px;font-weight:600;color:#A32D2D;">' + totalGastado.toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</div><div style="font-size:11px;color:#aaa;margin-top:4px;">Albaranes y facturas aprobados</div></div>' +
+      '<div class="card" style="text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:6px;">Margen real vs teorico</div><div style="font-size:22px;font-weight:600;color:'+colorMargen+';">' + margenReal + '%</div><div style="font-size:11px;color:#aaa;margin-top:4px;">Teorico: ' + margenTeorico + '%</div></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">' +
+      '<div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;">Certificaciones al cliente</div>' +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ea;font-size:12px;"><span style="color:#888;">Total certificado</span><span style="font-weight:500;">' + totalCertificado.toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ea;font-size:12px;"><span style="color:#888;">Pendiente de certificar</span><span style="font-weight:500;color:#854F0B;">' + Math.max(0,totalPresupuesto-totalCertificado).toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;"><span style="color:#888;">Certificado / Presupuesto</span><span style="font-weight:500;">' + (totalPresupuesto>0?(totalCertificado/totalPresupuesto*100).toFixed(0):0) + '%</span></div></div>' +
+      '<div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;">Control de costes</div>' +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ea;font-size:12px;"><span style="color:#888;">Coste presupuestado</span><span style="font-weight:500;">' + totalCoste.toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ea;font-size:12px;"><span style="color:#888;">Gasto real</span><span style="font-weight:500;color:#A32D2D;">' + totalGastado.toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;"><span style="color:#888;">Desviacion</span><span style="font-weight:500;color:'+(totalGastado>totalCoste?'#A32D2D':'#0F6E56')+'">' + (totalGastado-totalCoste).toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div></div>' +
+      '</div>';
+  } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando datos economicos</div>'; }
+}
+
+async function cargarGastos(projectId) {
+  var el = document.getElementById('ej-gastos-content');
+  if (!el) return;
+  try {
+    var res = await db.from('project_expenses').select('*').eq('project_id',projectId).order('expense_date',{ascending:false});
+    if (!res.data || !res.data.length) { el.innerHTML = '<div class="empty">No hay gastos registrados</div>'; return; }
+    var total = res.data.reduce(function(acc,g){return acc+(parseFloat(g.amount)||0);},0);
+    var totalAprobado = res.data.filter(function(g){return g.approved;}).reduce(function(acc,g){return acc+(parseFloat(g.amount)||0);},0);
+    el.innerHTML = '<div style="display:flex;gap:1rem;margin-bottom:1rem;">' +
+      '<div style="background:#f9f9f6;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Total gastos</div><div style="font-size:18px;font-weight:600;">' + total.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
+      '<div style="background:#EAF3DE;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Aprobado</div><div style="font-size:18px;font-weight:600;color:#3B6D11;">' + totalAprobado.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
+      '<div style="background:#FCEBEB;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Pendiente aprobacion</div><div style="font-size:18px;font-weight:600;color:#A32D2D;">' + (total-totalAprobado).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
+      '</div>' +
+      '<table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>IA</th></tr></thead><tbody>' +
+      res.data.map(function(g) {
+        return '<tr>' +
+          '<td>' + new Date(g.expense_date).toLocaleDateString('es-ES') + '</td>' +
+          '<td><span class="badge '+(g.expense_type==='factura'?'b-oferta_enviada':'b-default')+'">' + (g.expense_type==='factura'?'Factura':'Albaran') + '</span></td>' +
+          '<td style="font-size:11px;">' + (g.supplier_name||'-') + '</td>' +
+          '<td style="font-size:11px;">' + (g.concept||'-') + '</td>' +
+          '<td style="text-align:right;font-weight:500;">' + parseFloat(g.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
+          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : '<span class="badge b-review">Pendiente</span>') + '</td>' +
+          '<td>' + (g.ai_extracted ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:2px 6px;border-radius:4px;">IA</span>' : '-') + '</td>' +
+          '</tr>';
+      }).join('') + '</tbody></table>';
+  } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando gastos</div>'; }
+}
+
+async function cargarCertificaciones(projectId) {
+  var el = document.getElementById('ej-certs-content');
+  if (!el) return;
+  try {
+    var res = await db.from('project_certifications').select('*').eq('project_id',projectId).order('cert_number');
+    if (!res.data || !res.data.length) { el.innerHTML = '<div class="empty">No hay certificaciones registradas</div>'; return; }
+    el.innerHTML = '<table class="data-table"><thead><tr><th>Num.</th><th>Fecha</th><th>Importe</th><th>Acumulado</th><th>Facturada</th><th>Fecha factura</th></tr></thead><tbody>' +
+      res.data.map(function(c) {
+        return '<tr>' +
+          '<td style="font-weight:600;">Cert. ' + c.cert_number + '</td>' +
+          '<td>' + new Date(c.cert_date).toLocaleDateString('es-ES') + '</td>' +
+          '<td style="text-align:right;font-weight:500;">' + parseFloat(c.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
+          '<td style="text-align:right;">' + parseFloat(c.cumulative_amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
+          '<td>' + (c.invoiced ? '<span class="badge b-adjudicado">Si</span>' : '<span class="badge b-review">No</span>') + '</td>' +
+          '<td>' + (c.invoice_date ? new Date(c.invoice_date).toLocaleDateString('es-ES') : '-') + '</td>' +
+          '</tr>';
+      }).join('') + '</tbody></table>';
+  } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando certificaciones</div>'; }
+}
+
+function simularCargaGasto() {
+  alert('En produccion: el Jefe/a de Obra sube foto o PDF del albaran. La IA lee el importe, proveedor y concepto automaticamente y lo registra contra el presupuesto del proyecto.');
+}
+
+function volverDesdeEjecucion() {
+  ejProyecto = null;
+  if (currentFase) showProyectosFase(currentFase);
+  else showPanel('dashboard');
+}
+
+
 
 </script>
 </body>
