@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -4084,8 +4083,10 @@ async function guardarNuevoHitoPlanning() {
   if (!nombre) { alert('Escribe el nombre del hito'); return; }
   if (!ejProyecto) { alert('Error: no hay proyecto activo'); return; }
   try {
+    var mCode = 'HIT-' + Date.now();
     await db.from('project_milestones').insert({
       project_id: ejProyecto.id,
+      milestone_code: mCode,
       milestone_name: nombre,
       planned_date: fecha || null,
       gremio: gremio || null,
@@ -4152,8 +4153,10 @@ async function guardarHitoEjecucion() {
   if (!nombre) { alert('Escribe el nombre del hito'); return; }
   if (!ejProyecto) return;
   try {
+    var mCode2 = 'HIT-' + Date.now();
     await db.from('project_milestones').insert({
       project_id: ejProyecto.id,
+      milestone_code: mCode2,
       milestone_name: nombre,
       planned_date: fecha || null,
       completed: false,
