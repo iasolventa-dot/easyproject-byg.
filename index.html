@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -16,6 +15,7 @@
     body.dept-comercial  { background: #EEF7F0; }
     body.dept-prl        { background: #FEF6EE; }
     body.dept-admin      { background: #F3EEFA; }
+    body.dept-jefe_obra  { background: #F0FAF5; }
 
     .sidebar { width: 230px; background: white; border-right: 1px solid #e5e5e0; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 4px; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; }
     .logo-area { display: flex; align-items: center; gap: 10px; padding: 0 0.5rem 1rem; border-bottom: 1px solid #e5e5e0; margin-bottom: 0.5rem; }
@@ -37,6 +37,7 @@
     .dept-comercial-badge  { background: #DCFCE7; color: #166534; }
     .dept-prl-badge        { background: #FEF3C7; color: #92400e; }
     .dept-admin-badge      { background: #EDE9FE; color: #5b21b6; }
+    .dept-jefe_obra-badge  { background: #E1F5EE; color: #0F6E56; }
     .powered { font-size: 9px; color: #ccc; text-align: center; padding-top: 8px; border-top: 1px solid #f0f0ea; margin-top: 8px; }
     .powered span { color: #185FA5; }
 
@@ -66,6 +67,7 @@
     .dept-indicator.di-comercial  { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
     .dept-indicator.di-prl        { background: #FEF3C7; color: #92400e; border: 1px solid #FDE68A; }
     .dept-indicator.di-admin      { background: #EDE9FE; color: #5b21b6; border: 1px solid #DDD6FE; }
+    .dept-indicator.di-jefe_obra  { background: #E1F5EE; color: #0F6E56; border: 1px solid #A7DEC9; }
 
     /* METRICS */
     .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
@@ -292,6 +294,17 @@
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect y="2" width="18" height="2" rx="1" fill="#555"/><rect y="8" width="18" height="2" rx="1" fill="#555"/><rect y="14" width="18" height="2" rx="1" fill="#555"/></svg>
 </div>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- PANEL JEFE DE OBRA -->
+<div id="panel-jefe-obra" class="panel">
+  <div class="topbar">
+    <h1 id="jo-title">Mis proyectos</h1>
+    <button class="btn-refresh" onclick="loadDashboardJefeObra()">Actualizar</button>
+  </div>
+  <div id="jo-dept-indicator" class="dept-indicator di-jefe_obra" style="margin-bottom:1rem;"></div>
+  <div id="jo-alerta-banner" style="display:none;"></div>
+  <div id="jo-proyectos-content"><div class="loading">Cargando proyectos...</div></div>
+</div>
 
 <!-- PANTALLA DE LOGIN -->
 <div id="login-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#f5f5f0;z-index:9999;display:flex;align-items:center;justify-content:center;">
@@ -1347,7 +1360,8 @@ var deptConfig = {
   direccion: { name:'Dirección',        email:'direccion@bygsoluciones.es', badge:'DIRECCIÓN', desc:'Vista: Dirección - Seguimiento global y aprobaciones ejecutivas' },
   comercial: { name:'Dept. Comercial',  email:'comercial@bygsoluciones.es', badge:'COMERCIAL', desc:'Vista: Departamento Comercial - Gestión de ofertas y relación con clientes' },
   prl:       { name:'Dept. PRL',        email:'prl@bygsoluciones.es',       badge:'PRL',       desc:'Vista: Prevención de Riesgos Laborales - Documentación y cumplimiento' },
-  admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración - Datos maestros y gestión del sistema' }
+  admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración - Datos maestros y gestión del sistema' },
+  jefe_obra: { name:'Jefe/a de Obra',   email:'',                            badge:'OBRA',      desc:'Vista: Jefe/a de Obra - Gestión de mis proyectos en ejecución' }
 };
 
 var badgeMap = {
@@ -1446,6 +1460,10 @@ function irAFaseEjecucion() { showProyectosFase('en_ejecucion'); }
 
 async function loadDashboard() {
   var dept = currentDept || 'tecnico';
+  if (dept === 'jefe_obra') {
+    loadDashboardJefeObra();
+    return;
+  }
   resetDashboardUI();
   document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
 
@@ -3793,11 +3811,22 @@ function volverDesdeAdjudicado() {
 var currentUser = null;
 
 var deptByEmail = {
-  'tecnico@bygsoluciones.es':   'tecnico',
-  'direccion@bygsoluciones.es': 'direccion',
-  'comercial@bygsoluciones.es': 'comercial',
-  'prl@bygsoluciones.es':       'prl',
-  'admin@bygsoluciones.es':     'admin'
+  'tecnico@bygsoluciones.es':             'tecnico',
+  'direccion@bygsoluciones.es':           'direccion',
+  'comercial@bygsoluciones.es':           'comercial',
+  'prl@bygsoluciones.es':                 'prl',
+  'admin@bygsoluciones.es':               'admin',
+  // Jefes de Obra
+  'marcelino.garzon@bygsoluciones.es':    'jefe_obra',
+  'emilio.miranda@bygsoluciones.es':      'jefe_obra',
+  'antonio.sanchez@bygsoluciones.es':     'jefe_obra',
+  'ariadna.zerpa@bygsoluciones.es':       'jefe_obra',
+  'cristina.lazaro@bygsoluciones.es':     'jefe_obra',
+  'miriam.tinajero@bygsoluciones.es':     'jefe_obra',
+  'rebeca.anton@bygsoluciones.es':        'jefe_obra',
+  'antonio.villalon@bygsoluciones.es':    'jefe_obra',
+  'efren.colina@bygsoluciones.es':        'jefe_obra',
+  'yaromir.gonzalez@bygsoluciones.es':    'jefe_obra'
 };
 
 async function checkSession() {
@@ -5162,6 +5191,124 @@ async function loadAlertasPRL() {
       }).join('') +
       '</tbody></table></div>';
   } catch(e) { console.error(e); el.innerHTML = '<div class="empty">Error cargando alertas PRL</div>'; }
+}
+
+// ---- DASHBOARD JEFE DE OBRA ----
+async function loadDashboardJefeObra() {
+  // Mostrar panel jefe de obra
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-jefe-obra').classList.add('active');
+
+  var email = currentUser ? currentUser.email : '';
+  var nombre = email.split('@')[0].replace('.',' ');
+  document.getElementById('jo-title').textContent = 'Mis proyectos';
+  document.getElementById('jo-dept-indicator').textContent = 'Jefe/a de Obra — ' + email;
+
+  var el = document.getElementById('jo-proyectos-content');
+  el.innerHTML = '<div class="loading">Cargando proyectos...</div>';
+
+  try {
+    // Buscar el empleado por email para obtener su id
+    var empRes = await db.from('employees').select('id,nombre,apellidos').eq('email_login', email).single();
+
+    // Buscar en project_managers por email o nombre
+    var pmRes = await db.from('project_managers').select('id,full_name').ilike('email', email);
+    var pmIds = pmRes.data ? pmRes.data.map(function(p){return p.id;}) : [];
+
+    // Si no hay coincidencia exacta buscar por nombre
+    if (!pmIds.length && empRes.data) {
+      var nombreCompleto = empRes.data.nombre + ' ' + empRes.data.apellidos;
+      var pmRes2 = await db.from('project_managers').select('id,full_name').ilike('full_name', '%' + empRes.data.apellidos + '%');
+      if (pmRes2.data && pmRes2.data.length) pmIds = pmRes2.data.map(function(p){return p.id;});
+    }
+
+    // Buscar proyectos asignados (activos e histórico)
+    var proyectos = [];
+    if (pmIds.length) {
+      var projRes = await db.from('projects')
+        .select('id,name,code,project_code,project_manager_id,project_statuses(code,name),project_managers(full_name)')
+        .in('project_manager_id', pmIds)
+        .order('created_at', {ascending:false});
+      proyectos = projRes.data || [];
+    }
+
+    // También buscar en historial de asignaciones
+    var histRes = await db.from('project_manager_assignments')
+      .select('project_id,is_current,project_managers(full_name)')
+      .in('project_manager_id', pmIds);
+
+    var histIds = histRes.data ? histRes.data.map(function(h){return h.project_id;}) : [];
+    var idsYaEnListado = proyectos.map(function(p){return p.id;});
+    var histPendientes = histIds.filter(function(id){return !idsYaEnListado.includes(id);});
+
+    if (histPendientes.length) {
+      var histProj = await db.from('projects')
+        .select('id,name,code,project_code,project_manager_id,project_statuses(code,name)')
+        .in('id', histPendientes);
+      if (histProj.data) proyectos = proyectos.concat(histProj.data);
+    }
+
+    if (!proyectos.length) {
+      el.innerHTML = '<div class="card"><div class="empty">No tienes proyectos asignados actualmente.</div></div>';
+      return;
+    }
+
+    // Separar activos (en_ejecucion) e histórico
+    var activos = proyectos.filter(function(p){ return p.project_statuses && p.project_statuses.code === 'en_ejecucion'; });
+    var historico = proyectos.filter(function(p){ return !p.project_statuses || p.project_statuses.code !== 'en_ejecucion'; });
+
+    var html = '';
+
+    // Alerta si hay proyectos activos
+    var banner = document.getElementById('jo-alerta-banner');
+    if (activos.length) {
+      banner.style.display = 'block';
+      banner.innerHTML = '<div style="background:#E1F5EE;border:1px solid #A7DEC9;border-radius:8px;padding:10px 16px;margin-bottom:1rem;font-size:13px;font-weight:500;color:#0F6E56;">' +
+        '● ' + activos.length + ' proyecto' + (activos.length>1?'s':'') + ' en ejecución actualmente</div>';
+    } else {
+      banner.style.display = 'none';
+    }
+
+    function renderProyecto(p, esActivo) {
+      var stCode = p.project_statuses ? p.project_statuses.code : '';
+      var stName = p.project_statuses ? p.project_statuses.name : 'Desconocido';
+      var badgeColor = esActivo ? '#0F6E56' : '#888';
+      var badgeBg = esActivo ? '#E1F5EE' : '#f5f5f0';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e5e5e0;border-radius:8px;margin-bottom:8px;background:white;cursor:pointer;" onclick="abrirProyectoJefeObra(' + p.id + ',&quot;' + stCode + '&quot;)">' +
+        '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + (p.name||p.code||'#'+p.id) + '</div>' +
+        '<div style="font-size:11px;color:#888;margin-top:2px;">' + (p.project_code||p.code||'') + '</div>' +
+        '</div>' +
+        '<span style="font-size:11px;padding:3px 10px;border-radius:99px;background:' + badgeBg + ';color:' + badgeColor + ';font-weight:500;">' + stName + '</span>' +
+        '<span style="color:#185FA5;font-size:12px;">Ver →</span>' +
+        '</div>';
+    }
+
+    if (activos.length) {
+      html += '<div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;color:#0F6E56;">En ejecución</div>';
+      html += activos.map(function(p){return renderProyecto(p, true);}).join('');
+    }
+
+    if (historico.length) {
+      html += '<div style="font-size:13px;font-weight:600;margin:1rem 0 0.75rem;color:#888;">Histórico</div>';
+      html += historico.map(function(p){return renderProyecto(p, false);}).join('');
+    }
+
+    el.innerHTML = html;
+
+  } catch(e) {
+    console.error('Error jefe obra dashboard:', e);
+    el.innerHTML = '<div class="empty">Error cargando proyectos</div>';
+  }
+}
+
+function abrirProyectoJefeObra(id, stCode) {
+  if (stCode === 'en_ejecucion') {
+    abrirEjecucion(id, '');
+  } else {
+    // Para histórico mostrar vista de solo lectura
+    abrirEjecucion(id, '');
+  }
 }
 
 </script>
