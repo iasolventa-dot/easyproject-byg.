@@ -1837,41 +1837,9 @@ async function loadClientes() {
 }
 
 function abrirFichaCliente(id) {
-  var c = clientesData.find(function(x){return x.id===id;});
-  if (!c) return;
-  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  document.getElementById('panel-cliente-detalle').classList.add('active');
-  document.getElementById('cliente-det-title').textContent = c.commercial_name;
-  var campos = [
-    {label:'Código interno',         val:c.internal_code},
-    {label:'Acrónimo cliente',       val:c.client_code},
-    {label:'Nombre comercial',       val:c.commercial_name},
-    {label:'Razón social',           val:c.legal_name},
-    {label:'CIF / NIF',              val:c.cif},
-    {label:'Contacto principal',     val:c.contact_name},
-    {label:'Email principal',        val:c.commercial_email},
-    {label:'Teléfono principal',     val:c.phone},
-    {label:'Contacto técnico',       val:c.contact_name_tech},
-    {label:'Email técnico',          val:c.email_tecnico},
-    {label:'Teléfono técnico',       val:c.phone_tecnico},
-    {label:'Contacto administración',val:c.contact_name_admin},
-    {label:'Email administración',   val:c.email_admin},
-    {label:'Teléfono administración',val:c.phone_admin},
-    {label:'Domicilio social',        val:c.address},
-    {label:'Ciudad',                 val:c.city},
-    {label:'Tipo de cliente',        val:c.client_type},
-    {label:'Notas',                  val:c.notes},
-    {label:'Alta en sistema',        val:c.created_at ? new Date(c.created_at).toLocaleDateString('es-ES') : '-'},
-    {label:'Última actualización',   val:c.updated_at ? new Date(c.updated_at).toLocaleDateString('es-ES') : '-'}
-  ];
-  document.getElementById('cliente-ficha-content').innerHTML =
-    '<div style="display:flex;flex-direction:column;gap:0;">' +
-    campos.map(function(f){
-      return '<div style="display:flex;padding:10px 0;border-bottom:1px solid #f5f5f0;">' +
-        '<div style="width:200px;font-size:12px;color:#888;font-weight:500;flex-shrink:0;">'+f.label+'</div>' +
-        '<div style="font-size:13px;color:#1a1a1a;">'+(f.val||'-')+'</div></div>';
-    }).join('') + '</div>';
+  abrirFichaClienteEditar(id);
 }
+
 
 function imprimirListadoClientes() {
   var win = window.open('','_blank');
