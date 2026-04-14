@@ -4346,8 +4346,13 @@ function cancelarGasto() {
 
 function volverDesdeEjecución() {
   ejProyecto = null;
-  if (currentFase) showProyectosFase(currentFase);
-  else showPanel('dashboard');
+  if (currentDept === 'jefe_obra') {
+    loadDashboardJefeObra();
+  } else if (currentFase) {
+    showProyectosFase(currentFase);
+  } else {
+    showPanel('dashboard');
+  }
 }
 
 // ---- PLANNING DE OBRA ----
@@ -5195,9 +5200,16 @@ async function loadAlertasPRL() {
 
 // ---- DASHBOARD JEFE DE OBRA ----
 async function loadDashboardJefeObra() {
-  // Mostrar panel jefe de obra
+  // Mostrar panel jefe de obra — ocultar sidebar para interfaz simplificada
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('panel-jefe-obra').classList.add('active');
+  // Ocultar sidebar y hamburger, ajustar main
+  var sidebar = document.querySelector('.sidebar');
+  var main = document.querySelector('.main');
+  var hamburger = document.getElementById('hamburger-btn');
+  if (sidebar) sidebar.style.display = 'none';
+  if (main) main.style.marginLeft = '0';
+  if (hamburger) hamburger.style.display = 'none';
 
   var email = currentUser ? currentUser.email : '';
   var nombre = email.split('@')[0].replace('.',' ');
