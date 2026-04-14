@@ -4136,6 +4136,9 @@ async function cargarPlanning(projectId) {
       '<div style="height:100%;background:#0F6E56;border-radius:5px;width:' + pct + '%;transition:width 0.5s;"></div>' +
       '</div></div>';
 
+    // TIMELINE VISUAL
+    html += generarTimelinePlanning(hitos);
+
     // Lista de hitos del planning
     if (!esDireccion) {
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
@@ -4520,6 +4523,129 @@ async function cargarAlertasPlanning() {
 
 function irAObrasPlanningPendiente() {
   showProyectosFase('en_ejecucion');
+}
+
+// ---- TIMELINE / GANTT PLANNING ----
+function generarTimelinePlanning(hitos) {
+  if (!hitos || hitos.length === 0) return '';
+
+  var hoy = new Date();
+  hoy.setHours(0,0,0,0);
+
+  // Calcular rango de fechas
+  var fechas = hitos
+    .filter(function(h){ return h.planned_date || h.actual_date; })
+    .map(function(h){ return new Date(h.actual_date || h.planned_date); });
+
+  if (fechas.length === 0) return '';
+
+  var minFecha = new Date(Math.min.apply(null, fechas));
+  var maxFecha = new Date(Math.max.apply(null, fechas));
+
+  // Extender rango un poco para que no quede pegado a los bordes
+  minFecha.setDate(minFecha.getDate() - 10);
+  maxFecha.setDate(maxFecha.getDate() + 10);
+
+  var rangoTotal = maxFecha - minFecha; // ms
+
+  function posX(fecha, width) {
+    return Math.round(((fecha - minFecha) / rangoTotal) * width);
+  }
+
+  var W = 800; // ancho interno SVG
+  var H = 140;
+  var lineY = 70; // Y de la línea principal
+  var margenH = 40; // margen horizontal
+
+  // Generar meses en el eje X
+  var meses = [];
+  var cur = new Date(minFecha.getFullYear(), minFecha.getMonth(), 1);
+  while (cur <= maxFecha) {
+    meses.push(new Date(cur));
+    cur.setMonth(cur.getMonth() + 1);
+  }
+
+  var nombresMes = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  var svgParts = [];
+  svgParts.push('<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:1.5rem;">');
+  svgParts.push('<div style="font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:8px;">Timeline de hitos</div>');
+  svgParts.push('<svg viewBox="0 0 ' + (W + margenH*2) + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:500px;max-width:900px;font-family:-apple-system,sans-serif;">');
+
+  // Fondo
+  svgParts.push('<rect width="' + (W + margenH*2) + '" height="' + H + '" fill="#fafaf8" rx="8"/>');
+
+  // Líneas de mes y etiquetas
+  meses.forEach(function(m) {
+    var x = posX(m, W) + margenH;
+    svgParts.push('<line x1="' + x + '" y1="20" x2="' + x + '" y2="' + (H-10) + '" stroke="#e5e5e0" stroke-width="1" stroke-dasharray="3,3"/>');
+    svgParts.push('<text x="' + (x+4) + '" y="16" font-size="9" fill="#aaa">' + nombresMes[m.getMonth()] + ' ' + m.getFullYear() + '</text>');
+  });
+
+  // Línea principal horizontal
+  svgParts.push('<line x1="' + margenH + '" y1="' + lineY + '" x2="' + (W+margenH) + '" y2="' + lineY + '" stroke="#ddd" stroke-width="2"/>');
+
+  // Línea "Hoy"
+  var hoyX = posX(hoy, W) + margenH;
+  if (hoyX >= margenH && hoyX <= W + margenH) {
+    svgParts.push('<line x1="' + hoyX + '" y1="22" x2="' + hoyX + '" y2="' + (H-10) + '" stroke="#185FA5" stroke-width="1.5" stroke-dasharray="4,3"/>');
+    svgParts.push('<text x="' + (hoyX+3) + '" y="32" font-size="9" fill="#185FA5" font-weight="600">HOY</text>');
+  }
+
+  // Barras de Gantt (fila inferior) y puntos (línea principal)
+  var barH = 14;
+  var barY = lineY + 18;
+
+  hitos.forEach(function(h, idx) {
+    var fechaObj = h.actual_date ? new Date(h.actual_date) : (h.planned_date ? new Date(h.planned_date) : null);
+    if (!fechaObj) return;
+
+    var retrasado = !h.completed && h.planned_date && new Date(h.planned_date) < hoy;
+    var color = h.completed ? '#0F6E56' : (retrasado ? '#A32D2D' : '#185FA5');
+    var colorClaro = h.completed ? '#E1F5EE' : (retrasado ? '#FCEBEB' : '#E6F1FB');
+
+    var cx = posX(fechaObj, W) + margenH;
+
+    // Punto en la línea principal
+    svgParts.push('<circle cx="' + cx + '" cy="' + lineY + '" r="8" fill="' + color + '"/>');
+    if (h.completed) {
+      svgParts.push('<text x="' + cx + '" y="' + (lineY+4) + '" font-size="9" fill="white" text-anchor="middle" font-weight="700">✓</text>');
+    } else {
+      svgParts.push('<text x="' + cx + '" y="' + (lineY+4) + '" font-size="9" fill="white" text-anchor="middle" font-weight="700">' + (idx+1) + '</text>');
+    }
+
+    // Etiqueta del hito (alterna arriba/abajo para evitar solapamiento)
+    var labelY = idx % 2 === 0 ? lineY - 16 : lineY - 28;
+    var nombre = h.milestone_name.length > 18 ? h.milestone_name.substring(0,16) + '...' : h.milestone_name;
+    svgParts.push('<text x="' + cx + '" y="' + labelY + '" font-size="9" fill="' + color + '" text-anchor="middle" font-weight="500">' + nombre + '</text>');
+
+    // Fecha bajo el punto
+    var fechaStr = fechaObj.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'});
+    svgParts.push('<text x="' + cx + '" y="' + (lineY+20) + '" font-size="8" fill="#888" text-anchor="middle">' + fechaStr + '</text>');
+
+    // Barra Gantt (si hay fecha planificada)
+    if (h.planned_date) {
+      var barX = posX(new Date(h.planned_date), W) + margenH - 30;
+      var barW = 60;
+      barX = Math.max(margenH, barX);
+      svgParts.push('<rect x="' + barX + '" y="' + barY + '" width="' + barW + '" height="' + barH + '" rx="3" fill="' + colorClaro + '" stroke="' + color + '" stroke-width="1"/>');
+      svgParts.push('<rect x="' + barX + '" y="' + barY + '" width="' + (h.completed ? barW : barW*0.4) + '" height="' + barH + '" rx="3" fill="' + color + '" opacity="0.5"/>');
+    }
+  });
+
+  // Leyenda
+  var legY = H - 8;
+  svgParts.push('<circle cx="' + (margenH) + '" cy="' + legY + '" r="4" fill="#0F6E56"/>');
+  svgParts.push('<text x="' + (margenH+8) + '" y="' + (legY+3) + '" font-size="8" fill="#0F6E56">Completado</text>');
+  svgParts.push('<circle cx="' + (margenH+75) + '" cy="' + legY + '" r="4" fill="#185FA5"/>');
+  svgParts.push('<text x="' + (margenH+83) + '" y="' + (legY+3) + '" font-size="8" fill="#185FA5">Pendiente</text>');
+  svgParts.push('<circle cx="' + (margenH+150) + '" cy="' + legY + '" r="4" fill="#A32D2D"/>');
+  svgParts.push('<text x="' + (margenH+158) + '" y="' + (legY+3) + '" font-size="8" fill="#A32D2D">Retrasado</text>');
+
+  svgParts.push('</svg>');
+  svgParts.push('</div>');
+
+  return svgParts.join('');
 }
 
 </script>
