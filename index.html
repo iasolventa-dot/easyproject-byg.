@@ -298,15 +298,16 @@
 <!-- PANEL JEFE DE OBRA -->
 <div id="panel-jefe-obra" class="panel" style="max-width:700px;margin:0 auto;padding:2rem 1.5rem;">
   <!-- CABECERA JEFE OBRA -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e5e5e0;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="width:44px;height:44px;background:#0F6E56;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;">BYG</div>
-      <div>
+  <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e5e5e0;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+      <div style="width:44px;height:44px;background:#0F6E56;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0;">BYG</div>
+      <div style="flex:1;min-width:0;">
         <div style="font-size:16px;font-weight:600;color:#1a1a1a;" id="jo-title">Mis proyectos</div>
-        <div style="font-size:12px;color:#888;" id="jo-email"></div>
+        <div style="font-size:13px;font-weight:500;color:#0F6E56;" id="jo-nombre"></div>
+        <div style="font-size:11px;color:#888;" id="jo-email"></div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:8px;">
       <button class="btn-refresh" onclick="loadDashboardJefeObra()" style="font-size:12px;">↻ Actualizar</button>
       <button onclick="doLogout()" style="padding:6px 14px;border-radius:7px;border:1px solid #ddd;background:white;font-size:12px;cursor:pointer;color:#666;">Cerrar sesión</button>
     </div>
@@ -5226,6 +5227,14 @@ async function loadDashboardJefeObra() {
   document.getElementById('jo-title').textContent = 'Mis proyectos';
   var joEmail = document.getElementById('jo-email');
   if (joEmail) joEmail.textContent = email;
+  // Buscar nombre completo del empleado
+  try {
+    var empNombre = await db.from('employees').select('nombre,apellidos').eq('email_login', email).single();
+    var joNombre = document.getElementById('jo-nombre');
+    if (joNombre && empNombre.data) {
+      joNombre.textContent = empNombre.data.nombre + ' ' + empNombre.data.apellidos;
+    }
+  } catch(en) {}
 
   var el = document.getElementById('jo-proyectos-content');
   el.innerHTML = '<div class="loading">Cargando proyectos...</div>';
