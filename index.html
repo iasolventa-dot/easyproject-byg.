@@ -121,7 +121,7 @@
     .btn-success { background: #3B6D11; color: white; border-color: #3B6D11; }
     .btn-danger  { background: #A32D2D; color: white; border-color: #A32D2D; }
     .btn-back    { background: #f5f5f0; border-color: #ddd; color: #666; }
-    .btn-analisis { background: #E6F1FB; color: #0C447C; border: 1px solid #B5D4F4; border-radius: 7px; padding: 10px 16px; font-size: 12px; font-weight: 500; cursor: pointer; width: 100%; text-align: center; margin-top: 8px; }
+    .btn-análisis { background: #E6F1FB; color: #0C447C; border: 1px solid #B5D4F4; border-radius: 7px; padding: 10px 16px; font-size: 12px; font-weight: 500; cursor: pointer; width: 100%; text-align: center; margin-top: 8px; }
 
     /* WIZARD */
     .wizard-track { display: flex; align-items: center; margin-bottom: 2rem; background: white; border: 1px solid #e5e5e0; border-radius: 10px; padding: 1rem 1.5rem; gap: 0; }
@@ -267,12 +267,12 @@
       .dept-select { display:none; }
       .data-table { font-size:11px; }
       .data-table th, .data-table td { padding:7px 8px; }
-      /* Info proyecto ejecucion en movil: 2 columnas */
+      /* Info proyecto ejecución en movil: 2 columnas */
       #ej-info-grid { grid-template-columns:repeat(2,1fr) !important; }
       /* Tabs scrollables */
       .proj-tabs { overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
       .proj-tab { white-space:nowrap; padding:8px 12px; font-size:11px; }
-      /* Tarjetas economico en movil: 1 columna */
+      /* Tarjetas económico en movil: 1 columna */
       .ej-eco-grid { grid-template-columns:1fr !important; }
       .ej-gastos-sum { flex-direction:column !important; }
     }
@@ -329,12 +329,12 @@
 
   <div class="nav-section">Proyectos</div>
   <div class="nav-item sub" id="nav-solicitados" onclick="showProyectosFase('solicitado')">Solicitudes recibidas</div>
-  <div class="nav-item sub" id="nav-analisis" onclick="showProyectosFase('en_analisis')">En análisis</div>
+  <div class="nav-item sub" id="nav-análisis" onclick="showProyectosFase('en_analisis')">En análisis</div>
   <div class="nav-item sub" id="nav-oferta_curso" onclick="showProyectosFase('oferta_en_curso')">Oferta en curso</div>
   <div class="nav-item sub" id="nav-oferta_enviada" onclick="showProyectosFase('oferta_enviada')">Ofertas enviadas</div>
   <div class="nav-item sub" id="nav-adjudicados" onclick="showProyectosFase('adjudicado')">Adjudicados</div>
   <div class="nav-item sub" id="nav-pendiente_lanzamiento" onclick="showProyectosFase('pendiente_lanzamiento')">Pendiente lanzamiento</div>
-  <div class="nav-item sub" id="nav-ejecucion" onclick="showProyectosFase('en_ejecucion')">En ejecución</div>
+  <div class="nav-item sub" id="nav-ejecución" onclick="showProyectosFase('en_ejecucion')">En ejecución</div>
 
   <div class="nav-section">Datos maestros</div>
   <div class="nav-item sub" id="nav-clientes" onclick="showPanel('clientes')">Clientes</div>
@@ -362,7 +362,7 @@
     <h1><span class="live-dot"></span>Dashboard<span class="last-update" id="last-update"></span></h1>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="btn-refresh" onclick="loadDashboard()">Actualizar</button>
-      <div class="dept-select">
+      <div class="dept-select" id="dept-select-wrap">
         <button class="dept-btn active-tecnico" onclick="setDept('tecnico',this)">Técnico</button>
         <button class="dept-btn" onclick="setDept('direccion',this)">Dirección</button>
         <button class="dept-btn" onclick="setDept('comercial',this)">Comercial</button>
@@ -377,7 +377,7 @@
   <div id="dept-alertas-banner" style="display:none;"></div>
   <div class="metrics">
     <div class="metric"><div class="metric-label">Proyectos activos</div><div class="metric-value" id="m-total">-</div><div class="metric-sub">en base de datos</div></div>
-    <div class="metric"><div class="metric-label">Emails procesados</div><div class="metric-value" id="m-emails">-</div><div class="metric-sub">por n8n</div></div>
+    <div class="metric"><div class="metric-label">Emails procesados</div><div class="metric-value" id="m-emails">-</div><div class="metric-sub">automáticamente</div></div>
     <div class="metric"><div class="metric-label">Pendiente revisión</div><div class="metric-value" id="m-review" style="color:#854F0B;">-</div><div class="metric-sub">acción requerida</div></div>
     <div class="metric"><div class="metric-label">Errores registrados</div><div class="metric-value" id="m-errors" style="color:#A32D2D;">-</div><div class="metric-sub">automation_errors</div></div>
   </div>
@@ -391,7 +391,7 @@
     <div class="fase-card"><div class="fase-card-title">Ofertas enviadas</div><div class="fase-card-count" id="fc-oferta_enviada" style="color:#185FA5;">-</div><div class="fase-card-link" onclick="showProyectosFase('oferta_enviada')">Ver todos</div></div>
     <div class="fase-card"><div class="fase-card-title">Adjudicados</div><div class="fase-card-count" id="fc-adjudicado" style="color:#3B6D11;">-</div><div class="fase-card-link" onclick="showProyectosFase('adjudicado')">Ver todos</div></div>
     <div class="fase-card"><div class="fase-card-title">Pend. lanzamiento</div><div class="fase-card-count" id="fc-pendiente_lanzamiento" style="color:#854F0B;">-</div><div class="fase-card-link" onclick="showProyectosFase('pendiente_lanzamiento')">Ver todos</div></div>
-    <div class="fase-card"><div class="fase-card-title">En ejecucion</div><div class="fase-card-count" id="fc-en_ejecucion" style="color:#0F6E56;">-</div><div class="fase-card-link" onclick="showProyectosFase('en_ejecucion')">Ver todos</div></div>
+    <div class="fase-card"><div class="fase-card-title">En ejecución</div><div class="fase-card-count" id="fc-en_ejecucion" style="color:#0F6E56;">-</div><div class="fase-card-link" onclick="showProyectosFase('en_ejecucion')">Ver todos</div></div>
   </div>
 
   <div class="grid-2">
@@ -455,10 +455,10 @@
     <div id="gremio-container"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
       <button class="btn" onclick="alert('Cambios guardados.')">Guardar cambios</button>
-      <button class="btn btn-primary" onclick="enviarAprobacion()">Enviar a aprobación</button>
+      <button class="btn btn-primary" onclick="enviarAprobación()">Enviar a aprobación</button>
     </div>
   </div>
-  <div id="proj-tab-aprobacion" class="proj-tab-content" style="display:none;">
+  <div id="proj-tab-aprobación" class="proj-tab-content" style="display:none;">
     <div id="apro-empty-det" class="card" style="text-align:center;padding:2rem;">
       <div style="font-size:13px;color:#888;margin-bottom:6px;">Pendiente de supervisión técnica</div>
       <div style="font-size:11px;color:#aaa;">Completa primero la supervisión técnica para acceder a la aprobación</div>
@@ -472,24 +472,24 @@
           <div class="card" id="apro-proveedores-det"></div>
         </div>
         <div>
-          <div class="section-title">Estado de aprobaciones</div>
+          <div class="section-title">Estado de aprobaciónes</div>
           <div class="card">
-            <div class="apro-row"><div class="dot-g"></div><div><div style="font-size:12px;font-weight:500;">Técnico - Validado</div><div style="font-size:10px;color:#aaa;" id="apro-tecnico-det">-</div></div></div>
+            <div class="apro-row"><div class="dot-g"></div><div><div style="font-size:12px;font-weight:500;">Técnico - Validado</div><div style="font-size:10px;color:#aaa;" id="apro-técnico-det">-</div></div></div>
             <div class="apro-row"><div class="dot-o"></div><div><div style="font-size:12px;font-weight:500;">Dirección - Pendiente</div><div style="font-size:10px;color:#aaa;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="80e4e9f2e5e3e3e9efeec0e2f9e7f3efecf5e3e9efeee5f3aee5f3">[email&#160;protected]</a></div></div></div>
             <div class="apro-row"><div class="dot-o"></div><div><div style="font-size:12px;font-weight:500;">Comercial - Pendiente</div><div style="font-size:10px;color:#aaa;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c3a0acaea6b1a0aaa2af83a1baa4b0acafb6a0aaacada6b0eda6b0">[email&#160;protected]</a></div></div></div>
           </div>
           <div class="card" style="background:#f9f9f6;" id="apro-action-det">
             <div style="font-size:12px;font-weight:500;margin-bottom:6px;">Tu aprobación</div>
-            <div style="font-size:11px;color:#888;margin-bottom:10px;">¿Apruebas el envío de peticiones de oferta a los proveedores seleccionados?</div>
+            <div style="font-size:11px;color:#888;margin-bottom:10px;">¿Apruebas el envío de peticiones de oferta a los proveedores selecciónados?</div>
             <div style="display:flex;gap:8px;">
               <button class="btn btn-danger btn-sm" onclick="alert('Envío rechazado.')">Rechazar</button>
               <button class="btn btn-success btn-sm" onclick="aprobarDet()">Aprobar envío</button>
             </div>
           </div>
-          <div class="card" id="apro-analisis-det" style="display:none;background:#E6F1FB;border:1px solid #B5D4F4;margin-top:0;">
+          <div class="card" id="apro-análisis-det" style="display:none;background:#E6F1FB;border:1px solid #B5D4F4;margin-top:0;">
             <div style="font-size:12px;font-weight:500;margin-bottom:4px;color:#0C447C;">Análisis comparativo disponible</div>
             <div style="font-size:11px;color:#185FA5;margin-bottom:8px;">La IA ha comparado las ofertas recibidas.</div>
-            <button class="btn-analisis" onclick="abrirFormularioAprobacion()">Ver análisis de ofertas y decidir</button>
+            <button class="btn-análisis" onclick="abrirFormularioAprobación()">Ver análisis de ofertas y decidir</button>
           </div>
         </div>
       </div>
@@ -508,7 +508,7 @@
     <h1>Clientes</h1>
     <div style="display:flex;gap:8px;">
       <button class="btn" onclick="imprimirListadoClientes()">Imprimir listado</button>
-      <button class="btn btn-primary" onclick="alert('Alta de nuevo cliente - próximamente')">+ Nuevo cliente</button>
+      <button class="btn btn-primary" onclick="alert('El alta de nuevos clientes se realiza desde el panel de Administración.')">+ Nuevo cliente</button>
     </div>
   </div>
   <div class="card">
@@ -635,8 +635,8 @@
 <!-- PANEL EN EJECUCION -->
 <div id="panel-ejecucion" class="panel">
   <div class="topbar">
-    <h1 id="ej-title">En ejecucion</h1>
-    <button class="btn btn-back" onclick="volverDesdeEjecucion()">Volver</button>
+    <h1 id="ej-title">En ejecución</h1>
+    <button class="btn btn-back" onclick="volverDesdeEjecución()">Volver</button>
   </div>
 
   <!-- INFO PROYECTO -->
@@ -661,9 +661,9 @@
   <div class="proj-tabs" style="margin-bottom:1.5rem;">
     <div class="proj-tab active" onclick="showEjTab('planning',this)">Planning <span id="planning-badge" style="display:none;background:#185FA5;color:white;font-size:9px;padding:1px 5px;border-radius:99px;margin-left:4px;">NUEVO</span></div>
     <div class="proj-tab" onclick="showEjTab('hitos',this)">Hitos de obra</div>
-    <div class="proj-tab" onclick="showEjTab('economico',this)">Estado economico</div>
+    <div class="proj-tab" onclick="showEjTab('economico',this)">Estado económico</div>
     <div class="proj-tab" onclick="showEjTab('gastos',this)">Gastos</div>
-    <div class="proj-tab" onclick="showEjTab('certificaciones',this)">Certificaciones</div>
+    <div class="proj-tab" onclick="showEjTab('certificaciónes',this)">Certificaciónes</div>
   </div>
 
   <!-- TAB PLANNING -->
@@ -687,14 +687,14 @@
   <!-- TAB HITOS -->
   <div id="ej-tab-hitos" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-size:13px;color:#888;">Hitos en ejecucion — marca cada uno al completarlo</div>
-      <button class="btn btn-primary btn-sm" onclick="mostrarFormHitoEjecucion()">+ Nuevo hito</button>
+      <div style="font-size:13px;color:#888;">Hitos en ejecución — marca cada uno al completarlo</div>
+      <button class="btn btn-primary btn-sm" onclick="mostrarFormHitoEjecución()">+ Nuevo hito</button>
     </div>
     <div id="ej-form-hito-exec" style="display:none;background:#f9f9f6;border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem;">
       <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">
         <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Nombre del hito</label><input type="text" id="hito-exec-nombre" placeholder="Ej: Cierre electricidad" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>
         <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Fecha prevista</label><input type="date" id="hito-exec-fecha" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>
-        <div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="guardarHitoEjecucion()">Guardar</button><button class="btn btn-sm" onclick="document.getElementById('ej-form-hito-exec').style.display='none'">Cancelar</button></div>
+        <div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="guardarHitoEjecución()">Guardar</button><button class="btn btn-sm" onclick="document.getElementById('ej-form-hito-exec').style.display='none'">Cancelar</button></div>
       </div>
     </div>
     <div id="ej-hitos-content"><div class="loading">Cargando hitos...</div></div>
@@ -702,7 +702,7 @@
 
   <!-- TAB ECONOMICO -->
   <div id="ej-tab-economico" style="display:none;">
-    <div id="ej-economico-content"><div class="loading">Cargando datos economicos...</div></div>
+    <div id="ej-economico-content"><div class="loading">Cargando datos económicos...</div></div>
   </div>
 
   <!-- TAB GASTOS -->
@@ -715,12 +715,12 @@
   </div>
 
   <!-- TAB CERTIFICACIONES -->
-  <div id="ej-tab-certificaciones" style="display:none;">
+  <div id="ej-tab-certificacioneses" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-size:13px;color:#888;">Certificaciones economicas emitidas al cliente</div>
-      <button class="btn btn-primary btn-sm" onclick="alert('En produccion: crear nueva certificacion')">+ Nueva certificacion</button>
+      <div style="font-size:13px;color:#888;">Certificaciónes económicas emitidas al cliente</div>
+      <button class="btn btn-primary btn-sm" onclick="alert('En produccion: crear nueva certificación')">+ Nueva certificación</button>
     </div>
-    <div id="ej-certs-content"><div class="loading">Cargando certificaciones...</div></div>
+    <div id="ej-certs-content"><div class="loading">Cargando certificaciónes...</div></div>
   </div>
 </div>
 
@@ -743,13 +743,13 @@
 
   <!-- TABS -->
   <div class="proj-tabs" style="margin-bottom:1.5rem;">
-    <div class="proj-tab active" onclick="showAdjTab('asignacion',this)">Asignacion Jefe/a de Obra</div>
-    <div class="proj-tab" onclick="showAdjTab('documento',this)">Documento de adjudicacion</div>
+    <div class="proj-tab active" onclick="showAdjTab('asignación',this)">Asignación Jefe/a de Obra</div>
+    <div class="proj-tab" onclick="showAdjTab('documento',this)">Documento de adjudicación</div>
     <div class="proj-tab" onclick="showAdjTab('historial',this)">Historial</div>
   </div>
 
   <!-- TAB ASIGNACION -->
-  <div id="adj-tab-asignacion">
+  <div id="adj-tab-asignación">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
 
       <div class="card">
@@ -758,7 +758,7 @@
           <div>
             <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Jefe/a de Obra</label>
             <select id="adj-manager" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-              <option value="">Seleccionar Jefe/a de Obra...</option>
+              <option value="">Selecciónar Jefe/a de Obra...</option>
             </select>
           </div>
           <div>
@@ -767,7 +767,7 @@
           </div>
           <div>
             <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Instrucciones para el/la Jefe/a de Obra</label>
-            <textarea id="adj-manager-notes" placeholder="Condiciones especiales, accesos, contactos en obra..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:90px;resize:vertical;font-family:inherit;"></textarea>
+            <textarea id="adj-manager-notes" placeholder="Condiciónes especiales, accesos, contactos en obra..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:90px;resize:vertical;font-family:inherit;"></textarea>
           </div>
           <div id="adj-current-manager" style="display:none;padding:10px;background:#f9f9f6;border-radius:6px;border:1px solid #e5e5e0;font-size:12px;"></div>
           <div style="display:flex;gap:8px;">
@@ -804,7 +804,7 @@
   <!-- TAB DOCUMENTO -->
   <div id="adj-tab-documento" style="display:none;">
     <div class="alert-box" style="margin-bottom:1rem;background:#E6F1FB;border-color:#B5D4F4;">
-      <div class="alert-box-title" style="color:#0C447C;">Documento de adjudicacion para el/la Jefe/a de Obra</div>
+      <div class="alert-box-title" style="color:#0C447C;">Documento de adjudicación para el/la Jefe/a de Obra</div>
       <div class="alert-box-desc" style="color:#185FA5;">Este documento muestra los precios de venta contratados con el cliente, los costes de cada gremio y el margen de maniobra disponible en cada partida.</div>
     </div>
     <div id="adj-doc-content"><div class="loading">Cargando documento...</div></div>
@@ -880,9 +880,9 @@
           </div>
           <div>
             <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Notas</label>
-            <textarea id="oe-award-notes" placeholder="Condiciones especiales, plazos acordados..." style="width:100%;padding:7px 10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
+            <textarea id="oe-award-notes" placeholder="Condiciónes especiales, plazos acordados..." style="width:100%;padding:7px 10px;border:1px solid #C0DD97;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
           </div>
-          <button class="btn btn-success" onclick="registrarAdjudicacion()">Confirmar adjudicación y pasar a Adjudicado </button>
+          <button class="btn btn-success" onclick="registrarAdjudicación()">Confirmar adjudicación y pasar a Adjudicado </button>
         </div>
       </div>
 
@@ -912,7 +912,7 @@
               <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Notas de negociación</label>
               <textarea id="oe-negoc-notes" placeholder="Qué pide el cliente, en qué punto estamos..." style="width:100%;padding:7px 10px;border:1px solid #FAC775;border-radius:6px;font-size:12px;min-height:60px;resize:vertical;font-family:inherit;"></textarea>
             </div>
-            <button class="btn btn-sm" style="border-color:#FAC775;color:#854F0B;background:#FEF6EE;" onclick="registrarNegociacion()">Marcar en negociación</button>
+            <button class="btn btn-sm" style="border-color:#FAC775;color:#854F0B;background:#FEF6EE;" onclick="registrarNegociación()">Marcar en negociación</button>
           </div>
         </div>
       </div>
@@ -969,7 +969,7 @@
   <div id="oc-tab-peticiones">
     <div class="alert-box" style="margin-bottom:1.5rem;">
       <div class="alert-box-title">Lanzamiento de peticiones de oferta</div>
-      <div class="alert-box-desc">Revisa el email para cada gremio, fija las fechas clave y ordena el envío. Cada proveedor seleccionado recibirá el email con el Excel de partidas de su gremio adjunto.</div>
+      <div class="alert-box-desc">Revisa el email para cada gremio, fija las fechas clave y ordena el envío. Cada proveedor selecciónado recibirá el email con el Excel de partidas de su gremio adjunto.</div>
     </div>
     <div id="oc-gremios-peticiones"><div class="loading">Cargando gremios...</div></div>
   </div>
@@ -983,15 +983,15 @@
   <div id="oc-tab-montaje" style="display:none;">
     <div class="alert-box" style="margin-bottom:1.5rem;">
       <div class="alert-box-title">Montaje de la oferta final al cliente</div>
-      <div class="alert-box-desc">Revisa las partidas seleccionadas, propón el margen de beneficio por partida y somete a aprobación de Comercial y Dirección antes de enviar al cliente.</div>
+      <div class="alert-box-desc">Revisa las partidas selecciónadas, propón el margen de beneficio por partida y somete a aprobación de Comercial y Dirección antes de enviar al cliente.</div>
     </div>
     <div id="oc-montaje-content"><div class="loading">Cargando partidas...</div></div>
-    <div id="oc-aprobacion-margenes" style="display:none;margin-top:1rem;">
+    <div id="oc-aprobación-margenes" style="display:none;margin-top:1rem;">
       <div class="section-title">Aprobación de márgenes</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;">
         <div class="card" style="text-align:center;">
           <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Dept. Técnico</div>
-          <div id="aprov-tecnico-status"><button class="btn btn-success btn-sm" onclick="aprobarMargenes('tecnico')">Aprobar márgenes</button></div>
+          <div id="aprov-técnico-status"><button class="btn btn-success btn-sm" onclick="aprobarMargenes('tecnico')">Aprobar márgenes</button></div>
         </div>
         <div class="card" style="text-align:center;">
           <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Dept. Comercial</div>
@@ -999,7 +999,7 @@
         </div>
         <div class="card" style="text-align:center;">
           <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Dirección</div>
-          <div id="aprov-direccion-status"><button class="btn btn-success btn-sm" onclick="aprobarMargenes('direccion')">Aprobar márgenes</button></div>
+          <div id="aprov-dirección-status"><button class="btn btn-success btn-sm" onclick="aprobarMargenes('direccion')">Aprobar márgenes</button></div>
         </div>
       </div>
       <div id="oc-envio-final" style="display:none;">
@@ -1019,8 +1019,8 @@
 <!-- PANEL PROYECTO EN ANALISIS -->
 <div id="panel-analisis" class="panel">
   <div class="topbar">
-    <h1 id="analisis-title">Proyecto en análisis</h1>
-    <button class="btn btn-back" onclick="volverDesdeAnalisis()">Volver</button>
+    <h1 id="análisis-title">Proyecto en análisis</h1>
+    <button class="btn btn-back" onclick="volverDesdeAnálisis()">Volver</button>
   </div>
 
   <!-- INFO + EMAIL ENVIADO -->
@@ -1070,7 +1070,7 @@
   <div class="card" style="margin-bottom:1rem;">
     <div class="card-header">
       <div class="card-title">Informe técnico de análisis</div>
-      <button class="btn btn-sm btn-primary" onclick="guardarInformeTecnico()">Guardar informe</button>
+      <button class="btn btn-sm btn-primary" onclick="guardarInformeTécnico()">Guardar informe</button>
     </div>
     <textarea id="an-tech-notes" placeholder="Escribe aquí las observaciones técnicas, puntualizaciones y detalles relevantes para el futuro de este proyecto..."
       style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:140px;resize:vertical;font-family:inherit;line-height:1.6;color:#1a1a1a;"></textarea>
@@ -1080,16 +1080,16 @@
   <!-- ACCIONES FINALES -->
   <div class="card" style="background:#f9f9f6;">
     <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:#1a1a1a;">Decisión sobre el proyecto</div>
-    <div style="font-size:12px;color:#888;margin-bottom:1rem;">Una vez completado el análisis, selecciona la acción a realizar.</div>
+    <div style="font-size:12px;color:#888;margin-bottom:1rem;">Una vez completado el análisis, seleccióna la acción a realizar.</div>
     <div style="margin-bottom:0.75rem;">
       <label style="font-size:11px;color:#888;font-weight:500;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Motivo (obligatorio para cancelar o solicitar aclaraciones)</label>
       <textarea id="an-decision-reason" placeholder="Describe el motivo de la decisión..."
         style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-danger" onclick="accionAnalisis('cancelled')">Cancelar proyecto</button>
-      <button class="btn" style="border-color:#EF9F27;color:#854F0B;background:#FAEEDA;" onclick="accionAnalisis('info_requested')">Solicitar aclaraciones al cliente</button>
-      <button class="btn btn-success" onclick="accionAnalisis('oferta_en_curso')" style="margin-left:auto;">Confirmar y pasar a Oferta en curso </button>
+      <button class="btn btn-danger" onclick="accionAnálisis('cancelled')">Cancelar proyecto</button>
+      <button class="btn" style="border-color:#EF9F27;color:#854F0B;background:#FAEEDA;" onclick="accionAnálisis('info_requested')">Solicitar aclaraciones al cliente</button>
+      <button class="btn btn-success" onclick="accionAnálisis('oferta_en_curso')" style="margin-left:auto;">Confirmar y pasar a Oferta en curso </button>
     </div>
   </div>
 </div>
@@ -1098,7 +1098,7 @@
 <div id="panel-evaluacion" class="panel">
   <div class="topbar">
     <h1 id="eval-title">Evaluación de proyecto</h1>
-    <button class="btn btn-back" onclick="volverDesdeEvaluacion()">Volver</button>
+    <button class="btn btn-back" onclick="volverDesdeEvaluación()">Volver</button>
   </div>
 
   <!-- INFO PROYECTO -->
@@ -1121,7 +1121,7 @@
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
 
     <!-- TÉCNICO -->
-    <div class="card" id="eval-card-tecnico">
+    <div class="card" id="eval-card-técnico">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
         <div style="width:32px;height:32px;border-radius:8px;background:#f0f0ea;display:flex;align-items:center;justify-content:center;font-size:14px;">⚙️</div>
         <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dpto. Técnico</div><div style="font-size:11px;color:#888;">Capacidad y viabilidad técnica</div></div>
@@ -1129,13 +1129,13 @@
       <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
         Evalúa si ByG dispone de los recursos técnicos, experiencia y capacidad de ejecución para este proyecto.
       </div>
-      <div id="eval-estado-tecnico" style="margin-bottom:0.75rem;"></div>
-      <div id="eval-form-tecnico">
-        <textarea id="eval-reason-tecnico" placeholder="Observaciones técnicas (obligatorio si rechaza)..."
+      <div id="eval-estado-técnico" style="margin-bottom:0.75rem;"></div>
+      <div id="eval-form-técnico">
+        <textarea id="eval-reason-técnico" placeholder="Observaciones técnicas (obligatorio si rechaza)..."
           style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:80px;resize:vertical;margin-bottom:8px;font-family:inherit;"></textarea>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluacion('tecnico','rejected')">Rechazar</button>
-          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluacion('tecnico','approved')">Aprobar</button>
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluación('tecnico','rejected')">Rechazar</button>
+          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluación('tecnico','approved')">Aprobar</button>
         </div>
       </div>
     </div>
@@ -1154,14 +1154,14 @@
         <textarea id="eval-reason-comercial" placeholder="Observaciones comerciales (obligatorio si rechaza)..."
           style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:80px;resize:vertical;margin-bottom:8px;font-family:inherit;"></textarea>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluacion('comercial','rejected')">Rechazar</button>
-          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluacion('comercial','approved')">Aprobar</button>
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluación('comercial','rejected')">Rechazar</button>
+          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluación('comercial','approved')">Aprobar</button>
         </div>
       </div>
     </div>
 
     <!-- DIRECCIÓN -->
-    <div class="card" id="eval-card-direccion">
+    <div class="card" id="eval-card-dirección">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
         <div style="width:32px;height:32px;border-radius:8px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:14px;">🏢</div>
         <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dirección</div><div style="font-size:11px;color:#888;">Visto bueno ejecutivo</div></div>
@@ -1169,13 +1169,13 @@
       <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
         Aprobación final de Dirección para que el proyecto entre en fase de análisis y presupuestación.
       </div>
-      <div id="eval-estado-direccion" style="margin-bottom:0.75rem;"></div>
-      <div id="eval-form-direccion">
-        <textarea id="eval-reason-direccion" placeholder="Observaciones de dirección (obligatorio si rechaza)..."
+      <div id="eval-estado-dirección" style="margin-bottom:0.75rem;"></div>
+      <div id="eval-form-dirección">
+        <textarea id="eval-reason-dirección" placeholder="Observaciones de dirección (obligatorio si rechaza)..."
           style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:80px;resize:vertical;margin-bottom:8px;font-family:inherit;"></textarea>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluacion('direccion','rejected')">Rechazar</button>
-          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluacion('direccion','approved')">Aprobar</button>
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluación('direccion','rejected')">Rechazar</button>
+          <button class="btn btn-success btn-sm" style="flex:1;" onclick="registrarEvaluación('direccion','approved')">Aprobar</button>
         </div>
       </div>
     </div>
@@ -1202,10 +1202,10 @@ var currentProj = null;
 var currentFase = null;
 
 var deptConfig = {
-  tecnico:   { name:'Dept. Técnico',    email:'tecnico@bygsoluciones.es',   badge:'TÉCNICO',   desc:'Vista: Departamento Técnico - Supervisión y control de proyectos en curso' },
-  direccion: { name:'Dirección',        email:'direccion@bygsoluciones.es', badge:'DIRECCIÓN', desc:'Vista: Dirección - Seguimiento global y aprobaciones ejecutivas' },
-  comercial: { name:'Dept. Comercial',  email:'comercial@bygsoluciones.es', badge:'COMERCIAL', desc:'Vista: Departamento Comercial - Gestion de ofertas y relacion con clientes' },
-  prl:       { name:'Dept. PRL',        email:'prl@bygsoluciones.es',       badge:'PRL',       desc:'Vista: Prevencion de Riesgos Laborales - Documentacion y cumplimiento' },
+  técnico:   { name:'Dept. Técnico',    email:'técnico@bygsoluciones.es',   badge:'TÉCNICO',   desc:'Vista: Departamento Técnico - Supervisión y control de proyectos en curso' },
+  dirección: { name:'Dirección',        email:'dirección@bygsoluciones.es', badge:'DIRECCIÓN', desc:'Vista: Dirección - Seguimiento global y aprobaciónes ejecutivas' },
+  comercial: { name:'Dept. Comercial',  email:'comercial@bygsoluciones.es', badge:'COMERCIAL', desc:'Vista: Departamento Comercial - Gestión de ofertas y relacion con clientes' },
+  prl:       { name:'Dept. PRL',        email:'prl@bygsoluciones.es',       badge:'PRL',       desc:'Vista: Prevencion de Riesgos Laborales - Documentación y cumplimiento' },
   admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración - Datos maestros y gestión del sistema' }
 };
 
@@ -1237,7 +1237,7 @@ var gremiosData = {
     {c:'E-002',d:'Línea alimentación fuerza desde CGD',u:'m',q:'45',ok:true},
     {c:'E-003',d:'Puntos de luz LED empotrado',u:'Ud',q:'32',ok:false},
     {c:'E-004',d:'Toma de corriente 16A',u:'Ud',q:'18',ok:true}
-  ], proveedores:['Instalaciones García S.L.','Electra Madrid S.A.']},
+  ], proveedores:['Instalaciónes García S.L.','Electra Madrid S.A.']},
   CLIMATIZACION: { partidas:[
     {c:'C-001',d:'Unidad interior VRF cassette 4 vías',u:'Ud',q:'3',ok:true},
     {c:'C-002',d:'Unidad exterior VRF 10 HP',u:'Ud',q:'1',ok:true},
@@ -1297,7 +1297,7 @@ function setDept(dept, btn) {
 }
 
 function irAFaseAnalisis() { showProyectosFase('en_analisis'); }
-function showProyectosPendientesTecnico() { showProyectosFaseMultiple(['en_analisis','oferta_en_curso','pending_tech_review'], 'Proyectos pendientes de accion tecnica'); }
+function showProyectosPendientesTécnico() { showProyectosFaseMultiple(['en_analisis','oferta_en_curso','pending_tech_review'], 'Proyectos pendientes de accion técnica'); }
 function irAFaseSolicitado() { showProyectosFase('solicitado'); }
 function irAFaseEjecucion() { showProyectosFase('en_ejecucion'); }
 
@@ -1339,7 +1339,7 @@ async function cargarMetricasDept(dept) {
   if (panelBloqueos) panelBloqueos.remove();
 
   if (dept === 'tecnico') {
-    if (labels[2]) labels[2].textContent = 'Pendiente revision';
+    if (labels[2]) labels[2].textContent = 'Pendiente revisión';
     try {
       var stCodes = ['en_analisis','oferta_en_curso','pending_tech_review'];
       var stRes = await db.from('project_statuses').select('id').in('code', stCodes);
@@ -1350,11 +1350,11 @@ async function cargarMetricasDept(dept) {
       if (banner) {
         if (n > 0) {
           banner.style.display = 'block';
-          banner.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosPendientesTecnico()">' +
+          banner.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosPendientesTécnico()">' +
             '<div style="display:flex;align-items:center;gap:12px;">' +
             '<div class="notif-bell"><span style="font-size:14px;color:white;font-weight:bold;">!</span></div>' +
             '<div><div style="font-size:13px;font-weight:600;color:#A32D2D;">' + n + ' proyecto(s) requieren tu atencion</div>' +
-            '<div style="font-size:11px;color:#A32D2D;opacity:0.8;">Proyectos en analisis u oferta en curso pendientes de accion</div></div></div>' +
+            '<div style="font-size:11px;color:#A32D2D;opacity:0.8;">Proyectos en análisis u oferta en curso pendientes de accion</div></div></div>' +
             '<span style="font-size:12px;color:#A32D2D;font-weight:500;">Ver proyectos</span></div>';
         } else {
           banner.style.display = 'none';
@@ -1401,7 +1401,7 @@ async function cargarMetricasDept(dept) {
     } catch(e) { console.error(e); }
 
   } else if (dept === 'prl') {
-    if (labels[2]) labels[2].textContent = 'Obras en ejecucion';
+    if (labels[2]) labels[2].textContent = 'Obras en ejecución';
     try {
       var stEj = await db.from('project_statuses').select('id').eq('code','en_ejecucion').single();
       var ejCount = 0;
@@ -1416,8 +1416,8 @@ async function cargarMetricasDept(dept) {
           banner.innerHTML = '<div style="background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="irAFaseEjecucion()">' +
             '<div style="display:flex;align-items:center;gap:12px;">' +
             '<div class="notif-bell orange"><span style="font-size:14px;color:white;font-weight:bold;">!</span></div>' +
-            '<div><div style="font-size:13px;font-weight:600;color:#854F0B;">' + ejCount + ' obra(s) en ejecucion requieren documentacion PRL</div>' +
-            '<div style="font-size:11px;color:#854F0B;opacity:0.8;">Revisa la documentacion de seguridad de las obras activas</div></div></div>' +
+            '<div><div style="font-size:13px;font-weight:600;color:#854F0B;">' + ejCount + ' obra(s) en ejecución requieren documentación PRL</div>' +
+            '<div style="font-size:11px;color:#854F0B;opacity:0.8;">Revisa la documentación de seguridad de las obras activas</div></div></div>' +
             '<span style="font-size:12px;color:#854F0B;font-weight:500;">Ver obras</span></div>';
         } else {
           banner.style.display = 'none';
@@ -1458,9 +1458,9 @@ async function cargarProyectosBloqueados() {
     var pr = await db.from('projects').select('id,name,code').eq('project_status_id',st.id);
     if (pr.data && pr.data.length) {
       pr.data.forEach(function(p) {
-        var quien = st.code === 'pending_tech_review' ? 'Dpto. Tecnico' :
-                    st.code === 'pending_mgmt_approval' ? 'Direccion' :
-                    st.code === 'en_analisis' ? 'Dpto. Tecnico' : 'Dpto. Tecnico';
+        var quien = st.code === 'pending_tech_review' ? 'Dpto. Técnico' :
+                    st.code === 'pending_mgmt_approval' ? 'Dirección' :
+                    st.code === 'en_analisis' ? 'Dpto. Técnico' : 'Dpto. Técnico';
         bloqueados.push({proyecto: p.name||p.code||'#'+p.id, estado: st.name, quien: quien, id: p.id});
       });
     }
@@ -1492,7 +1492,7 @@ function resetDashboardUI() {
   var labels = document.querySelectorAll('.metric-label');
   if (labels[0]) labels[0].textContent = 'Proyectos activos';
   if (labels[1]) labels[1].textContent = 'Emails procesados';
-  if (labels[2]) labels[2].textContent = 'Pendiente revision';
+  if (labels[2]) labels[2].textContent = 'Pendiente revisión';
   if (labels[3]) labels[3].textContent = 'Errores registrados';
   var bp = document.getElementById('panel-bloqueos');
   if (bp) bp.remove();
@@ -1736,7 +1736,7 @@ async function validarGremio() {
   }
 }
 
-async function enviarAprobacion() {
+async function enviarAprobación() {
   if (!currentProj) return;
   var data = gremiosData[currentProj.cat]||{partidas:[],proveedores:['Proveedor S.L.']};
   document.getElementById('apro-empty-det').style.display='none';
@@ -1748,7 +1748,7 @@ async function enviarAprobacion() {
     return '<div class="apro-row"><div class="dot-g"></div><div><div style="font-size:12px;font-weight:500;">'+p+'</div>' +
       '<div style="font-size:10px;color:#aaa;">'+currentProj.cat+'</div></div></div>';
   }).join('');
-  document.getElementById('apro-tecnico-det').textContent = 'tecnico@bygsoluciones.es · '+new Date().toLocaleDateString('es-ES');
+  document.getElementById('apro-técnico-det').textContent = 'técnico@bygsoluciones.es · '+new Date().toLocaleDateString('es-ES');
   showProjTab('aprobacion', document.querySelectorAll('.proj-tab')[2]);
   try { await db.from('projects').update({project_status_id:9,updated_at:new Date().toISOString()}).eq('id',currentProj.id); }
   catch(e) { console.error('Error Supabase:',e); }
@@ -1760,14 +1760,14 @@ async function aprobarDet() {
     '<div style="font-size:22px;margin-bottom:6px;color:#3B6D11;">OK</div>' +
     '<div style="font-size:13px;font-weight:500;color:#3B6D11;margin-bottom:3px;">Envío aprobado</div>' +
     '<div style="font-size:11px;color:#888;">Las peticiones se enviarán cuando todos los departamentos aprueben.</div></div>';
-  document.getElementById('apro-analisis-det').style.display='block';
+  document.getElementById('apro-análisis-det').style.display='block';
   if (currentProj) {
     try { await db.from('projects').update({project_status_id:10,updated_at:new Date().toISOString()}).eq('id',currentProj.id); }
     catch(e) { console.error('Error Supabase:',e); }
   }
 }
 
-function abrirFormularioAprobacion() {
+function abrirFormularioAprobación() {
   if (!currentProj) return;
   var params='token=demo-'+currentProj.id+'-'+Date.now()+'&step=1&analysis_id=1&project_id='+currentProj.id+'&specialty='+encodeURIComponent(currentProj.cat);
   window.open('/aprobar.html?'+params,'_blank');
@@ -1815,7 +1815,7 @@ function abrirFichaCliente(id) {
     {label:'Contacto administración',val:c.contact_name_admin},
     {label:'Email administración',   val:c.email_admin},
     {label:'Teléfono administración',val:c.phone_admin},
-    {label:'Dirección',              val:c.address},
+    {label:'Domicilio social',        val:c.address},
     {label:'Ciudad',                 val:c.city},
     {label:'Tipo de cliente',        val:c.client_type},
     {label:'Notas',                  val:c.notes},
@@ -1967,22 +1967,23 @@ function renderFichaProveedor(p, editable) {
     gremios = p.supplier_specialty_rel.map(function(r){ return r.specialty_code + (r.primary_specialty?' (principal)':''); });
   } else if (p.specialty_code) { gremios = [p.specialty_code]; }
 
+  var camposObligatoriosProv = ['internal_code','commercial_name','legal_name','cif','commercial_email','phone','address'];
   var campos = [
-    {label:'Código interno',          key:'internal_code',     val:p.internal_code},
-    {label:'Nombre comercial',         key:'commercial_name',   val:p.commercial_name},
-    {label:'Razón social',             key:'legal_name',        val:p.legal_name},
-    {label:'CIF / NIF',               key:'cif',               val:p.cif},
-    {label:'Gremios / Especialidades', key:'_gremios',          val:gremios.join(', '), readonly:true},
-    {label:'Categoría',               key:'category',          val:p.category},
-    {label:'Estado',                  key:'status',            val:p.status},
-    {label:'Valoración histórica',    key:'rating',            val:p.rating?p.rating+'/5':''},
-    {label:'Email principal',         key:'commercial_email',  val:p.commercial_email},
-    {label:'Email Dpto. Técnico',     key:'tech_email',        val:p.tech_email},
-    {label:'Email Dpto. Administración', key:'admin_email',    val:p.admin_email},
-    {label:'Teléfono principal',      key:'phone',             val:p.phone},
-    {label:'Teléfono Dpto. Técnico',  key:'tech_phone',        val:p.tech_phone},
-    {label:'Teléfono Dpto. Administración', key:'admin_phone', val:p.admin_phone},
-    {label:'Dirección',              key:'address',           val:p.address},
+    {label:'Código interno',          key:'internal_code',     val:p.internal_code,        required:true},
+    {label:'Nombre comercial',        key:'commercial_name',   val:p.commercial_name,       required:true},
+    {label:'Razón social',            key:'legal_name',        val:p.legal_name,            required:true},
+    {label:'CIF / NIF',              key:'cif',               val:p.cif,                   required:true},
+    {label:'Gremios / Especialidades',key:'_gremios',          val:gremios.join(', '),      readonly:true},
+    {label:'Categoría',              key:'category',          val:p.category},
+    {label:'Estado',                 key:'status',            val:p.status},
+    {label:'Valoración histórica',   key:'rating',            val:p.rating?p.rating+'/5':''},
+    {label:'Email principal',        key:'commercial_email',  val:p.commercial_email,      required:true},
+    {label:'Email Dpto. Técnico',    key:'tech_email',        val:p.tech_email},
+    {label:'Email Dpto. Administración', key:'admin_email',   val:p.admin_email},
+    {label:'Teléfono principal',     key:'phone',             val:p.phone,                 required:true},
+    {label:'Teléfono Dpto. Técnico', key:'tech_phone',        val:p.tech_phone},
+    {label:'Teléfono Dpto. Administración', key:'admin_phone',val:p.admin_phone},
+    {label:'Domicilio social',       key:'address',           val:p.address,               required:true},
     {label:'Ciudad',                 key:'city',              val:p.city},
     {label:'Provincia',              key:'province',          val:p.province},
     {label:'Condiciones de pago',    key:'payment_terms',     val:p.payment_terms},
@@ -1999,12 +2000,16 @@ function renderFichaProveedor(p, editable) {
       var isReadonly = f.readonly || !editable;
       var inputStyle = isReadonly ?
         'background:#f9f9f6;border:1px solid transparent;' :
-        'background:white;border:1px solid #ddd;';
+        (f.required ? 'background:white;border:1px solid #ddd;' : 'background:white;border:1px solid #ddd;');
+      var labelHtml = f.label + (f.required && editable ? ' <span style="color:#A32D2D;font-size:10px;">*</span>' : '');
       return '<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
-        '<div style="width:220px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">'+f.label+'</div>' +
+        '<div style="width:220px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">' + labelHtml + '</div>' +
         '<input id="prov-field-'+f.key+'" value="'+(f.val||'')+'" '+(isReadonly?'readonly':'')+
+        (f.required && !isReadonly ? ' required' : '') +
         ' style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;color:#1a1a1a;'+inputStyle+'"></div>';
-    }).join('') + '</div>';
+    }).join('') +
+    (editable ? '<div style="font-size:11px;color:#888;margin-top:10px;"><span style="color:#A32D2D;">*</span> Campos obligatorios</div>' : '') +
+    '</div>';
 }
 
 function toggleEditarProveedor() {
@@ -2023,6 +2028,24 @@ async function guardarProveedor() {
     var el = document.getElementById('prov-field-'+k);
     if (el) data[k] = el.value || null;
   });
+  // Validar campos obligatorios
+  var obligatorios = {
+    'internal_code': 'Código interno',
+    'commercial_name': 'Nombre comercial',
+    'legal_name': 'Razón social',
+    'cif': 'CIF / NIF',
+    'commercial_email': 'Email principal',
+    'phone': 'Teléfono principal',
+    'address': 'Domicilio social'
+  };
+  var errores = [];
+  Object.keys(obligatorios).forEach(function(k) {
+    if (!data[k] || !data[k].trim()) errores.push(obligatorios[k]);
+  });
+  if (errores.length > 0) {
+    alert('Los siguientes campos son obligatorios:\n\n• ' + errores.join('\n• '));
+    return;
+  }
   try {
     if (proveedorActual.id) {
       await db.from('suppliers').update(data).eq('id', proveedorActual.id);
@@ -2085,7 +2108,7 @@ function imprimirFichaProveedor() {
     {label:'Dirección',                  val:p.address},
     {label:'Ciudad',                     val:p.city},
     {label:'Provincia',                  val:p.province},
-    {label:'Condiciones de pago',        val:p.payment_terms},
+    {label:'Condiciónes de pago',        val:p.payment_terms},
     {label:'Método de pago',             val:p.payment_method},
     {label:'Retención (%)',              val:p.retention_pct},
     {label:'Notas',                      val:p.notes},
@@ -2368,7 +2391,7 @@ async function abrirEvaluacion(id, nameEnc) {
     document.getElementById('eval-cat').textContent = evalProyecto.category||'-';
     document.getElementById('eval-date').textContent = evalProyecto.received_at?new Date(evalProyecto.received_at).toLocaleDateString('es-ES'):'-';
 
-    // Cargar evaluaciones existentes
+    // Cargar evaluaciónes existentes
     var evals = await db.from('project_evaluations').select('*').eq('project_id',id);
     if (evals.data && evals.data.length) {
       evals.data.forEach(function(e) {
@@ -2377,7 +2400,7 @@ async function abrirEvaluacion(id, nameEnc) {
       });
     }
     resetAlertaEval();
-  } catch(e) { console.error('Error abriendo evaluacion:',e); }
+  } catch(e) { console.error('Error abriendo evaluación:',e); }
 }
 
 function mostrarEstadoEval(dept, decision, reason, by) {
@@ -2427,7 +2450,7 @@ function resetAlertaEval() {
       '<div style="font-size:28px;margin-bottom:8px;">OK</div>' +
       '<div style="font-size:15px;font-weight:600;color:#3B6D11;margin-bottom:6px;">Proyecto aceptado</div>' +
       '<div style="font-size:12px;color:#3B6D11;margin-bottom:1rem;">Los tres departamentos han aprobado. El proyecto avanza a fase En Análisis.</div>' +
-      '<button class="btn btn-success" onclick="avanzarAAnalisis()">Confirmar y avanzar a En Análisis</button></div>';
+      '<button class="btn btn-success" onclick="avanzarAAnálisis()">Confirmar y avanzar a En Análisis</button></div>';
   } else {
     alert.className = 'alert-box';
     alert.style.display = 'block';
@@ -2437,7 +2460,7 @@ function resetAlertaEval() {
   }
 }
 
-async function registrarEvaluacion(dept, decision) {
+async function registrarEvaluación(dept, decision) {
   if (!evalProyecto) return;
   var reason = document.getElementById('eval-reason-'+dept) ? document.getElementById('eval-reason-'+dept).value.trim() : '';
   if (decision === 'rejected' && !reason) {
@@ -2446,7 +2469,7 @@ async function registrarEvaluacion(dept, decision) {
     alert('El campo de observaciones es obligatorio al rechazar.');
     return;
   }
-  var deptNames = {tecnico:'Dept. Técnico', comercial:'Dept. Comercial', direccion:'Dirección'};
+  var deptNames = {técnico:'Dept. Técnico', comercial:'Dept. Comercial', dirección:'Dirección'};
   var evalData = {
     project_id:       evalProyecto.id,
     department:       dept,
@@ -2471,7 +2494,7 @@ async function registrarEvaluacion(dept, decision) {
   } catch(e) { alert('Error al registrar: '+e.message); }
 }
 
-async function avanzarAAnalisis() {
+async function avanzarAAnálisis() {
   if (!evalProyecto) return;
   try {
     var stRes = await db.from('project_statuses').select('id').eq('code','en_analisis').single();
@@ -2486,7 +2509,7 @@ async function avanzarAAnalisis() {
   } catch(e) { alert('Error: '+e.message); }
 }
 
-function volverDesdeEvaluacion() {
+function volverDesdeEvaluación() {
   evalProyecto = null;
   evalDecisiones = {};
   if (currentFase) {
@@ -2497,9 +2520,9 @@ function volverDesdeEvaluacion() {
 }
 
 // -- PROYECTO EN ANÁLISIS --
-var analisisProyecto = null;
-var analisisData = null;
-var gremiosSeleccionados = {};
+var análisisProyecto = null;
+var análisisData = null;
+var gremiosSelecciónados = {};
 
 var proveedoresPorGremio = {
   ELECTRICIDAD: ['PRV-001','PRV-002'],
@@ -2512,43 +2535,43 @@ async function abrirAnalisis(id, nameEnc) {
   var name = decodeURIComponent(nameEnc);
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('panel-analisis').classList.add('active');
-  gremiosSeleccionados = {};
+  gremiosSelecciónados = {};
 
   try {
     var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,confidence,project_statuses(code,name)').eq('id',id).single();
-    analisisProyecto = res.data;
-    document.getElementById('analisis-title').textContent = 'En Análisis - '+(analisisProyecto.name||analisisProyecto.code||'#'+id);
-    document.getElementById('an-name').textContent = analisisProyecto.name||analisisProyecto.code||'#'+id;
-    document.getElementById('an-client').textContent = analisisProyecto.contact_email||'-';
-    document.getElementById('an-cat').textContent = analisisProyecto.category||'-';
+    análisisProyecto = res.data;
+    document.getElementById('análisis-title').textContent = 'En Análisis - '+(análisisProyecto.name||análisisProyecto.code||'#'+id);
+    document.getElementById('an-name').textContent = análisisProyecto.name||análisisProyecto.code||'#'+id;
+    document.getElementById('an-client').textContent = análisisProyecto.contact_email||'-';
+    document.getElementById('an-cat').textContent = análisisProyecto.category||'-';
 
     // Cargar análisis existente
     var anRes = await db.from('project_analysis').select('*').eq('project_id',id).maybeSingle();
-    analisisData = anRes.data;
-    if (analisisData) {
-      document.getElementById('an-tech-notes').value = analisisData.tech_notes||'';
-      document.getElementById('an-docs-reviewed').checked = analisisData.docs_reviewed||false;
-      if (analisisData.email_sent_at) {
-        document.getElementById('an-email-date').textContent = 'Enviado el '+new Date(analisisData.email_sent_at).toLocaleDateString('es-ES');
+    análisisData = anRes.data;
+    if (análisisData) {
+      document.getElementById('an-tech-notes').value = análisisData.tech_notes||'';
+      document.getElementById('an-docs-reviewed').checked = análisisData.docs_reviewed||false;
+      if (análisisData.email_sent_at) {
+        document.getElementById('an-email-date').textContent = 'Enviado el '+new Date(análisisData.email_sent_at).toLocaleDateString('es-ES');
       }
     } else {
       // Crear registro de análisis y marcar email como enviado
       var newAn = {project_id:id, email_sent_at:new Date().toISOString(), docs_reviewed:false};
       var insRes = await db.from('project_analysis').insert(newAn).select().single();
-      analisisData = insRes.data;
+      análisisData = insRes.data;
       document.getElementById('an-email-date').textContent = 'Enviado el '+new Date().toLocaleDateString('es-ES');
     }
 
     // Cargar documentos
-    cargarDocumentosAnalisis(id, analisisProyecto.category);
+    cargarDocumentosAnálisis(id, análisisProyecto.category);
 
     // Cargar gremios y proveedores propuestos
-    cargarGremiosAnalisis(analisisProyecto.category);
+    cargarGremiosAnálisis(análisisProyecto.category);
 
-  } catch(e) { console.error('Error abriendo analisis:',e); }
+  } catch(e) { console.error('Error abriendo análisis:',e); }
 }
 
-function cargarDocumentosAnalisis(projectId, categoria) {
+function cargarDocumentosAnálisis(projectId, categoria) {
   var el = document.getElementById('an-docs-list');
   var cat = categoria || 'GREMIO';
 
@@ -2597,7 +2620,7 @@ function cargarDocumentosAnalisis(projectId, categoria) {
 
 var _gremioMap = {};
 
-async function cargarGremiosAnalisis(categoria) {
+async function cargarGremiosAnálisis(categoria) {
   var el = document.getElementById('an-gremios-list');
   el.innerHTML = '<div class="loading">Cargando gremios y proveedores...</div>';
 
@@ -2608,7 +2631,7 @@ async function cargarGremiosAnalisis(categoria) {
     // Cargar gremios reales del proyecto desde project_specialties
     var gremiosRes = await db.from('project_specialties')
       .select('specialty_code,confidence')
-      .eq('project_id', analisisProyecto.id)
+      .eq('project_id', análisisProyecto.id)
       .order('confidence', {ascending:false});
 
     var gremios = gremiosRes.data && gremiosRes.data.length ?
@@ -2622,8 +2645,8 @@ async function cargarGremiosAnalisis(categoria) {
       });
 
       var propuestos = provGremio.slice(0,3);
-      if (!gremiosSeleccionados[gremio]) {
-        gremiosSeleccionados[gremio] = propuestos.map(function(p){return p.id;});
+      if (!gremiosSelecciónados[gremio]) {
+        gremiosSelecciónados[gremio] = propuestos.map(function(p){return p.id;});
       }
 
       // Confianza de este gremio
@@ -2634,10 +2657,10 @@ async function cargarGremiosAnalisis(categoria) {
 
       var filas = todosProveedores.map(function(p) {
         var esPropuesto = propuestos.some(function(x){return x.id===p.id;});
-        var estaSeleccionado = (gremiosSeleccionados[gremio]||[]).indexOf(p.id) > -1;
+        var estaSelecciónado = (gremiosSelecciónados[gremio]||[]).indexOf(p.id) > -1;
         var stars = p.rating ? '\u2605'.repeat(p.rating) : '-';
-        var chk = estaSeleccionado ? 'checked' : '';
-        var bgColor = estaSeleccionado ? 'background:#EAF3DE;' : '';
+        var chk = estaSelecciónado ? 'checked' : '';
+        var bgColor = estaSelecciónado ? 'background:#EAF3DE;' : '';
         return '<tr style="'+bgColor+'">' +
           '<td style="text-align:center;"><input type="checkbox" '+chk+' onchange="toggleProveedor(\'' + gremio + '\',' + p.id + ',this.checked)"></td>' +
           '<td style="font-weight:500;">' + p.commercial_name + '</td>' +
@@ -2650,7 +2673,7 @@ async function cargarGremiosAnalisis(categoria) {
       return '<div style="margin-bottom:1rem;">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;">' +
         '<span class="badge b-default">' + gremio + '</span>' + confLabel +
-        '<span style="font-size:12px;color:#888;margin-left:4px;">Selecciona los proveedores a los que enviar petición de oferta</span></div>' +
+        '<span style="font-size:12px;color:#888;margin-left:4px;">Seleccióna los proveedores a los que enviar petición de oferta</span></div>' +
         '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
         '<thead><tr style="background:#f9f9f6;">' +
         '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #e5e5e0;width:40px;">Sel.</th>' +
@@ -2667,13 +2690,13 @@ async function cargarGremiosAnalisis(categoria) {
 }
 
 function toggleProveedor(gremio, provId, checked) {
-  if (!gremiosSeleccionados[gremio]) gremiosSeleccionados[gremio] = [];
+  if (!gremiosSelecciónados[gremio]) gremiosSelecciónados[gremio] = [];
   if (checked) {
-    if (gremiosSeleccionados[gremio].indexOf(provId) === -1) {
-      gremiosSeleccionados[gremio].push(provId);
+    if (gremiosSelecciónados[gremio].indexOf(provId) === -1) {
+      gremiosSelecciónados[gremio].push(provId);
     }
   } else {
-    gremiosSeleccionados[gremio] = gremiosSeleccionados[gremio].filter(function(id){return id !== provId;});
+    gremiosSelecciónados[gremio] = gremiosSelecciónados[gremio].filter(function(id){return id !== provId;});
   }
   // Actualizar color de fila
   var row = event.target.closest('tr');
@@ -2682,25 +2705,25 @@ function toggleProveedor(gremio, provId, checked) {
 
 
 async function marcarDocsRevisados(checked) {
-  if (!analisisProyecto) return;
+  if (!análisisProyecto) return;
   try {
-    await db.from('project_analysis').update({docs_reviewed:checked, updated_at:new Date().toISOString()}).eq('project_id', analisisProyecto.id);
+    await db.from('project_analysis').update({docs_reviewed:checked, updated_at:new Date().toISOString()}).eq('project_id', análisisProyecto.id);
   } catch(e) { console.error(e); }
 }
 
-async function guardarInformeTecnico() {
-  if (!analisisProyecto) return;
+async function guardarInformeTécnico() {
+  if (!análisisProyecto) return;
   var notes = document.getElementById('an-tech-notes').value;
   try {
-    await db.from('project_analysis').update({tech_notes:notes, updated_at:new Date().toISOString()}).eq('project_id', analisisProyecto.id);
+    await db.from('project_analysis').update({tech_notes:notes, updated_at:new Date().toISOString()}).eq('project_id', análisisProyecto.id);
     var el = document.getElementById('an-notes-saved');
     el.textContent = 'Guardado el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES');
     el.style.color = '#3B6D11';
   } catch(e) { alert('Error al guardar: '+e.message); }
 }
 
-async function accionAnalisis(accion) {
-  if (!analisisProyecto) return;
+async function accionAnálisis(accion) {
+  if (!análisisProyecto) return;
   var reason = document.getElementById('an-decision-reason').value.trim();
   if ((accion === 'cancelled' || accion === 'info_requested') && !reason) {
     document.getElementById('an-decision-reason').style.borderColor = '#A32D2D';
@@ -2711,35 +2734,35 @@ async function accionAnalisis(accion) {
   try {
     var stRes = await db.from('project_statuses').select('id').eq('code', accion).single();
     if (stRes.data) {
-      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id', analisisProyecto.id);
+      await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id', análisisProyecto.id);
       if (accion === 'oferta_en_curso') {
         // Guardar selección de proveedores
         var inserts = [];
-        Object.keys(gremiosSeleccionados).forEach(function(gremio){
-          (gremiosSeleccionados[gremio]||[]).forEach(function(provId){
-            inserts.push({project_id:analisisProyecto.id, specialty_code:gremio, supplier_id:provId, proposed_by_ai:true, selected:true});
+        Object.keys(gremiosSelecciónados).forEach(function(gremio){
+          (gremiosSelecciónados[gremio]||[]).forEach(function(provId){
+            inserts.push({project_id:análisisProyecto.id, specialty_code:gremio, supplier_id:provId, proposed_by_ai:true, selected:true});
           });
         });
         if (inserts.length) {
           await db.from('project_gremio_suppliers').upsert(inserts, {onConflict:'project_id,specialty_code,supplier_id'});
         }
-        alert('Proyecto avanzado a Oferta en curso. Proveedores seleccionados guardados.');
+        alert('Proyecto avanzado a Oferta en curso. Proveedores selecciónados guardados.');
       } else if (accion === 'cancelled') {
         alert('Proyecto cancelado. Motivo registrado.');
       } else {
         alert('Aclaraciones solicitadas al cliente. El proyecto queda en espera.');
       }
-      analisisProyecto = null;
-      analisisData = null;
+      análisisProyecto = null;
+      análisisData = null;
       await showProyectosFase('en_analisis');
       loadDashboard();
     }
   } catch(e) { alert('Error: '+e.message); }
 }
 
-function volverDesdeAnalisis() {
-  analisisProyecto = null;
-  analisisData = null;
+function volverDesdeAnálisis() {
+  análisisProyecto = null;
+  análisisData = null;
   if (currentFase) showProyectosFase(currentFase);
   else showPanel('dashboard');
 }
@@ -2752,14 +2775,14 @@ function abrirDocumento(nombre) {
 var ocProyecto = null;
 var ocGremios = [];
 var ocMargenes = {};
-var ocAprobaciones = {tecnico:false, comercial:false, direccion:false};
+var ocAprobaciónes = {técnico:false, comercial:false, dirección:false};
 
 async function abrirOfertaCurso(id, nameEnc) {
   var name = decodeURIComponent(nameEnc);
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('panel-oferta-curso').classList.add('active');
   showOcTab('peticiones', document.querySelector('.proj-tab'));
-  ocAprobaciones = {tecnico:false, comercial:false, direccion:false};
+  ocAprobaciónes = {técnico:false, comercial:false, dirección:false};
 
   try {
     var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,project_code,project_statuses(code,name)').eq('id',id).single();
@@ -2803,12 +2826,12 @@ async function cargarPeticionesGremios(peticionesExistentes) {
     var provRes = await db.from('suppliers').select('id,commercial_name,specialty_code,tech_email,commercial_email,supplier_specialty_rel(specialty_code)').eq('status','active');
     var todosProveedores = provRes.data || [];
 
-    // Cargar proveedores seleccionados por gremio
+    // Cargar proveedores selecciónados por gremio
     var selRes = await db.from('project_gremio_suppliers').select('specialty_code,supplier_id,suppliers(commercial_name,tech_email,commercial_email)').eq('project_id',ocProyecto.id).eq('selected',true);
-    var seleccionados = selRes.data || [];
+    var selecciónados = selRes.data || [];
 
     var html = ocGremios.map(function(gremio) {
-      var provGremio = seleccionados.filter(function(s){return s.specialty_code===gremio;});
+      var provGremio = selecciónados.filter(function(s){return s.specialty_code===gremio;});
       if (!provGremio.length) {
         // Fallback: proveedores del fichero por gremio
         provGremio = todosProveedores.filter(function(p){
@@ -2837,7 +2860,7 @@ async function cargarPeticionesGremios(peticionesExistentes) {
       return '<div class="card" style="margin-bottom:1rem;" data-gremio="'+gremio+'">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;flex-wrap:wrap;gap:8px;">' +
         '<div style="display:flex;align-items:center;gap:8px;"><span class="badge b-default">'+gremio+'</span>'+statusBadge+'</div>' +
-        '<div style="font-size:12px;color:#888;">'+provGremio.length+' proveedores seleccionados</div></div>' +
+        '<div style="font-size:12px;color:#888;">'+provGremio.length+' proveedores selecciónados</div></div>' +
 
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">' +
         '<div><div style="font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:4px;">Proveedores destinatarios</div>'+provList+'</div>' +
@@ -2923,7 +2946,7 @@ async function enviarPeticion(gremio) {
 
 async function cargarOfertasRecibidas() {
   var el = document.getElementById('oc-ofertas-content');
-  if (!ocProyecto) { el.innerHTML = '<div class="empty">No hay proyecto seleccionado</div>'; return; }
+  if (!ocProyecto) { el.innerHTML = '<div class="empty">No hay proyecto selecciónado</div>'; return; }
   el.innerHTML = '<div class="loading">Cargando ofertas...</div>';
 
   try {
@@ -3060,10 +3083,10 @@ async function cargarMontajeOferta() {
     '</table></div>' +
     '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">' +
     '<button class="btn" onclick="cargarMontajeOferta()">Recalcular</button>' +
-    '<button class="btn btn-primary" onclick="someterAprobacionMargenes()">Someter a aprobación de márgenes </button>' +
+    '<button class="btn btn-primary" onclick="someterAprobaciónMargenes()">Someter a aprobación de márgenes </button>' +
     '</div>';
 
-  document.getElementById('oc-aprobacion-margenes').style.display = 'none';
+  document.getElementById('oc-aprobación-margenes').style.display = 'none';
 }
 
 function actualizarMargen(input) {
@@ -3071,17 +3094,17 @@ function actualizarMargen(input) {
   ocMargenes[code] = parseFloat(input.value) || 0;
 }
 
-function someterAprobacionMargenes() {
-  document.getElementById('oc-aprobacion-margenes').style.display = 'block';
-  document.getElementById('oc-aprobacion-margenes').scrollIntoView({behavior:'smooth', block:'start'});
+function someterAprobaciónMargenes() {
+  document.getElementById('oc-aprobación-margenes').style.display = 'block';
+  document.getElementById('oc-aprobación-margenes').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function aprobarMargenes(dept) {
-  ocAprobaciones[dept] = true;
+  ocAprobaciónes[dept] = true;
   var el = document.getElementById('aprov-'+dept+'-status');
   if (el) el.innerHTML = '<div style="color:#3B6D11;font-size:13px;">OK Aprobado</div>';
 
-  if (ocAprobaciones.tecnico && ocAprobaciones.comercial && ocAprobaciones.direccion) {
+  if (ocAprobaciónes.técnico && ocAprobaciónes.comercial && ocAprobaciónes.dirección) {
     document.getElementById('oc-envio-final').style.display = 'block';
     var emailCliente = 'Estimado cliente,\n\nNos complace presentarles nuestra propuesta económica para el proyecto ' +
       (ocProyecto?ocProyecto.name||ocProyecto.code:'') + '.\n\nAdjuntamos nuestra oferta detallada por partidas y gremios para su revisión.\n\nQuedamos a su disposición para cualquier aclaración o modificación que precisen.\n\nAtentamente,\nDepartamento Técnico\nBYG Soluciones S.L.';
@@ -3133,7 +3156,7 @@ async function abrirOfertaEnviada(id, nameEnc) {
     document.getElementById('oe-award-date').value = new Date().toISOString().split('T')[0];
 
     // Cargar historial
-    cargarHistorialAdjudicacion(id);
+    cargarHistorialAdjudicación(id);
 
     // Verificar si ya hay adjudicación registrada
     var awardRes = await db.from('project_awards').select('*').eq('project_id',id).order('created_at',{ascending:false}).limit(1);
@@ -3168,10 +3191,10 @@ function showOeTab(tab, el) {
   var tabEl = document.getElementById('oe-tab-'+tab);
   if (tabEl) tabEl.style.display = 'block';
   if (el) el.classList.add('active');
-  if (tab === 'historial') cargarHistorialAdjudicacion(oeProyecto ? oeProyecto.id : null);
+  if (tab === 'historial') cargarHistorialAdjudicación(oeProyecto ? oeProyecto.id : null);
 }
 
-async function registrarAdjudicacion() {
+async function registrarAdjudicación() {
   if (!oeProyecto) return;
   var method = document.getElementById('oe-method').value;
   var date = document.getElementById('oe-award-date').value;
@@ -3197,7 +3220,7 @@ async function registrarAdjudicacion() {
     });
     
     if (insRes.error) {
-      alert('Error guardando adjudicacion: ' + JSON.stringify(insRes.error));
+      alert('Error guardando adjudicación: ' + JSON.stringify(insRes.error));
       return;
     }
 
@@ -3242,7 +3265,7 @@ async function registrarRechazo() {
   } catch(e) { alert('Error: '+e.message); }
 }
 
-async function registrarNegociacion() {
+async function registrarNegociación() {
   if (!oeProyecto) return;
   var notes = document.getElementById('oe-negoc-notes').value.trim();
 
@@ -3302,7 +3325,7 @@ async function guardarDatosCompetencia() {
   } catch(e) { alert('Error: '+e.message); }
 }
 
-async function cargarHistorialAdjudicacion(projectId) {
+async function cargarHistorialAdjudicación(projectId) {
   var el = document.getElementById('oe-historial-content');
   if (!el || !projectId) return;
   el.innerHTML = '<div class="loading">Cargando...</div>';
@@ -3350,7 +3373,7 @@ async function abrirAdjudicado(id, nameEnc) {
   var name = decodeURIComponent(nameEnc);
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('panel-adjudicado').classList.add('active');
-  showAdjTab('asignacion', document.querySelector('.proj-tab'));
+  showAdjTab('asignación', document.querySelector('.proj-tab'));
 
   try {
     var res = await db.from('projects').select('id,name,code,project_code,contact_email,category,project_manager_id,project_statuses(code,name)').eq('id',id).single();
@@ -3361,7 +3384,7 @@ async function abrirAdjudicado(id, nameEnc) {
     document.getElementById('adj-client').textContent = adjProyecto.contact_email||'-';
     document.getElementById('adj-code').textContent = adjProyecto.project_code||'-';
 
-    // Cargar importe de adjudicacion
+    // Cargar importe de adjudicación
     var awardRes = await db.from('project_awards').select('awarded_amount').eq('project_id',id).eq('award_type','adjudicado').order('created_at',{ascending:false}).limit(1);
     if (awardRes.data && awardRes.data.length && awardRes.data[0].awarded_amount) {
       document.getElementById('adj-amount').textContent = parseFloat(awardRes.data[0].awarded_amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR';
@@ -3372,7 +3395,7 @@ async function abrirAdjudicado(id, nameEnc) {
     // Cargar jefes de obra disponibles
     var jefesRes = await db.from('project_managers').select('id,full_name,available,current_projects').order('full_name');
     var sel = document.getElementById('adj-manager');
-    sel.innerHTML = '<option value="">Seleccionar Jefe/a de Obra...</option>';
+    sel.innerHTML = '<option value="">Selecciónar Jefe/a de Obra...</option>';
     if (jefesRes.data) {
       jefesRes.data.forEach(function(j) {
         var opt = document.createElement('option');
@@ -3392,7 +3415,7 @@ async function abrirAdjudicado(id, nameEnc) {
         '<br><span style="font-size:11px;color:#888;">Asignado/a el ' + new Date(adjManagerActual.assigned_at).toLocaleDateString('es-ES') + '</span>';
       document.getElementById('adj-reasignar-area').style.display = 'block';
 
-      // Si ya tiene asignacion mostrar panel de lanzamiento
+      // Si ya tiene asignación mostrar panel de lanzamiento
       var statusCode = adjProyecto.project_statuses ? adjProyecto.project_statuses.code : '';
       if (statusCode === 'pendiente_lanzamiento') {
         document.getElementById('adj-launch-actions').style.display = 'block';
@@ -3402,14 +3425,14 @@ async function abrirAdjudicado(id, nameEnc) {
       }
     }
 
-    cargarDocumentoAdjudicacion(id);
-    cargarHistorialAsignaciones(id);
+    cargarDocumentoAdjudicación(id);
+    cargarHistorialAsignaciónes(id);
 
   } catch(e) { console.error('Error abriendo adjudicado:',e); }
 }
 
 function showAdjTab(tab, el) {
-  ['asignacion','documento','historial'].forEach(function(t){
+  ['asignación','documento','historial'].forEach(function(t){
     var el2 = document.getElementById('adj-tab-'+t);
     if (el2) el2.style.display = 'none';
   });
@@ -3425,21 +3448,21 @@ async function asignarJefeObra() {
   var startDate = document.getElementById('adj-start-date').value;
   var notes = document.getElementById('adj-manager-notes').value;
 
-  if (!managerId) { alert('Selecciona un/a Jefe/a de Obra.'); return; }
+  if (!managerId) { alert('Seleccióna un/a Jefe/a de Obra.'); return; }
   if (!startDate) { alert('Indica la fecha prevista de inicio.'); return; }
 
   try {
-    // Desactivar asignacion anterior si existe
+    // Desactivar asignación anterior si existe
     if (adjManagerActual) {
       await db.from('project_manager_assignments').update({is_current:false, unassigned_at:new Date().toISOString()}).eq('id',adjManagerActual.id);
     }
 
-    // Crear nueva asignacion
+    // Crear nueva asignación
     await db.from('project_manager_assignments').insert({
       project_id: adjProyecto.id,
       manager_id: managerId,
       assigned_at: new Date().toISOString(),
-      assigned_by: 'Direccion',
+      assigned_by: 'Dirección',
       is_current: true
     });
 
@@ -3466,11 +3489,11 @@ async function cambiarJefeObra() {
   var managerId = parseInt(document.getElementById('adj-manager').value);
   var reason = document.getElementById('adj-change-reason').value.trim();
 
-  if (!managerId) { alert('Selecciona el nuevo/a Jefe/a de Obra.'); return; }
+  if (!managerId) { alert('Seleccióna el nuevo/a Jefe/a de Obra.'); return; }
   if (!reason) { alert('Indica el motivo del cambio.'); return; }
 
   try {
-    // Desactivar asignacion actual
+    // Desactivar asignación actual
     if (adjManagerActual) {
       await db.from('project_manager_assignments').update({
         is_current: false,
@@ -3479,12 +3502,12 @@ async function cambiarJefeObra() {
       }).eq('id', adjManagerActual.id);
     }
 
-    // Nueva asignacion
+    // Nueva asignación
     await db.from('project_manager_assignments').insert({
       project_id: adjProyecto.id,
       manager_id: managerId,
       assigned_at: new Date().toISOString(),
-      assigned_by: 'Direccion',
+      assigned_by: 'Dirección',
       is_current: true
     });
 
@@ -3500,7 +3523,7 @@ async function confirmarInicioObra() {
     var stRes = await db.from('project_statuses').select('id').eq('code','en_ejecucion').single();
     if (stRes.data) {
       await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',adjProyecto.id);
-      alert('Inicio de obra confirmado. El proyecto pasa a En Ejecucion.');
+      alert('Inicio de obra confirmado. El proyecto pasa a En Ejecución.');
       adjProyecto = null;
       await showProyectosFase('pendiente_lanzamiento');
       loadDashboard();
@@ -3508,7 +3531,7 @@ async function confirmarInicioObra() {
   } catch(e) { alert('Error: '+e.message); }
 }
 
-async function cargarDocumentoAdjudicacion(projectId) {
+async function cargarDocumentoAdjudicación(projectId) {
   var el = document.getElementById('adj-doc-content');
   if (!el) return;
 
@@ -3552,7 +3575,7 @@ async function cargarDocumentoAdjudicacion(projectId) {
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
         '<span class="badge b-default">' + gremio + '</span></div>' +
         '<table class="data-table"><thead><tr>' +
-        '<th>Cod.</th><th>Descripcion</th><th style="text-align:center;">Cant.</th><th>Ud.</th><th style="text-align:right;">Coste prov.</th>' +
+        '<th>Cod.</th><th>Descripción</th><th style="text-align:center;">Cant.</th><th>Ud.</th><th style="text-align:right;">Coste prov.</th>' +
         '<th style="text-align:center;">Margen</th><th style="text-align:right;">Precio venta</th>' +
         '<th style="text-align:right;">Margen EUR</th>' +
         '</tr></thead><tbody>' +
@@ -3578,21 +3601,21 @@ async function cargarDocumentoAdjudicacion(projectId) {
     });
 
     html += '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:12px;margin-top:1rem;font-size:12px;color:#3B6D11;">' +
-      'Este documento es confidencial y de uso interno. El/la Jefe/a de Obra debe mantener los costes de ejecucion dentro de los margenes indicados para garantizar la rentabilidad del proyecto.' +
+      'Este documento es confidencial y de uso interno. El/la Jefe/a de Obra debe mantener los costes de ejecución dentro de los margenes indicados para garantizar la rentabilidad del proyecto.' +
       '</div>';
 
     el.innerHTML = html;
   } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando documento</div>'; }
 }
 
-async function cargarHistorialAsignaciones(projectId) {
+async function cargarHistorialAsignaciónes(projectId) {
   var el = document.getElementById('adj-historial-content');
   if (!el || !projectId) return;
 
   try {
     var res = await db.from('project_manager_assignments').select('*,project_managers(full_name)').eq('project_id',projectId).order('assigned_at',{ascending:false});
     if (!res.data || !res.data.length) {
-      el.innerHTML = '<div class="empty">No hay asignaciones registradas.</div>';
+      el.innerHTML = '<div class="empty">No hay asignaciónes registradas.</div>';
       return;
     }
     el.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;">' +
@@ -3621,8 +3644,8 @@ function volverDesdeAdjudicado() {
 var currentUser = null;
 
 var deptByEmail = {
-  'tecnico@bygsoluciones.es':   'tecnico',
-  'direccion@bygsoluciones.es': 'direccion',
+  'técnico@bygsoluciones.es':   'tecnico',
+  'dirección@bygsoluciones.es': 'direccion',
   'comercial@bygsoluciones.es': 'comercial',
   'prl@bygsoluciones.es':       'prl',
   'admin@bygsoluciones.es':     'admin'
@@ -3712,6 +3735,10 @@ function iniciarApp() {
   var activeBtn = document.querySelector('.dept-btn[onclick*="' + dept + '"]');
   if (activeBtn) activeBtn.classList.add('active-' + dept);
 
+  // Solo admin ve los botones de departamento
+  var deptWrap = document.getElementById('dept-select-wrap');
+  if (deptWrap) deptWrap.style.display = (dept === 'admin') ? 'flex' : 'none';
+
   loadDashboard();
 }
 
@@ -3748,7 +3775,7 @@ async function abrirEjecucion(id, nameEnc) {
   try {
     var res = await db.from('projects').select('id,name,code,project_code,contact_email,category,project_manager_id,project_statuses(code,name)').eq('id',id).single();
     ejProyecto = res.data;
-    document.getElementById('ej-title').textContent = 'En ejecucion - '+(ejProyecto.name||ejProyecto.code||'#'+id);
+    document.getElementById('ej-title').textContent = 'En ejecución - '+(ejProyecto.name||ejProyecto.code||'#'+id);
     document.getElementById('ej-name').textContent = ejProyecto.name||ejProyecto.code||'#'+id;
 
     if (ejProyecto.project_manager_id) {
@@ -3774,11 +3801,11 @@ async function abrirEjecucion(id, nameEnc) {
     cargarGastos(id);
     cargarCertificaciones(id);
 
-  } catch(e) { console.error('Error abriendo ejecucion:',e); }
+  } catch(e) { console.error('Error abriendo ejecución:',e); }
 }
 
 function showEjTab(tab, el) {
-  ['planning','hitos','economico','gastos','certificaciones'].forEach(function(t){
+  ['planning','hitos','económico','gastos','certificaciónes'].forEach(function(t){
     var el2 = document.getElementById('ej-tab-'+t);
     if (el2) el2.style.display = 'none';
   });
@@ -3848,7 +3875,7 @@ async function cargarEconomico(projectId) {
       '<div class="card" style="text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:6px;">Margen real vs teorico</div><div style="font-size:22px;font-weight:600;color:'+colorMargen+';">' + margenReal + '%</div><div style="font-size:11px;color:#aaa;margin-top:4px;">Teorico: ' + margenTeorico + '%</div></div>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">' +
-      '<div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;">Certificaciones al cliente</div>' +
+      '<div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;">Certificaciónes al cliente</div>' +
         '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ea;font-size:12px;"><span style="color:#888;">Total certificado</span><span style="font-weight:500;">' + totalCertificado.toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div>' +
         '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ea;font-size:12px;"><span style="color:#888;">Pendiente de certificar</span><span style="font-weight:500;color:#854F0B;">' + Math.max(0,totalPresupuesto-totalCertificado).toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div>' +
         '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;"><span style="color:#888;">Certificado / Presupuesto</span><span style="font-weight:500;">' + (totalPresupuesto>0?(totalCertificado/totalPresupuesto*100).toFixed(0):0) + '%</span></div></div>' +
@@ -3857,7 +3884,7 @@ async function cargarEconomico(projectId) {
         '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ea;font-size:12px;"><span style="color:#888;">Gasto real</span><span style="font-weight:500;color:#A32D2D;">' + totalGastado.toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div>' +
         '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;"><span style="color:#888;">Desviacion</span><span style="font-weight:500;color:'+(totalGastado>totalCoste?'#A32D2D':'#0F6E56')+'">' + (totalGastado-totalCoste).toLocaleString('es-ES',{minimumFractionDigits:0}) + ' EUR</span></div></div>' +
       '</div>';
-  } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando datos economicos</div>'; }
+  } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando datos económicos</div>'; }
 }
 
 async function cargarGastos(projectId) {
@@ -3871,7 +3898,7 @@ async function cargarGastos(projectId) {
     el.innerHTML = '<div style="display:flex;gap:1rem;margin-bottom:1rem;">' +
       '<div style="background:#f9f9f6;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Total gastos</div><div style="font-size:18px;font-weight:600;">' + total.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
       '<div style="background:#EAF3DE;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Aprobado</div><div style="font-size:18px;font-weight:600;color:#3B6D11;">' + totalAprobado.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
-      '<div style="background:#FCEBEB;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Pendiente aprobacion</div><div style="font-size:18px;font-weight:600;color:#A32D2D;">' + (total-totalAprobado).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
+      '<div style="background:#FCEBEB;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Pendiente aprobación</div><div style="font-size:18px;font-weight:600;color:#A32D2D;">' + (total-totalAprobado).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
       '</div>' +
       '<table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>IA</th></tr></thead><tbody>' +
       res.data.map(function(g) {
@@ -3893,7 +3920,7 @@ async function cargarCertificaciones(projectId) {
   if (!el) return;
   try {
     var res = await db.from('project_certifications').select('*').eq('project_id',projectId).order('cert_number');
-    if (!res.data || !res.data.length) { el.innerHTML = '<div class="empty">No hay certificaciones registradas</div>'; return; }
+    if (!res.data || !res.data.length) { el.innerHTML = '<div class="empty">No hay certificaciónes registradas</div>'; return; }
     el.innerHTML = '<table class="data-table"><thead><tr><th>Num.</th><th>Fecha</th><th>Importe</th><th>Acumulado</th><th>Facturada</th><th>Fecha factura</th></tr></thead><tbody>' +
       res.data.map(function(c) {
         return '<tr>' +
@@ -3905,14 +3932,14 @@ async function cargarCertificaciones(projectId) {
           '<td>' + (c.invoice_date ? new Date(c.invoice_date).toLocaleDateString('es-ES') : '-') + '</td>' +
           '</tr>';
       }).join('') + '</tbody></table>';
-    } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando certificaciones</div>'; }
+    } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando certificaciónes</div>'; }
 }
 
 function simularCargaGasto() {
   alert('En produccion: el Jefe/a de Obra sube foto o PDF del albaran. La IA extrae importe, proveedor y concepto automaticamente.');
 }
 
-function volverDesdeEjecucion() {
+function volverDesdeEjecución() {
   ejProyecto = null;
   if (currentFase) showProyectosFase(currentFase);
   else showPanel('dashboard');
@@ -3954,15 +3981,15 @@ async function cargarPlanning(projectId) {
     if (!planning_submitted && !esDireccion) {
       html += '<div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:12px 16px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;">' +
         '<span style="font-size:18px;">📋</span>' +
-        '<div><div style="font-size:12px;font-weight:600;color:#92400e;">Planning pendiente de enviar a Direccion</div>' +
-        '<div style="font-size:11px;color:#854F0B;margin-top:2px;">Crea los hitos del proyecto y envialos para que Direccion los revise</div></div>' +
-        '<button class="btn btn-primary btn-sm" style="margin-left:auto;white-space:nowrap;" onclick="enviarPlanningADireccion(' + projectId + ')">Enviar a Direccion</button>' +
+        '<div><div style="font-size:12px;font-weight:600;color:#92400e;">Planning pendiente de enviar a Dirección</div>' +
+        '<div style="font-size:11px;color:#854F0B;margin-top:2px;">Crea los hitos del proyecto y envialos para que Dirección los revise</div></div>' +
+        '<button class="btn btn-primary btn-sm" style="margin-left:auto;white-space:nowrap;" onclick="enviarPlanningADirección(' + projectId + ')">Enviar a Dirección</button>' +
         '</div>';
     } else if (planning_submitted) {
       var fechaEnvio = execRes.data.planning_submitted_at ? new Date(execRes.data.planning_submitted_at).toLocaleDateString('es-ES') : '';
       html += '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;">' +
         '<span style="color:#3B6D11;font-size:16px;">✓</span>' +
-        '<div style="font-size:12px;color:#27500A;">Planning enviado a Direccion' + (fechaEnvio ? ' el ' + fechaEnvio : '') + '</div>' +
+        '<div style="font-size:12px;color:#27500A;">Planning enviado a Dirección' + (fechaEnvio ? ' el ' + fechaEnvio : '') + '</div>' +
         (comments.length > 0 ? '<span class="badge b-adjudicado" style="margin-left:auto;">' + comments.length + ' comentario' + (comments.length>1?'s':'') + '</span>' : '') +
         '</div>';
     }
@@ -4024,7 +4051,7 @@ async function cargarPlanning(projectId) {
 
     // SECCION COMENTARIOS
     html += '<div style="margin-top:1.5rem;">' +
-      '<div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;display:flex;align-items:center;gap:8px;">Comentarios de Direccion' +
+      '<div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;display:flex;align-items:center;gap:8px;">Comentarios de Dirección' +
       (unread.length > 0 ? '<span style="background:#A32D2D;color:white;font-size:9px;padding:2px 7px;border-radius:99px;">' + unread.length + ' nuevo' + (unread.length>1?'s':'') + '</span>' : '') +
       '</div>';
 
@@ -4034,7 +4061,7 @@ async function cargarPlanning(projectId) {
       comments.forEach(function(c) {
         var esDirComment = c.author_role === 'direccion';
         html += '<div class="comment-item ' + (esDirComment ? 'comment-dir' : 'comment-tec') + (!c.is_read && c.author_role !== currentDept ? ' comment-new' : '') + '">' +
-          '<div class="comment-author">' + (esDirComment ? 'Direccion' : 'Jefe de Obra') + ' &mdash; ' + (c.author_name || c.author_email) + '</div>' +
+          '<div class="comment-author">' + (esDirComment ? 'Dirección' : 'Jefe de Obra') + ' &mdash; ' + (c.author_name || c.author_email) + '</div>' +
           '<div class="comment-text">' + c.comment + '</div>' +
           '<div class="comment-time">' + new Date(c.created_at).toLocaleString('es-ES') + '</div>' +
           '</div>';
@@ -4102,8 +4129,8 @@ async function guardarNuevoHitoPlanning() {
   } catch(e) { alert('Error guardando hito: ' + e.message); }
 }
 
-async function enviarPlanningADireccion(projectId) {
-  if (!confirm('Se notificara a Direccion que el planning esta listo para revision. ¿Continuar?')) return;
+async function enviarPlanningADirección(projectId) {
+  if (!confirm('Se notificara a Dirección que el planning esta listo para revisión. ¿Continuar?')) return;
   try {
     await db.from('project_execution').update({
       planning_submitted: true,
@@ -4116,7 +4143,7 @@ async function enviarPlanningADireccion(projectId) {
       author_email: currentUser ? currentUser.email : 'sistema',
       author_name: 'Jefe de Obra',
       author_role: 'tecnico',
-      comment: 'Planning enviado a Direccion para revision.',
+      comment: 'Planning enviado a Dirección para revisión.',
       is_read: false
     });
     cargarPlanning(projectId);
@@ -4142,12 +4169,12 @@ async function enviarComentarioPlanning(projectId) {
 }
 
 // ---- HITOS TAB EJECUCION ----
-function mostrarFormHitoEjecucion() {
+function mostrarFormHitoEjecución() {
   var f = document.getElementById('ej-form-hito-exec');
   if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
 }
 
-async function guardarHitoEjecucion() {
+async function guardarHitoEjecución() {
   var nombre = document.getElementById('hito-exec-nombre') ? document.getElementById('hito-exec-nombre').value.trim() : '';
   var fecha = document.getElementById('hito-exec-fecha') ? document.getElementById('hito-exec-fecha').value : null;
   if (!nombre) { alert('Escribe el nombre del hito'); return; }
