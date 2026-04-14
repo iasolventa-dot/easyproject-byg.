@@ -550,7 +550,7 @@
     <h1>Clientes</h1>
     <div style="display:flex;gap:8px;">
       <button class="btn" onclick="imprimirListadoClientes()">Imprimir listado</button>
-      <button class="btn btn-primary" onclick="alert('El alta de nuevos clientes se realiza desde el panel de Administración.')">+ Nuevo cliente</button>
+      <button class="btn btn-primary" onclick="abrirFichaClienteEditar(null)">+ Nuevo cliente</button>
     </div>
   </div>
   <div class="card">
@@ -567,6 +567,8 @@
     <h1 id="cliente-det-title">Ficha de cliente</h1>
     <div style="display:flex;gap:8px;">
       <button class="btn" onclick="imprimirFichaCliente()">Imprimir ficha</button>
+      <button class="btn" id="btn-editar-cli" onclick="toggleEditarCliente()" style="display:none;">Editar</button>
+      <button class="btn btn-success" id="btn-guardar-cli" onclick="guardarCliente()" style="display:none;">Guardar</button>
       <button class="btn btn-back" onclick="showPanel('clientes')">Volver al listado</button>
     </div>
   </div>
@@ -4341,6 +4343,123 @@ function toggleSidebar() {
 function closeSidebar() {
   document.querySelector('.sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ---- ALTA Y EDICION DE CLIENTES ----
+var clienteActual = {};
+var modoEdicionCli = false;
+
+function abrirFichaClienteEditar(id) {
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-cliente-detalle').classList.add('active');
+  modoEdicionCli = false;
+  document.getElementById('btn-editar-cli').style.display = 'none';
+  document.getElementById('btn-guardar-cli').style.display = 'none';
+  if (!id) {
+    clienteActual = {};
+    document.getElementById('cliente-det-title').textContent = 'Nuevo cliente';
+    document.getElementById('btn-guardar-cli').style.display = 'inline-block';
+    renderFichaClienteEditable({}, true);
+    return;
+  }
+  clienteActual = clientesData.find(function(x){return x.id===id;}) || {};
+  document.getElementById('cliente-det-title').textContent = clienteActual.commercial_name || 'Ficha de cliente';
+  document.getElementById('btn-editar-cli').style.display = 'inline-block';
+  renderFichaClienteEditable(clienteActual, false);
+}
+
+function toggleEditarCliente() {
+  modoEdicionCli = true;
+  document.getElementById('btn-editar-cli').style.display = 'none';
+  document.getElementById('btn-guardar-cli').style.display = 'inline-block';
+  renderFichaClienteEditable(clienteActual, true);
+}
+
+function renderFichaClienteEditable(c, editable) {
+  var campos = [
+    {label:'Código interno',          key:'internal_code',      val:c.internal_code,      readonly:true},
+    {label:'Acrónimo cliente',        key:'client_code',        val:c.client_code,         required:true},
+    {label:'Nombre comercial',        key:'commercial_name',    val:c.commercial_name,     required:true},
+    {label:'Razón social',            key:'legal_name',         val:c.legal_name,          required:true},
+    {label:'CIF / NIF',              key:'cif',                val:c.cif,                 required:true},
+    {label:'Contacto principal',      key:'contact_name',       val:c.contact_name},
+    {label:'Email principal',         key:'commercial_email',   val:c.commercial_email,    required:true},
+    {label:'Teléfono principal',      key:'phone',              val:c.phone,               required:true},
+    {label:'Contacto técnico',        key:'contact_name_tech',  val:c.contact_name_tech},
+    {label:'Email técnico',           key:'email_tecnico',      val:c.email_tecnico},
+    {label:'Teléfono técnico',        key:'phone_tecnico',      val:c.phone_tecnico},
+    {label:'Contacto administración', key:'contact_name_admin', val:c.contact_name_admin},
+    {label:'Email administración',    key:'email_admin',        val:c.email_admin},
+    {label:'Teléfono administración', key:'phone_admin',        val:c.phone_admin},
+    {label:'Domicilio social',        key:'address',            val:c.address,             required:true},
+    {label:'Ciudad',                  key:'city',               val:c.city},
+    {label:'Tipo de cliente',         key:'client_type',        val:c.client_type},
+    {label:'Notas',                   key:'notes',              val:c.notes},
+    {label:'Alta en sistema',         key:'_created',           val:c.created_at?new Date(c.created_at).toLocaleDateString('es-ES'):'-', readonly:true},
+    {label:'Última actualización',    key:'_updated',           val:c.updated_at?new Date(c.updated_at).toLocaleDateString('es-ES'):'-', readonly:true}
+  ];
+  document.getElementById('cliente-ficha-content').innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:0;">' +
+    campos.map(function(f) {
+      var isReadonly = f.readonly || !editable;
+      var inputStyle = isReadonly ? 'background:#f9f9f6;border:1px solid transparent;' : 'background:white;border:1px solid #ddd;';
+      var labelHtml = f.label + (f.required && editable ? ' <span style="color:#A32D2D;font-size:10px;">*</span>' : '');
+      return '<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
+        '<div style="width:220px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">' + labelHtml + '</div>' +
+        '<input id="cli-field-' + f.key + '" value="' + (f.val||'') + '" ' + (isReadonly?'readonly':'') +
+        ' style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;color:#1a1a1a;' + inputStyle + '"></div>';
+    }).join('') +
+    (editable ? '<div style="font-size:11px;color:#888;margin-top:10px;"><span style="color:#A32D2D;">*</span> Campos obligatorios</div>' : '') +
+    '</div>';
+}
+
+async function guardarCliente() {
+  var camposList = ['client_code','commercial_name','legal_name','cif','contact_name',
+    'commercial_email','phone','contact_name_tech','email_tecnico','phone_tecnico',
+    'contact_name_admin','email_admin','phone_admin','address','city','client_type','notes'];
+  var data = {updated_at: new Date().toISOString()};
+  camposList.forEach(function(k) {
+    var el = document.getElementById('cli-field-' + k);
+    if (el) data[k] = el.value || null;
+  });
+  var obligatorios = {
+    'client_code':     'Acrónimo cliente',
+    'commercial_name': 'Nombre comercial',
+    'legal_name':      'Razón social',
+    'cif':             'CIF / NIF',
+    'commercial_email':'Email principal',
+    'phone':           'Teléfono principal',
+    'address':         'Domicilio social'
+  };
+  var errores = [];
+  Object.keys(obligatorios).forEach(function(k) {
+    if (!data[k] || !data[k].trim()) errores.push(obligatorios[k]);
+  });
+  if (errores.length > 0) {
+    alert('Los siguientes campos son obligatorios:\n\n\u2022 ' + errores.join('\n\u2022 '));
+    return;
+  }
+  try {
+    if (clienteActual.id) {
+      await db.from('clients').update(data).eq('id', clienteActual.id);
+    } else {
+      var lastCli = await db.from('clients').select('internal_code').order('id',{ascending:false}).limit(1);
+      var lastNum = 0;
+      if (lastCli.data && lastCli.data.length && lastCli.data[0].internal_code) {
+        var m = lastCli.data[0].internal_code.match(/\d+/);
+        if (m) lastNum = parseInt(m[0]);
+      }
+      data.internal_code = 'CLI-' + String(lastNum+1).padStart(3,'0');
+      await db.from('clients').insert(data);
+    }
+    alert('Cliente guardado correctamente.');
+    modoEdicionCli = false;
+    document.getElementById('btn-editar-cli').style.display = 'inline-block';
+    document.getElementById('btn-guardar-cli').style.display = 'none';
+    await loadClientes();
+    var updated = clientesData.find(function(x){return x.commercial_name===data.commercial_name;});
+    if (updated) { clienteActual = updated; renderFichaClienteEditable(updated, false); }
+  } catch(e) { alert('Error al guardar: ' + e.message); }
 }
 
 </script>
