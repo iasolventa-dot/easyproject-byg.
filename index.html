@@ -832,7 +832,7 @@
   <div id="ej-tab-gastos" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <div style="font-size:13px;color:#888;">Albaranes, facturas y otros gastos registrados en obra</div>
-      <button class="btn btn-primary btn-sm" onclick="abrirCargaGasto()">+ Registrar gasto</button>
+      <button class="btn btn-primary btn-sm" id="btn-registrar-gasto" onclick="abrirCargaGasto()" style="display:none;">+ Registrar gasto</button>
     </div>
     <!-- Input archivo oculto -->
     <input type="file" id="gasto-file-input" accept="image/*,application/pdf" style="display:none;" onchange="procesarArchivoGasto(this)">
@@ -4078,6 +4078,13 @@ async function abrirEjecucion(id, nameEnc) {
     cargarGastos(id);
     cargarCertificaciones(id);
 
+    // Mostrar botón registrar gasto solo para depts autorizados
+    var btnGasto = document.getElementById('btn-registrar-gasto');
+    if (btnGasto) {
+      var deptsGasto = ['tecnico','jefe_obra','admin','direccion'];
+      btnGasto.style.display = deptsGasto.indexOf(currentDept) > -1 ? 'inline-block' : 'none';
+    }
+
   } catch(e) { console.error('Error abriendo ejecución:',e); }
 }
 
@@ -4177,7 +4184,7 @@ async function cargarGastos(projectId) {
       '<div style="background:#EAF3DE;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Aprobado</div><div style="font-size:18px;font-weight:600;color:#3B6D11;">' + totalAprobado.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
       '<div style="background:#FCEBEB;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Pendiente aprobación</div><div style="font-size:18px;font-weight:600;color:#A32D2D;">' + (total-totalAprobado).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
       '</div>' +
-      '<table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>IA</th></tr></thead><tbody>' +
+      '<table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>IA</th><th>Doc.</th></tr></thead><tbody>' +
       res.data.map(function(g) {
         return '<tr>' +
           '<td>' + new Date(g.expense_date).toLocaleDateString('es-ES') + '</td>' +
@@ -4185,8 +4192,10 @@ async function cargarGastos(projectId) {
           '<td style="font-size:11px;">' + (g.supplier_name||'-') + '</td>' +
           '<td style="font-size:11px;">' + (g.concept||'-') + '</td>' +
           '<td style="text-align:right;font-weight:500;">' + parseFloat(g.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
-          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : '<button class="btn btn-sm btn-success" style="padding:3px 8px;font-size:11px;" onclick="aprobarGasto(' + g.id + ',' + projectId + ')">Aprobar</button>') + '</td>' +
+          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : (currentDept === 'jefe_obra' || currentDept === 'tecnico' ? '<button class="btn btn-sm btn-success" style="padding:3px 8px;font-size:11px;" onclick="aprobarGasto(' + g.id + ',' + projectId + ')">Aprobar</button>' : '<span class="badge b-review">Pendiente</span>')) + '</td>' +
           '<td>' + (g.ai_extracted ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:2px 6px;border-radius:4px;">IA</span>' : '-') + '</td>' +
+          '<td>' + (g.document_url && ['jefe_obra','admin','direccion'].indexOf(currentDept) > -1 ?
+            '<button onclick="verDocumentoGasto(&quot;' + g.document_url + '&quot;,&quot;' + (g.document_name||'documento') + '&quot;)" style="background:none;border:none;cursor:pointer;font-size:16px;" title="Ver documento original">📄</button>' : '') + '</td>' +
           '</tr>';
       }).join('') + '</tbody></table>';
   } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando gastos</div>'; }
@@ -4338,10 +4347,26 @@ async function confirmarGasto() {
     concept: document.getElementById('gasto-concepto').value || null,
     expense_date: document.getElementById('gasto-fecha').value || new Date().toISOString().split('T')[0],
     ai_extracted: true,
-    approved: false
+    approved: false,
+    uploaded_by: currentUser ? currentUser.email : null
   };
 
   try {
+    // Subir documento a Supabase Storage si existe
+    var fileInput = document.getElementById('gasto-file-input');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      var file = fileInput.files[0];
+      var fileName = ejProyecto.id + '_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      var uploadRes = await db.storage.from('gastos-documentos').upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+      if (!uploadRes.error) {
+        data.document_url = fileName;
+        data.document_name = file.name;
+      }
+    }
+
     await db.from('project_expenses').insert(data);
     document.getElementById('gasto-modal').style.display = 'none';
     cargarGastos(ejProyecto.id);
@@ -4928,7 +4953,30 @@ function generarTimelinePlanning(hitos) {
 
 async function aprobarGasto(gastoId, projectId) {
   try {
-    await db.from('project_expenses').update({approved: true}).eq('id', gastoId);
+    await db.from('project_expenses').update({
+      approved: true,
+      approved_by: currentUser ? currentUser.email : null,
+      approved_at: new Date().toISOString()
+    }).eq('id', gastoId);
+
+    // Insertar notificación para Admin y Dirección
+    var gastoData = await db.from('project_expenses').select('amount,concept,supplier_name,expense_date').eq('id',gastoId).single();
+    if (gastoData.data) {
+      var g = gastoData.data;
+      var texto = 'Gasto aprobado por Jefe de Obra: ' +
+        parseFloat(g.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR' +
+        (g.supplier_name ? ' — ' + g.supplier_name : '') +
+        (g.concept ? ' (' + g.concept + ')' : '');
+      await db.from('project_planning_comments').insert({
+        project_id: projectId,
+        author_email: currentUser ? currentUser.email : 'sistema',
+        author_name: 'Jefe de Obra',
+        author_role: 'tecnico',
+        comment: texto,
+        is_read: false
+      });
+    }
+
     cargarGastos(projectId);
     cargarEconomico(projectId);
   } catch(e) { alert('Error al aprobar: ' + e.message); }
@@ -5341,6 +5389,17 @@ function abrirProyectoJefeObra(id, stCode) {
     // Para histórico mostrar vista de solo lectura
     abrirEjecucion(id, '');
   }
+}
+
+async function verDocumentoGasto(fileName, displayName) {
+  try {
+    var res = await db.storage.from('gastos-documentos').createSignedUrl(fileName, 300); // 5 min
+    if (res.data && res.data.signedUrl) {
+      window.open(res.data.signedUrl, '_blank');
+    } else {
+      alert('No se pudo obtener el documento.');
+    }
+  } catch(e) { alert('Error al abrir documento: ' + e.message); }
 }
 
 </script>
