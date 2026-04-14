@@ -1405,14 +1405,41 @@ async function cargarMetricasDept(dept) {
     } catch(e) { console.error(e); }
 
   } else if (dept === 'direccion') {
+    if (labels[1]) labels[1].textContent = 'Obras en ejecucion';
     if (labels[2]) labels[2].textContent = 'Importe adjudicado';
     try {
       var adjRes = await db.from('project_awards').select('awarded_amount').eq('award_type','adjudicado');
       var totalAdj = adjRes.data ? adjRes.data.reduce(function(acc,a){return acc+(parseFloat(a.awarded_amount)||0);},0) : 0;
       mReview.textContent = totalAdj > 0 ? totalAdj.toLocaleString('es-ES',{maximumFractionDigits:0}) + ' EUR' : '0 EUR';
+
+      // Obras en ejecucion
+      var stEj = await db.from('project_statuses').select('id').eq('code','en_ejecucion').single();
+      if (stEj.data) {
+        var ejRes = await db.from('projects').select('id',{count:'exact'}).eq('project_status_id',stEj.data.id);
+        document.getElementById('m-emails').textContent = ejRes.count||0;
+      }
+
       await cargarProyectosBloqueados();
+
+      // Alertas planning: plannings nuevos + comentarios sin leer de direction
+      var planningAlerts = await cargarAlertasPlanning();
+      if (banner) {
+        if (planningAlerts.total > 0) {
+          var textoAlerta = [];
+          if (planningAlerts.nuevos > 0) textoAlerta.push(planningAlerts.nuevos + ' planning(s) nuevo(s) enviado(s) por Jefe de Obra');
+          if (planningAlerts.comentarios > 0) textoAlerta.push(planningAlerts.comentarios + ' respuesta(s) a comentarios sin leer');
+          banner.style.display = 'block';
+          banner.innerHTML = '<div style="background:#EEF2FA;border:1px solid #BFDBFE;border-radius:8px;padding:10px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="irAObrasPlanningPendiente()">' +
+            '<div style="display:flex;align-items:center;gap:12px;">' +
+            '<div class="notif-bell blue"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></div>' +
+            '<div><div style="font-size:13px;font-weight:600;color:#1e40af;">' + textoAlerta.join(' · ') + '</div>' +
+            '<div style="font-size:11px;color:#3b5bdb;opacity:0.8;">Revisa los plannings de obra pendientes</div></div></div>' +
+            '<span style="font-size:12px;color:#1e40af;font-weight:500;">Ver plannings →</span></div>';
+        } else {
+          banner.style.display = 'none';
+        }
+      }
     } catch(e) { console.error(e); }
-    if (banner) banner.style.display = 'none';
 
   } else if (dept === 'comercial') {
     if (labels[1]) labels[1].textContent = 'Ofertas pendientes';
@@ -4453,6 +4480,46 @@ async function guardarCliente() {
     var updated = clientesData.find(function(x){return x.commercial_name===data.commercial_name;});
     if (updated) { clienteActual = updated; renderFichaClienteEditable(updated, false); }
   } catch(e) { alert('Error al guardar: ' + e.message); }
+}
+
+// ---- ALERTAS PLANNING PARA DIRECCION ----
+async function cargarAlertasPlanning() {
+  try {
+    // Proyectos en ejecucion con planning enviado
+    var stEj = await db.from('project_statuses').select('id').eq('code','en_ejecucion').single();
+    if (!stEj.data) return {total:0, nuevos:0, comentarios:0};
+
+    var proyEj = await db.from('projects').select('id').eq('project_status_id', stEj.data.id);
+    if (!proyEj.data || !proyEj.data.length) return {total:0, nuevos:0, comentarios:0};
+
+    var ids = proyEj.data.map(function(p){return p.id;});
+
+    // Plannings recien enviados (submitted en las ultimas 72h y no vistos por direccion)
+    var hace72h = new Date(Date.now() - 72*60*60*1000).toISOString();
+    var planNuevos = await db.from('project_execution')
+      .select('project_id,planning_submitted_at')
+      .eq('planning_submitted', true)
+      .gte('planning_submitted_at', hace72h)
+      .in('project_id', ids);
+    var nuevos = planNuevos.data ? planNuevos.data.length : 0;
+
+    // Comentarios de tecnico sin leer por direccion
+    var comsSinLeer = await db.from('project_planning_comments')
+      .select('id')
+      .eq('author_role', 'tecnico')
+      .eq('is_read', false)
+      .in('project_id', ids);
+    var comentarios = comsSinLeer.data ? comsSinLeer.data.length : 0;
+
+    return {total: nuevos + comentarios, nuevos: nuevos, comentarios: comentarios};
+  } catch(e) {
+    console.error('cargarAlertasPlanning:', e);
+    return {total:0, nuevos:0, comentarios:0};
+  }
+}
+
+function irAObrasPlanningPendiente() {
+  showProyectosFase('en_ejecucion');
 }
 
 </script>
