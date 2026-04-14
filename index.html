@@ -4553,8 +4553,8 @@ function generarTimelinePlanning(hitos) {
   }
 
   var W = 800; // ancho interno SVG
-  var H = 140;
-  var lineY = 70; // Y de la línea principal
+  var H = 180;
+  var lineY = 75; // Y de la línea principal
   var margenH = 40; // margen horizontal
 
   // Generar meses en el eje X
@@ -4594,7 +4594,7 @@ function generarTimelinePlanning(hitos) {
 
   // Barras de Gantt (fila inferior) y puntos (línea principal)
   var barH = 14;
-  var barY = lineY + 18;
+  var barY = lineY + 22;
 
   hitos.forEach(function(h, idx) {
     var fechaObj = h.actual_date ? new Date(h.actual_date) : (h.planned_date ? new Date(h.planned_date) : null);
@@ -4634,7 +4634,7 @@ function generarTimelinePlanning(hitos) {
   });
 
   // Leyenda
-  var legY = H - 8;
+  var legY = H - 10;
   svgParts.push('<circle cx="' + (margenH) + '" cy="' + legY + '" r="4" fill="#0F6E56"/>');
   svgParts.push('<text x="' + (margenH+8) + '" y="' + (legY+3) + '" font-size="8" fill="#0F6E56">Completado</text>');
   svgParts.push('<circle cx="' + (margenH+75) + '" cy="' + legY + '" r="4" fill="#185FA5"/>');
