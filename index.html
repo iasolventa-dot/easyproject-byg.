@@ -4081,7 +4081,7 @@ async function cargarGastos(projectId) {
           '<td style="font-size:11px;">' + (g.supplier_name||'-') + '</td>' +
           '<td style="font-size:11px;">' + (g.concept||'-') + '</td>' +
           '<td style="text-align:right;font-weight:500;">' + parseFloat(g.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
-          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : '<span class="badge b-review">Pendiente</span>') + '</td>' +
+          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : '<button class="btn btn-sm btn-success" style="padding:3px 8px;font-size:11px;" onclick="aprobarGasto(' + g.id + ',' + projectId + ')">Aprobar</button>') + '</td>' +
           '<td>' + (g.ai_extracted ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:2px 6px;border-radius:4px;">IA</span>' : '-') + '</td>' +
           '</tr>';
       }).join('') + '</tbody></table>';
@@ -4815,6 +4815,14 @@ function generarTimelinePlanning(hitos) {
   svgParts.push('</div>');
 
   return svgParts.join('');
+}
+
+async function aprobarGasto(gastoId, projectId) {
+  try {
+    await db.from('project_expenses').update({approved: true}).eq('id', gastoId);
+    cargarGastos(projectId);
+    cargarEconomico(projectId);
+  } catch(e) { alert('Error al aprobar: ' + e.message); }
 }
 
 </script>
