@@ -4553,8 +4553,8 @@ function generarTimelinePlanning(hitos) {
   }
 
   var W = 800; // ancho interno SVG
-  var H = 180;
-  var lineY = 75; // Y de la línea principal
+  var H = 140;
+  var lineY = 72; // Y de la línea principal
   var margenH = 40; // margen horizontal
 
   // Generar meses en el eje X
@@ -4593,9 +4593,6 @@ function generarTimelinePlanning(hitos) {
   }
 
   // Barras de Gantt (fila inferior) y puntos (línea principal)
-  var barH = 14;
-  var barY = lineY + 22;
-
   hitos.forEach(function(h, idx) {
     var fechaObj = h.actual_date ? new Date(h.actual_date) : (h.planned_date ? new Date(h.planned_date) : null);
     if (!fechaObj) return;
@@ -4623,14 +4620,7 @@ function generarTimelinePlanning(hitos) {
     var fechaStr = fechaObj.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'});
     svgParts.push('<text x="' + cx + '" y="' + (lineY+20) + '" font-size="8" fill="#888" text-anchor="middle">' + fechaStr + '</text>');
 
-    // Barra Gantt (si hay fecha planificada)
-    if (h.planned_date) {
-      var barX = posX(new Date(h.planned_date), W) + margenH - 30;
-      var barW = 60;
-      barX = Math.max(margenH, barX);
-      svgParts.push('<rect x="' + barX + '" y="' + barY + '" width="' + barW + '" height="' + barH + '" rx="3" fill="' + colorClaro + '" stroke="' + color + '" stroke-width="1"/>');
-      svgParts.push('<rect x="' + barX + '" y="' + barY + '" width="' + (h.completed ? barW : barW*0.4) + '" height="' + barH + '" rx="3" fill="' + color + '" opacity="0.5"/>');
-    }
+
   });
 
   // Leyenda
