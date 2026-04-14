@@ -2007,9 +2007,9 @@ function renderFichaProveedor(p, editable) {
     gremios = p.supplier_specialty_rel.map(function(r){ return r.specialty_code + (r.primary_specialty?' (principal)':''); });
   } else if (p.specialty_code) { gremios = [p.specialty_code]; }
 
-  var camposObligatoriosProv = ['internal_code','commercial_name','legal_name','cif','commercial_email','phone','address'];
+  var camposObligatoriosProv = ['commercial_name','legal_name','cif','commercial_email','phone','address'];
   var campos = [
-    {label:'Código interno',          key:'internal_code',     val:p.internal_code,        required:true},
+    {label:'Código interno',          key:'internal_code',     val:p.internal_code,        readonly:true},
     {label:'Nombre comercial',        key:'commercial_name',   val:p.commercial_name,       required:true},
     {label:'Razón social',            key:'legal_name',        val:p.legal_name,            required:true},
     {label:'CIF / NIF',              key:'cif',               val:p.cif,                   required:true},
@@ -2070,7 +2070,6 @@ async function guardarProveedor() {
   });
   // Validar campos obligatorios
   var obligatorios = {
-    'internal_code': 'Código interno',
     'commercial_name': 'Nombre comercial',
     'legal_name': 'Razón social',
     'cif': 'CIF / NIF',
@@ -2090,6 +2089,14 @@ async function guardarProveedor() {
     if (proveedorActual.id) {
       await db.from('suppliers').update(data).eq('id', proveedorActual.id);
     } else {
+      // Generar código interno automático: PRV-XXX
+      var lastProv = await db.from('suppliers').select('internal_code').order('id', {ascending:false}).limit(1);
+      var lastNum = 0;
+      if (lastProv.data && lastProv.data.length && lastProv.data[0].internal_code) {
+        var match = lastProv.data[0].internal_code.match(/\d+/);
+        if (match) lastNum = parseInt(match[0]);
+      }
+      data.internal_code = 'PRV-' + String(lastNum + 1).padStart(3, '0');
       await db.from('suppliers').insert(data);
     }
     alert('Proveedor guardado correctamente.');
