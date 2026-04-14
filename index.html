@@ -1840,7 +1840,6 @@ function abrirFichaCliente(id) {
   abrirFichaClienteEditar(id);
 }
 
-
 function imprimirListadoClientes() {
   var win = window.open('','_blank');
   var rows = clientesData.map(function(c){
@@ -4343,40 +4342,73 @@ function toggleEditarCliente() {
   renderFichaClienteEditable(clienteActual, true);
 }
 
+function toggleClienteConfirmado() {
+  var cb = document.getElementById('cli-confirmado');
+  if (!cb) return;
+  clienteActual.client_confirmed = cb.checked;
+  renderFichaClienteEditable(clienteActual, true);
+}
+
 function renderFichaClienteEditable(c, editable) {
-  var campos = [
-    {label:'Código interno',          key:'internal_code',      val:c.internal_code,      readonly:true},
-    {label:'Acrónimo cliente',        key:'client_code',        val:c.client_code,         required:true},
+  var confirmado = c.client_confirmed || false;
+
+  var camposBase = [
+    {label:'Codigo interno',          key:'internal_code',      val:c.internal_code,      readonly:true},
+    {label:'Acronimo cliente',        key:'client_code',        val:c.client_code,         required:true},
     {label:'Nombre comercial',        key:'commercial_name',    val:c.commercial_name,     required:true},
-    {label:'Razón social',            key:'legal_name',         val:c.legal_name,          required:true},
-    {label:'CIF / NIF',              key:'cif',                val:c.cif,                 required:true},
     {label:'Contacto principal',      key:'contact_name',       val:c.contact_name},
     {label:'Email principal',         key:'commercial_email',   val:c.commercial_email,    required:true},
-    {label:'Teléfono principal',      key:'phone',              val:c.phone,               required:true},
-    {label:'Contacto técnico',        key:'contact_name_tech',  val:c.contact_name_tech},
-    {label:'Email técnico',           key:'email_tecnico',      val:c.email_tecnico},
-    {label:'Teléfono técnico',        key:'phone_tecnico',      val:c.phone_tecnico},
-    {label:'Contacto administración', key:'contact_name_admin', val:c.contact_name_admin},
-    {label:'Email administración',    key:'email_admin',        val:c.email_admin},
-    {label:'Teléfono administración', key:'phone_admin',        val:c.phone_admin},
-    {label:'Domicilio social',        key:'address',            val:c.address,             required:true},
+    {label:'Telefono principal',      key:'phone',              val:c.phone},
+    {label:'Contacto tecnico',        key:'contact_name_tech',  val:c.contact_name_tech},
+    {label:'Email tecnico',           key:'email_tecnico',      val:c.email_tecnico},
+    {label:'Telefono tecnico',        key:'phone_tecnico',      val:c.phone_tecnico},
+    {label:'Contacto administracion', key:'contact_name_admin', val:c.contact_name_admin},
+    {label:'Email administracion',    key:'email_admin',        val:c.email_admin},
+    {label:'Telefono administracion', key:'phone_admin',        val:c.phone_admin},
     {label:'Ciudad',                  key:'city',               val:c.city},
     {label:'Tipo de cliente',         key:'client_type',        val:c.client_type},
-    {label:'Notas',                   key:'notes',              val:c.notes},
-    {label:'Alta en sistema',         key:'_created',           val:c.created_at?new Date(c.created_at).toLocaleDateString('es-ES'):'-', readonly:true},
-    {label:'Última actualización',    key:'_updated',           val:c.updated_at?new Date(c.updated_at).toLocaleDateString('es-ES'):'-', readonly:true}
+    {label:'Notas',                   key:'notes',              val:c.notes}
   ];
+
+  var camposFiscales = [
+    {label:'Razon social',    key:'legal_name', val:c.legal_name, required:confirmado},
+    {label:'CIF / NIF',      key:'cif',        val:c.cif,        required:confirmado},
+    {label:'Domicilio social',key:'address',    val:c.address,    required:confirmado}
+  ];
+
+  var camposInfo = [
+    {label:'Alta en sistema',      key:'_created', val:c.created_at?new Date(c.created_at).toLocaleDateString('es-ES'):'-', readonly:true},
+    {label:'Ultima actualizacion', key:'_updated', val:c.updated_at?new Date(c.updated_at).toLocaleDateString('es-ES'):'-', readonly:true}
+  ];
+
+  function renderCampo(f) {
+    var isReadonly = f.readonly || !editable;
+    var inputStyle = isReadonly ? 'background:#f9f9f6;border:1px solid transparent;' : 'background:white;border:1px solid #ddd;';
+    var labelHtml = f.label + (f.required && editable ? ' <span style="color:#A32D2D;font-size:10px;">*</span>' : '');
+    return '<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
+      '<div style="width:220px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">' + labelHtml + '</div>' +
+      '<input id="cli-field-' + f.key + '" value="' + (f.val||'').replace(/"/g, '&quot;') + '" ' + (isReadonly?'readonly':'') +
+      ' style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;color:#1a1a1a;' + inputStyle + '"></div>';
+  }
+
+  var toggleHtml = editable ?
+    '<div style="margin:12px 0;padding:12px 14px;background:' + (confirmado?'#EAF3DE':'#FEF3C7') + ';border:1px solid ' + (confirmado?'#C0DD97':'#FDE68A') + ';border-radius:8px;display:flex;align-items:center;gap:10px;">' +
+    '<input type="checkbox" id="cli-confirmado" ' + (confirmado?'checked':'') + ' onchange="toggleClienteConfirmado()" style="width:16px;height:16px;cursor:pointer;">' +
+    '<div><div style="font-size:12px;font-weight:600;color:' + (confirmado?'#27500A':'#92400e') + ';">Cliente confirmado (proyecto adjudicado)</div>' +
+    '<div style="font-size:11px;color:' + (confirmado?'#3B6D11':'#854F0B') + ';margin-top:2px;">Al confirmar se requieren datos fiscales para facturacion</div></div></div>' :
+    '<div style="margin:8px 0;padding:8px 14px;background:' + (confirmado?'#EAF3DE':'#f9f9f6') + ';border-radius:6px;font-size:12px;color:' + (confirmado?'#27500A':'#888') + ';">' +
+    (confirmado ? '✓ Cliente confirmado — datos fiscales completos' : 'Cliente lead — pendiente de confirmacion') + '</div>';
+
+  var sepFiscal = '<div style="padding:10px 0 4px;font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid #e5e5e0;margin:8px 0 4px;">Datos fiscales' +
+    (confirmado && editable ? ' <span style="color:#A32D2D;font-size:10px;">* obligatorios</span>' : '') + '</div>';
+
   document.getElementById('cliente-ficha-content').innerHTML =
     '<div style="display:flex;flex-direction:column;gap:0;">' +
-    campos.map(function(f) {
-      var isReadonly = f.readonly || !editable;
-      var inputStyle = isReadonly ? 'background:#f9f9f6;border:1px solid transparent;' : 'background:white;border:1px solid #ddd;';
-      var labelHtml = f.label + (f.required && editable ? ' <span style="color:#A32D2D;font-size:10px;">*</span>' : '');
-      return '<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
-        '<div style="width:220px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">' + labelHtml + '</div>' +
-        '<input id="cli-field-' + f.key + '" value="' + (f.val||'') + '" ' + (isReadonly?'readonly':'') +
-        ' style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;color:#1a1a1a;' + inputStyle + '"></div>';
-    }).join('') +
+    toggleHtml +
+    camposBase.map(renderCampo).join('') +
+    sepFiscal +
+    camposFiscales.map(renderCampo).join('') +
+    camposInfo.map(renderCampo).join('') +
     (editable ? '<div style="font-size:11px;color:#888;margin-top:10px;"><span style="color:#A32D2D;">*</span> Campos obligatorios</div>' : '') +
     '</div>';
 }
@@ -4390,34 +4422,27 @@ async function guardarCliente() {
     var el = document.getElementById('cli-field-' + k);
     if (el) data[k] = el.value || null;
   });
-  var obligatorios = {
-    'client_code':     'Acrónimo cliente',
-    'commercial_name': 'Nombre comercial',
-    'legal_name':      'Razón social',
-    'cif':             'CIF / NIF',
-    'commercial_email':'Email principal',
-    'phone':           'Teléfono principal',
-    'address':         'Domicilio social'
-  };
+  var cbConf = document.getElementById('cli-confirmado');
+  data.client_confirmed = cbConf ? cbConf.checked : (clienteActual.client_confirmed || false);
+
+  var obligBase = {'client_code':'Acronimo cliente','commercial_name':'Nombre comercial','commercial_email':'Email principal'};
+  var obligFiscal = data.client_confirmed ? {'legal_name':'Razon social','cif':'CIF / NIF','address':'Domicilio social'} : {};
+  var todos = Object.assign({}, obligBase, obligFiscal);
   var errores = [];
-  Object.keys(obligatorios).forEach(function(k) {
-    if (!data[k] || !data[k].trim()) errores.push(obligatorios[k]);
-  });
-  if (errores.length > 0) {
-    alert('Los siguientes campos son obligatorios:\n\n\u2022 ' + errores.join('\n\u2022 '));
-    return;
-  }
+  Object.keys(todos).forEach(function(k){ if (!data[k]||!data[k].trim()) errores.push(todos[k]); });
+  if (errores.length > 0) { alert('Campos obligatorios:\n\n\u2022 ' + errores.join('\n\u2022 ')); return; }
+
   try {
     if (clienteActual.id) {
       await db.from('clients').update(data).eq('id', clienteActual.id);
     } else {
-      var lastCli = await db.from('clients').select('internal_code').order('id',{ascending:false}).limit(1);
-      var lastNum = 0;
-      if (lastCli.data && lastCli.data.length && lastCli.data[0].internal_code) {
-        var m = lastCli.data[0].internal_code.match(/\d+/);
-        if (m) lastNum = parseInt(m[0]);
+      var last = await db.from('clients').select('internal_code').order('id',{ascending:false}).limit(1);
+      var n = 0;
+      if (last.data && last.data.length && last.data[0].internal_code) {
+        var m = last.data[0].internal_code.match(/\d+/);
+        if (m) n = parseInt(m[0]);
       }
-      data.internal_code = 'CLI-' + String(lastNum+1).padStart(3,'0');
+      data.internal_code = 'CLI-' + String(n+1).padStart(3,'0');
       await db.from('clients').insert(data);
     }
     alert('Cliente guardado correctamente.');
