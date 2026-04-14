@@ -4175,7 +4175,8 @@ async function procesarArchivoGasto(input) {
       body: JSON.stringify(payload)
     });
 
-    var extracted = await res.json();
+    var texto = await res.text();
+    var extracted = JSON.parse(typeof texto === 'string' ? texto : JSON.stringify(texto));
 
     // Rellenar campos con los datos extraídos
     if (extracted.importe) document.getElementById('gasto-importe').value = extracted.importe;
