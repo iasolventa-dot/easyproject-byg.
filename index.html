@@ -4132,16 +4132,37 @@ async function procesarArchivoGasto(input) {
   document.getElementById('gasto-tipo').value = 'albaran';
 
   try {
-    // Convertir archivo a base64
-    var base64 = await new Promise(function(resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
     var isPdf = file.type === 'application/pdf';
     var mediaType = isPdf ? 'application/pdf' : file.type;
+
+    // Convertir archivo a base64, comprimiendo imágenes para reducir tamaño
+    var base64 = await new Promise(function(resolve, reject) {
+      if (isPdf) {
+        var reader = new FileReader();
+        reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      } else {
+        // Comprimir imagen antes de convertir a base64
+        var img = new Image();
+        var url = URL.createObjectURL(file);
+        img.onload = function() {
+          var canvas = document.createElement('canvas');
+          var maxW = 800, maxH = 800;
+          var w = img.width, h = img.height;
+          if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+          if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+          canvas.width = w; canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          URL.revokeObjectURL(url);
+          resolve(dataUrl.split(',')[1]);
+        };
+        img.onerror = reject;
+        img.src = url;
+      }
+    });
 
     // Llamar a Claude API para extraer datos
     var prompt = 'Analiza este documento (albaran o factura) y extrae los siguientes datos en formato JSON. Responde SOLO con el JSON, sin explicaciones ni texto adicional:\n{\n  "tipo": "albaran" o "factura",\n  "importe": numero con decimales (solo el total, sin simbolo de moneda),\n  "proveedor": "nombre del proveedor emisor",\n  "concepto": "descripcion breve del concepto o servicio",\n  "fecha": "YYYY-MM-DD",\n  "confianza": "alta", "media" o "baja"\n}\nSi no puedes extraer algun campo con seguridad, ponlo como null.';
