@@ -296,12 +296,21 @@
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <!-- PANEL JEFE DE OBRA -->
-<div id="panel-jefe-obra" class="panel">
-  <div class="topbar">
-    <h1 id="jo-title">Mis proyectos</h1>
-    <button class="btn-refresh" onclick="loadDashboardJefeObra()">Actualizar</button>
+<div id="panel-jefe-obra" class="panel" style="max-width:700px;margin:0 auto;padding:2rem 1.5rem;">
+  <!-- CABECERA JEFE OBRA -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e5e5e0;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:44px;height:44px;background:#0F6E56;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;">BYG</div>
+      <div>
+        <div style="font-size:16px;font-weight:600;color:#1a1a1a;" id="jo-title">Mis proyectos</div>
+        <div style="font-size:12px;color:#888;" id="jo-email"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-refresh" onclick="loadDashboardJefeObra()" style="font-size:12px;">↻ Actualizar</button>
+      <button onclick="doLogout()" style="padding:6px 14px;border-radius:7px;border:1px solid #ddd;background:white;font-size:12px;cursor:pointer;color:#666;">Cerrar sesión</button>
+    </div>
   </div>
-  <div id="jo-dept-indicator" class="dept-indicator di-jefe_obra" style="margin-bottom:1rem;"></div>
   <div id="jo-alerta-banner" style="display:none;"></div>
   <div id="jo-proyectos-content"><div class="loading">Cargando proyectos...</div></div>
 </div>
@@ -5215,7 +5224,8 @@ async function loadDashboardJefeObra() {
   var email = currentUser ? currentUser.email : '';
   var nombre = email.split('@')[0].replace('.',' ');
   document.getElementById('jo-title').textContent = 'Mis proyectos';
-  document.getElementById('jo-dept-indicator').textContent = 'Jefe/a de Obra — ' + email;
+  var joEmail = document.getElementById('jo-email');
+  if (joEmail) joEmail.textContent = email;
 
   var el = document.getElementById('jo-proyectos-content');
   el.innerHTML = '<div class="loading">Cargando proyectos...</div>';
