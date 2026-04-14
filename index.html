@@ -753,7 +753,48 @@
   <div id="ej-tab-gastos" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <div style="font-size:13px;color:#888;">Albaranes, facturas y otros gastos registrados en obra</div>
-      <button class="btn btn-primary btn-sm" onclick="simularCargaGasto()">+ Registrar gasto</button>
+      <button class="btn btn-primary btn-sm" onclick="abrirCargaGasto()">+ Registrar gasto</button>
+    </div>
+    <!-- Input archivo oculto -->
+    <input type="file" id="gasto-file-input" accept="image/*,application/pdf" style="display:none;" onchange="procesarArchivoGasto(this)">
+    <!-- Modal confirmación IA -->
+    <div id="gasto-modal" style="display:none;background:#f0f4ff;border:1px solid #BFDBFE;border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
+        <span style="font-size:16px;">🤖</span>
+        <div style="font-size:13px;font-weight:600;color:#1e40af;">Datos extraídos por IA — revisa y confirma</div>
+        <div id="gasto-loading" style="display:none;font-size:11px;color:#888;margin-left:auto;">Analizando documento...</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+        <div>
+          <label style="font-size:10px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;">Tipo</label>
+          <select id="gasto-tipo" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+            <option value="albaran">Albarán</option>
+            <option value="factura">Factura</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;">Importe (EUR) *</label>
+          <input type="number" id="gasto-importe" step="0.01" placeholder="0.00" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;">Proveedor</label>
+          <input type="text" id="gasto-proveedor" placeholder="Nombre del proveedor" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;">Fecha</label>
+          <input type="date" id="gasto-fecha" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;box-sizing:border-box;">
+        </div>
+        <div style="grid-column:span 2;">
+          <label style="font-size:10px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;">Concepto</label>
+          <input type="text" id="gasto-concepto" placeholder="Descripción del gasto" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;box-sizing:border-box;">
+        </div>
+      </div>
+      <div id="gasto-ia-confianza" style="font-size:11px;color:#888;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-success" onclick="confirmarGasto()">✓ Confirmar y guardar</button>
+        <button class="btn btn-sm" onclick="cancelarGasto()">Cancelar</button>
+      </div>
     </div>
     <div id="ej-gastos-content"><div class="loading">Cargando gastos...</div></div>
   </div>
@@ -4067,8 +4108,121 @@ async function cargarCertificaciones(projectId) {
     } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando certificaciónes</div>'; }
 }
 
-function simularCargaGasto() {
-  alert('En produccion: el Jefe/a de Obra sube foto o PDF del albaran. La IA extrae importe, proveedor y concepto automaticamente.');
+function abrirCargaGasto() {
+  document.getElementById('gasto-file-input').value = '';
+  document.getElementById('gasto-file-input').click();
+}
+
+async function procesarArchivoGasto(input) {
+  var file = input.files[0];
+  if (!file) return;
+
+  // Mostrar modal con loading
+  var modal = document.getElementById('gasto-modal');
+  var loading = document.getElementById('gasto-loading');
+  modal.style.display = 'block';
+  loading.style.display = 'inline';
+  document.getElementById('gasto-ia-confianza').textContent = '';
+
+  // Resetear campos
+  document.getElementById('gasto-importe').value = '';
+  document.getElementById('gasto-proveedor').value = '';
+  document.getElementById('gasto-concepto').value = '';
+  document.getElementById('gasto-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('gasto-tipo').value = 'albaran';
+
+  try {
+    // Convertir archivo a base64
+    var base64 = await new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    var isPdf = file.type === 'application/pdf';
+    var mediaType = isPdf ? 'application/pdf' : file.type;
+
+    // Llamar a Claude API para extraer datos
+    var prompt = 'Analiza este documento (albaran o factura) y extrae los siguientes datos en formato JSON. Responde SOLO con el JSON, sin explicaciones ni texto adicional:\n{\n  "tipo": "albaran" o "factura",\n  "importe": numero con decimales (solo el total, sin simbolo de moneda),\n  "proveedor": "nombre del proveedor emisor",\n  "concepto": "descripcion breve del concepto o servicio",\n  "fecha": "YYYY-MM-DD",\n  "confianza": "alta", "media" o "baja"\n}\nSi no puedes extraer algun campo con seguridad, ponlo como null.';
+
+    var body = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      messages: [{
+        role: 'user',
+        content: isPdf ? [
+          {type: 'document', source: {type: 'base64', media_type: 'application/pdf', data: base64}},
+          {type: 'text', text: prompt}
+        ] : [
+          {type: 'image', source: {type: 'base64', media_type: mediaType, data: base64}},
+          {type: 'text', text: prompt}
+        ]
+      }]
+    };
+
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+
+    var data = await res.json();
+    var texto = data.content && data.content[0] ? data.content[0].text : '';
+
+    // Parsear JSON de respuesta
+    var clean = texto.replace(/```json|```/g, '').trim();
+    var extracted = JSON.parse(clean);
+
+    // Rellenar campos con los datos extraídos
+    if (extracted.importe) document.getElementById('gasto-importe').value = extracted.importe;
+    if (extracted.proveedor) document.getElementById('gasto-proveedor').value = extracted.proveedor;
+    if (extracted.concepto) document.getElementById('gasto-concepto').value = extracted.concepto;
+    if (extracted.fecha) document.getElementById('gasto-fecha').value = extracted.fecha;
+    if (extracted.tipo) document.getElementById('gasto-tipo').value = extracted.tipo;
+
+    var confianza = extracted.confianza || 'media';
+    var colConf = confianza === 'alta' ? '#0F6E56' : (confianza === 'media' ? '#854F0B' : '#A32D2D');
+    document.getElementById('gasto-ia-confianza').innerHTML =
+      '<span style="color:' + colConf + ';font-weight:500;">Confianza IA: ' + confianza.toUpperCase() + '</span>' +
+      ' — Revisa los datos antes de confirmar';
+
+  } catch(e) {
+    console.error('Error IA gastos:', e);
+    document.getElementById('gasto-ia-confianza').innerHTML =
+      '<span style="color:#A32D2D;">No se pudo extraer automáticamente. Rellena los campos manualmente.</span>';
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+async function confirmarGasto() {
+  var importe = parseFloat(document.getElementById('gasto-importe').value);
+  if (!importe || isNaN(importe)) { alert('El importe es obligatorio.'); return; }
+  if (!ejProyecto) { alert('Error: no hay proyecto activo.'); return; }
+
+  var data = {
+    project_id: ejProyecto.id,
+    expense_type: document.getElementById('gasto-tipo').value,
+    amount: importe,
+    supplier_name: document.getElementById('gasto-proveedor').value || null,
+    concept: document.getElementById('gasto-concepto').value || null,
+    expense_date: document.getElementById('gasto-fecha').value || new Date().toISOString().split('T')[0],
+    ai_extracted: true,
+    approved: false
+  };
+
+  try {
+    await db.from('project_expenses').insert(data);
+    document.getElementById('gasto-modal').style.display = 'none';
+    cargarGastos(ejProyecto.id);
+    cargarEconomico(ejProyecto.id);
+  } catch(e) { alert('Error al guardar: ' + e.message); }
+}
+
+function cancelarGasto() {
+  document.getElementById('gasto-modal').style.display = 'none';
+  document.getElementById('gasto-file-input').value = '';
 }
 
 function volverDesdeEjecución() {
