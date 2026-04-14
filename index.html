@@ -3874,10 +3874,6 @@ function iniciarApp() {
   var activeBtn = document.querySelector('.dept-btn[onclick*="' + dept + '"]');
   if (activeBtn) activeBtn.classList.add('active-' + dept);
 
-  // Solo admin ve los botones de departamento
-  var deptWrap = document.getElementById('dept-select-wrap');
-  if (deptWrap) deptWrap.style.display = (dept === 'admin') ? 'flex' : 'none';
-
   loadDashboard();
 }
 
