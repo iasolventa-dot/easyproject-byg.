@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -388,6 +389,10 @@
   <div class="nav-item sub" id="nav-prl" onclick="showPanel('prl')">PRL / Documentación</div>
   <div class="nav-item sub" id="nav-alertas" onclick="showPanel('alertas')">Alertas</div>
 
+  <div class="nav-section" id="nav-section-rrhh" style="display:none;">Recursos Humanos</div>
+  <div class="nav-item sub" id="nav-rrhh" onclick="showPanel('rrhh')" style="display:none;">Personal</div>
+  <div class="nav-item sub" id="nav-rrhh-prl" onclick="showPanel('rrhh-prl')" style="display:none;">Alertas PRL</div>
+
   <div class="user-pill">
     <strong id="user-name">Dept. Técnico</strong>
     <span id="user-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8cf8e9efe2e5efe3cceef5ebffe3e0f9efe5e3e2e9ffa2e9ff">[email&#160;protected]</a></span>
@@ -665,6 +670,57 @@
 </div>
 
 <!-- PRL -->
+<div id="panel-rrhh" class="panel">
+  <div class="topbar">
+    <h1>Recursos Humanos — Personal</h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="abrirFichaEmpleado(null)">+ Nuevo empleado</button>
+    </div>
+  </div>
+  <!-- Filtros -->
+  <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
+    <input id="rrhh-search" type="text" placeholder="Buscar por nombre, cargo, departamento..." style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" oninput="filtrarEmpleados(this.value)">
+    <select id="rrhh-dept-filter" onchange="filtrarEmpleados(document.getElementById('rrhh-search').value)" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+      <option value="">Todos los departamentos</option>
+      <option value="Dirección">Dirección</option>
+      <option value="Técnico">Técnico</option>
+      <option value="Comercial">Comercial</option>
+      <option value="Administración">Administración</option>
+      <option value="Producción">Producción</option>
+    </select>
+  </div>
+  <div class="card">
+    <table class="data-table" id="rrhh-table">
+      <thead><tr><th>Código</th><th>Nombre</th><th>Departamento</th><th>Cargo</th><th>Estado</th><th>Rol app</th><th></th></tr></thead>
+      <tbody id="rrhh-tbody"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FICHA EMPLEADO -->
+<div id="panel-rrhh-ficha" class="panel">
+  <div class="topbar">
+    <h1 id="rrhh-ficha-title">Ficha de empleado</h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" id="btn-editar-emp" onclick="toggleEditarEmpleado()" style="display:none;">Editar</button>
+      <button class="btn btn-success" id="btn-guardar-emp" onclick="guardarEmpleado()" style="display:none;">Guardar</button>
+      <button class="btn btn-back" onclick="showPanel('rrhh')">Volver al listado</button>
+    </div>
+  </div>
+  <div id="rrhh-ficha-content" style="max-width:800px;">
+    <div class="loading">Cargando...</div>
+  </div>
+</div>
+
+<!-- ALERTAS PRL RRHH -->
+<div id="panel-rrhh-prl" class="panel">
+  <div class="topbar">
+    <h1>Alertas PRL — Vencimientos</h1>
+    <button class="btn btn-back" onclick="showPanel('rrhh')">Volver</button>
+  </div>
+  <div id="rrhh-prl-content"><div class="loading">Cargando...</div></div>
+</div>
+
 <div id="panel-prl" class="panel">
   <div class="topbar"><h1>PRL / Documentación subcontratas</h1></div>
   <div class="card"><div class="empty">Módulo PRL - próximamente disponible</div></div>
@@ -1357,6 +1413,8 @@ function showPanel(name) {
   if (nav) nav.classList.add('active');
   if (name==='clientes') loadClientes();
   if (name==='proveedores') loadProveedores();
+  if (name==='rrhh') loadEmpleados();
+  if (name==='rrhh-prl') loadAlertasPRL();
   if (name==='jefes') loadJefes();
   if (name==='gremios') loadGremios();
   if (name==='alertas') loadAlertas();
@@ -1591,6 +1649,13 @@ async function cargarProyectosBloqueados() {
 }
 
 function resetDashboardUI() {
+  // Mostrar RRHH solo para dirección
+  var rrhhItems = ['nav-section-rrhh','nav-rrhh','nav-rrhh-prl'];
+  rrhhItems.forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = (currentDept === 'direccion') ? '' : 'none';
+  });
+
   ['projects-list','emails-list','errors-list'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.innerHTML='<div class="loading">Cargando...</div>';
@@ -4823,6 +4888,280 @@ async function aprobarGasto(gastoId, projectId) {
     cargarGastos(projectId);
     cargarEconomico(projectId);
   } catch(e) { alert('Error al aprobar: ' + e.message); }
+}
+
+// ---- MÓDULO RRHH ----
+var empleadosData = [];
+var empleadoActual = {};
+var modoEdicionEmp = false;
+
+var ROLES_APP = {
+  'direccion': 'Dirección',
+  'tecnico': 'Técnico',
+  'comercial': 'Comercial',
+  'admin': 'Administración',
+  'prl': 'PRL',
+  'jefe_obra': 'Jefe/a de Obra'
+};
+
+var ESTADOS_EMP = ['activo','baja','vacaciones','excedencia'];
+
+async function loadEmpleados() {
+  var tbody = document.getElementById('rrhh-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Cargando...</td></tr>';
+  try {
+    var res = await db.from('employees').select('*').order('departamento').order('apellidos');
+    empleadosData = res.data || [];
+    renderTablaEmpleados(empleadosData);
+  } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="7" class="empty">Error cargando personal</td></tr>'; }
+}
+
+function renderTablaEmpleados(data) {
+  var tbody = document.getElementById('rrhh-tbody');
+  if (!tbody) return;
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay empleados registrados</td></tr>'; return; }
+  tbody.innerHTML = data.map(function(e) {
+    var estadoBadge = e.estado === 'activo' ? '<span class="badge b-adjudicado">Activo</span>' :
+      e.estado === 'baja' ? '<span class="badge b-red">Baja</span>' :
+      '<span class="badge b-default">' + (e.estado||'-') + '</span>';
+    var rolBadge = ROLES_APP[e.rol_app] ? '<span class="badge b-analisis">' + ROLES_APP[e.rol_app] + '</span>' : '-';
+    return '<tr onclick="abrirFichaEmpleado(' + e.id + ')" style="cursor:pointer;">' +
+      '<td style="font-size:11px;color:#888;">' + (e.employee_code||'-') + '</td>' +
+      '<td><div style="font-weight:500;">' + e.nombre + ' ' + e.apellidos + '</div>' +
+      (e.email_corporativo ? '<div style="font-size:11px;color:#888;">' + e.email_corporativo + '</div>' : '') + '</td>' +
+      '<td>' + (e.departamento||'-') + '</td>' +
+      '<td style="font-size:12px;">' + (e.cargo||'-') + '</td>' +
+      '<td>' + estadoBadge + '</td>' +
+      '<td>' + rolBadge + '</td>' +
+      '<td style="color:#185FA5;font-size:12px;">Ver →</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function filtrarEmpleados(q) {
+  var dept = document.getElementById('rrhh-dept-filter') ? document.getElementById('rrhh-dept-filter').value : '';
+  var lower = (q||'').toLowerCase();
+  var filtered = empleadosData.filter(function(e) {
+    var matchDept = !dept || e.departamento === dept;
+    var matchQ = !lower ||
+      (e.nombre||'').toLowerCase().includes(lower) ||
+      (e.apellidos||'').toLowerCase().includes(lower) ||
+      (e.cargo||'').toLowerCase().includes(lower) ||
+      (e.email_corporativo||'').toLowerCase().includes(lower);
+    return matchDept && matchQ;
+  });
+  renderTablaEmpleados(filtered);
+}
+
+function abrirFichaEmpleado(id) {
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-rrhh-ficha').classList.add('active');
+  modoEdicionEmp = false;
+  document.getElementById('btn-editar-emp').style.display = 'none';
+  document.getElementById('btn-guardar-emp').style.display = 'none';
+
+  if (!id) {
+    empleadoActual = {};
+    document.getElementById('rrhh-ficha-title').textContent = 'Nuevo empleado';
+    document.getElementById('btn-guardar-emp').style.display = 'inline-block';
+    renderFichaEmpleado({}, true);
+    return;
+  }
+  empleadoActual = empleadosData.find(function(x){return x.id===id;}) || {};
+  document.getElementById('rrhh-ficha-title').textContent = empleadoActual.nombre + ' ' + empleadoActual.apellidos;
+  document.getElementById('btn-editar-emp').style.display = 'inline-block';
+  renderFichaEmpleado(empleadoActual, false);
+}
+
+function toggleEditarEmpleado() {
+  modoEdicionEmp = true;
+  document.getElementById('btn-editar-emp').style.display = 'none';
+  document.getElementById('btn-guardar-emp').style.display = 'inline-block';
+  renderFichaEmpleado(empleadoActual, true);
+}
+
+function renderFichaEmpleado(e, editable) {
+  var esDireccion = currentDept === 'direccion';
+
+  var secciones = [
+    { titulo: 'Identificación', campos: [
+      {label:'Código empleado', key:'employee_code', val:e.employee_code, readonly:true},
+      {label:'Nombre *', key:'nombre', val:e.nombre, required:true},
+      {label:'Apellidos *', key:'apellidos', val:e.apellidos, required:true},
+      {label:'DNI / NIE', key:'dni_nie', val:e.dni_nie},
+      {label:'Fecha de nacimiento', key:'fecha_nacimiento', val:e.fecha_nacimiento, type:'date'}
+    ]},
+    { titulo: 'Contacto', campos: [
+      {label:'Email corporativo', key:'email_corporativo', val:e.email_corporativo},
+      {label:'Email personal', key:'email_personal', val:e.email_personal},
+      {label:'Teléfono móvil', key:'telefono_movil', val:e.telefono_movil},
+      {label:'Teléfono fijo', key:'telefono_fijo', val:e.telefono_fijo},
+      {label:'Teléfono emergencia', key:'telefono_emergencia', val:e.telefono_emergencia},
+      {label:'Contacto emergencia', key:'contacto_emergencia', val:e.contacto_emergencia}
+    ]},
+    { titulo: 'Datos laborales', campos: [
+      {label:'Departamento *', key:'departamento', val:e.departamento, required:true, type:'select', options:['Dirección','Técnico','Comercial','Administración','Producción']},
+      {label:'Cargo *', key:'cargo', val:e.cargo, required:true},
+      {label:'Fecha de alta', key:'fecha_alta', val:e.fecha_alta, type:'date'},
+      {label:'Tipo de contrato', key:'tipo_contrato', val:e.tipo_contrato, type:'select', options:['Indefinido','Temporal','Obra y servicio','Prácticas','Otro']},
+      {label:'Jornada', key:'jornada', val:e.jornada||'completa', type:'select', options:['completa','parcial']},
+      {label:'Estado', key:'estado', val:e.estado||'activo', type:'select', options:ESTADOS_EMP},
+      ...(esDireccion ? [{label:'Salario bruto anual (EUR)', key:'salario_bruto_anual', val:e.salario_bruto_anual, type:'number'}] : [])
+    ]},
+    { titulo: 'Acceso a la aplicación', campos: [
+      {label:'Rol en la app', key:'rol_app', val:e.rol_app, type:'select', options:Object.keys(ROLES_APP), optionLabels:Object.values(ROLES_APP)},
+      {label:'Email de login', key:'email_login', val:e.email_login},
+      {label:'Activo en app', key:'activo_en_app', val:e.activo_en_app, type:'checkbox'}
+    ]},
+    { titulo: 'PRL', campos: [
+      {label:'Formación PRL — fecha', key:'formacion_prl_fecha', val:e.formacion_prl_fecha, type:'date'},
+      {label:'Formación PRL — vencimiento', key:'formacion_prl_vencimiento', val:e.formacion_prl_vencimiento, type:'date'},
+      {label:'Apto médico — fecha', key:'apto_medico_fecha', val:e.apto_medico_fecha, type:'date'},
+      {label:'Apto médico — vencimiento', key:'apto_medico_vencimiento', val:e.apto_medico_vencimiento, type:'date'},
+      {label:'EPIs entregados', key:'epis_entregados', val:e.epis_entregados, type:'checkbox'}
+    ]},
+    { titulo: 'Movilidad', campos: [
+      {label:'Carnet de conducir', key:'carnet_conducir', val:e.carnet_conducir, type:'checkbox'},
+      {label:'Vehículo propio', key:'vehiculo_propio', val:e.vehiculo_propio, type:'checkbox'},
+      {label:'Zona de operación', key:'zona_operacion', val:e.zona_operacion}
+    ]},
+    { titulo: 'Notas', campos: [
+      {label:'Notas', key:'notas', val:e.notas, type:'textarea'}
+    ]}
+  ];
+
+  function renderCampo(f) {
+    var isReadonly = f.readonly || !editable;
+    var id = 'emp-field-' + f.key;
+    var inputStyle = isReadonly ? 'background:#f9f9f6;border:1px solid transparent;' : 'background:white;border:1px solid #ddd;';
+    var labelHtml = f.label + (f.required && editable ? ' <span style="color:#A32D2D;font-size:10px;">*</span>' : '');
+    var input = '';
+
+    if (f.type === 'checkbox') {
+      input = '<input type="checkbox" id="' + id + '" ' + (f.val ? 'checked' : '') + ' ' + (isReadonly ? 'disabled' : '') + ' style="width:16px;height:16px;">';
+    } else if (f.type === 'select' && !isReadonly) {
+      var opts = (f.options||[]).map(function(o, i) {
+        var label = f.optionLabels ? f.optionLabels[i] : o;
+        return '<option value="' + o + '" ' + (f.val===o?'selected':'') + '>' + label + '</option>';
+      }).join('');
+      input = '<select id="' + id + '" style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;' + inputStyle + '">' + opts + '</select>';
+    } else if (f.type === 'textarea' && !isReadonly) {
+      input = '<textarea id="' + id + '" rows="3" style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;' + inputStyle + 'resize:vertical;">' + (f.val||'') + '</textarea>';
+    } else {
+      input = '<input type="' + (f.type||'text') + '" id="' + id + '" value="' + (f.val||'').toString().replace(/"/g,'&quot;') + '" ' + (isReadonly?'readonly':'') + ' style="flex:1;padding:5px 8px;border-radius:5px;font-size:13px;' + inputStyle + '">';
+    }
+
+    return '<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f0;">' +
+      '<div style="width:220px;font-size:11px;color:#888;font-weight:500;flex-shrink:0;text-transform:uppercase;letter-spacing:0.03em;">' + labelHtml + '</div>' +
+      input + '</div>';
+  }
+
+  var html = secciones.map(function(s) {
+    return '<div class="card" style="margin-bottom:1rem;">' +
+      '<div class="card-header"><div class="card-title">' + s.titulo + '</div></div>' +
+      s.campos.map(renderCampo).join('') +
+      '</div>';
+  }).join('');
+
+  if (editable) html += '<div style="font-size:11px;color:#888;margin-top:4px;"><span style="color:#A32D2D;">*</span> Campos obligatorios</div>';
+
+  document.getElementById('rrhh-ficha-content').innerHTML = html;
+}
+
+async function guardarEmpleado() {
+  var campos = ['nombre','apellidos','dni_nie','fecha_nacimiento','email_corporativo','email_personal',
+    'telefono_movil','telefono_fijo','telefono_emergencia','contacto_emergencia',
+    'departamento','cargo','fecha_alta','tipo_contrato','jornada','estado','salario_bruto_anual',
+    'rol_app','email_login','formacion_prl_fecha','formacion_prl_vencimiento',
+    'apto_medico_fecha','apto_medico_vencimiento','zona_operacion','notas'];
+
+  var data = {updated_at: new Date().toISOString()};
+  campos.forEach(function(k) {
+    var el = document.getElementById('emp-field-' + k);
+    if (el) data[k] = el.value || null;
+  });
+
+  // Checkboxes
+  ['activo_en_app','epis_entregados','carnet_conducir','vehiculo_propio'].forEach(function(k) {
+    var el = document.getElementById('emp-field-' + k);
+    if (el) data[k] = el.checked;
+  });
+
+  // Validar obligatorios
+  if (!data.nombre || !data.apellidos || !data.departamento || !data.cargo) {
+    alert('Los campos Nombre, Apellidos, Departamento y Cargo son obligatorios.');
+    return;
+  }
+
+  try {
+    if (empleadoActual.id) {
+      await db.from('employees').update(data).eq('id', empleadoActual.id);
+    } else {
+      var last = await db.from('employees').select('employee_code').order('id',{ascending:false}).limit(1);
+      var n = 0;
+      if (last.data && last.data.length && last.data[0].employee_code) {
+        var m = last.data[0].employee_code.match(/\d+/);
+        if (m) n = parseInt(m[0]);
+      }
+      data.employee_code = 'BYG-' + String(n+1).padStart(3,'0');
+      await db.from('employees').insert(data);
+    }
+    alert('Empleado guardado correctamente.');
+    modoEdicionEmp = false;
+    document.getElementById('btn-editar-emp').style.display = 'inline-block';
+    document.getElementById('btn-guardar-emp').style.display = 'none';
+    await loadEmpleados();
+    var updated = empleadosData.find(function(x){return x.nombre===data.nombre && x.apellidos===data.apellidos;});
+    if (updated) { empleadoActual = updated; renderFichaEmpleado(updated, false); }
+  } catch(e) { alert('Error al guardar: ' + e.message); }
+}
+
+async function loadAlertasPRL() {
+  var el = document.getElementById('rrhh-prl-content');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Cargando alertas...</div>';
+  try {
+    var hoy = new Date();
+    var en30 = new Date(hoy.getTime() + 30*24*60*60*1000);
+
+    var res = await db.from('employees').select('id,employee_code,nombre,apellidos,departamento,cargo,formacion_prl_vencimiento,apto_medico_vencimiento').eq('estado','activo');
+    var emps = res.data || [];
+
+    var alertas = emps.filter(function(e) {
+      return e.formacion_prl_vencimiento || e.apto_medico_vencimiento;
+    }).map(function(e) {
+      var fPRL = e.formacion_prl_vencimiento ? new Date(e.formacion_prl_vencimiento) : null;
+      var fMed = e.apto_medico_vencimiento ? new Date(e.apto_medico_vencimiento) : null;
+      var estadoPRL = fPRL ? (fPRL < hoy ? 'VENCIDA' : fPRL < en30 ? 'PRÓXIMA' : 'OK') : 'Sin datos';
+      var estadoMed = fMed ? (fMed < hoy ? 'VENCIDO' : fMed < en30 ? 'PRÓXIMO' : 'OK') : 'Sin datos';
+      return Object.assign({}, e, {estadoPRL:estadoPRL, estadoMed:estadoMed});
+    }).filter(function(e){
+      return e.estadoPRL !== 'OK' || e.estadoMed !== 'OK';
+    });
+
+    if (!alertas.length) {
+      el.innerHTML = '<div class="card"><div class="empty" style="color:#3B6D11;">✓ Sin alertas de PRL pendientes</div></div>';
+      return;
+    }
+
+    el.innerHTML = '<div class="card"><table class="data-table"><thead><tr>' +
+      '<th>Empleado</th><th>Departamento</th><th>Formación PRL</th><th>Apto médico</th><th></th>' +
+      '</tr></thead><tbody>' +
+      alertas.map(function(e) {
+        var colPRL = e.estadoPRL==='VENCIDA'?'#A32D2D':e.estadoPRL==='PRÓXIMA'?'#854F0B':'#888';
+        var colMed = e.estadoMed==='VENCIDO'?'#A32D2D':e.estadoMed==='PRÓXIMO'?'#854F0B':'#888';
+        return '<tr onclick="abrirFichaEmpleado(' + e.id + ')" style="cursor:pointer;">' +
+          '<td><div style="font-weight:500;">' + e.nombre + ' ' + e.apellidos + '</div><div style="font-size:11px;color:#888;">' + e.cargo + '</div></td>' +
+          '<td>' + e.departamento + '</td>' +
+          '<td><span style="color:' + colPRL + ';font-weight:500;">' + e.estadoPRL + '</span>' +
+          (e.formacion_prl_vencimiento ? '<div style="font-size:11px;color:#aaa;">' + new Date(e.formacion_prl_vencimiento).toLocaleDateString('es-ES') + '</div>' : '') + '</td>' +
+          '<td><span style="color:' + colMed + ';font-weight:500;">' + e.estadoMed + '</span>' +
+          (e.apto_medico_vencimiento ? '<div style="font-size:11px;color:#aaa;">' + new Date(e.apto_medico_vencimiento).toLocaleDateString('es-ES') + '</div>' : '') + '</td>' +
+          '<td style="color:#185FA5;font-size:12px;">Ver →</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  } catch(e) { console.error(e); el.innerHTML = '<div class="empty">Error cargando alertas PRL</div>'; }
 }
 
 </script>
