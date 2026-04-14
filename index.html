@@ -5024,6 +5024,7 @@ function renderFichaEmpleado(e, editable) {
       {label:'Nombre *', key:'nombre', val:e.nombre, required:true},
       {label:'Apellidos *', key:'apellidos', val:e.apellidos, required:true},
       {label:'DNI / NIE', key:'dni_nie', val:e.dni_nie},
+      {label:'Nº Seguridad Social *', key:'numero_ss', val:e.numero_ss, required:true},
       {label:'Fecha de nacimiento', key:'fecha_nacimiento', val:e.fecha_nacimiento, type:'date'}
     ]},
     { titulo: 'Contacto', campos: [
@@ -5104,7 +5105,7 @@ function renderFichaEmpleado(e, editable) {
 }
 
 async function guardarEmpleado() {
-  var campos = ['nombre','apellidos','dni_nie','fecha_nacimiento','email_corporativo','email_personal',
+  var campos = ['nombre','apellidos','dni_nie','numero_ss','fecha_nacimiento','email_corporativo','email_personal',
     'telefono_movil','telefono_fijo','telefono_emergencia','contacto_emergencia',
     'departamento','cargo','fecha_alta','tipo_contrato','jornada','estado','salario_bruto_anual',
     'rol_app','email_login','formacion_prl_fecha','formacion_prl_vencimiento',
@@ -5123,8 +5124,8 @@ async function guardarEmpleado() {
   });
 
   // Validar obligatorios
-  if (!data.nombre || !data.apellidos || !data.departamento || !data.cargo) {
-    alert('Los campos Nombre, Apellidos, Departamento y Cargo son obligatorios.');
+  if (!data.nombre || !data.apellidos || !data.departamento || !data.cargo || !data.numero_ss) {
+    alert('Los campos Nombre, Apellidos, Departamento, Cargo y Nº Seguridad Social son obligatorios.');
     return;
   }
 
