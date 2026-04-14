@@ -4161,18 +4161,21 @@ async function procesarArchivoGasto(input) {
       }]
     };
 
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
+    // Llamar al webhook de n8n (evita CORS)
+    var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/gastos-ia';
+    var payload = {
+      base64: base64,
+      mediaType: mediaType,
+      isPdf: isPdf
+    };
+
+    var res = await fetch(n8nUrl, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload)
     });
 
-    var data = await res.json();
-    var texto = data.content && data.content[0] ? data.content[0].text : '';
-
-    // Parsear JSON de respuesta
-    var clean = texto.replace(/```json|```/g, '').trim();
-    var extracted = JSON.parse(clean);
+    var extracted = await res.json();
 
     // Rellenar campos con los datos extraídos
     if (extracted.importe) document.getElementById('gasto-importe').value = extracted.importe;
