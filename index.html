@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -15,7 +16,6 @@
     body.dept-comercial  { background: #EEF7F0; }
     body.dept-prl        { background: #FEF6EE; }
     body.dept-admin      { background: #F3EEFA; }
-    body.dept-jefe_obra  { background: #F0FAF5; }
 
     .sidebar { width: 230px; background: white; border-right: 1px solid #e5e5e0; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 4px; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; }
     .logo-area { display: flex; align-items: center; gap: 10px; padding: 0 0.5rem 1rem; border-bottom: 1px solid #e5e5e0; margin-bottom: 0.5rem; }
@@ -37,7 +37,6 @@
     .dept-comercial-badge  { background: #DCFCE7; color: #166534; }
     .dept-prl-badge        { background: #FEF3C7; color: #92400e; }
     .dept-admin-badge      { background: #EDE9FE; color: #5b21b6; }
-    .dept-jefe_obra-badge  { background: #E1F5EE; color: #0F6E56; }
     .powered { font-size: 9px; color: #ccc; text-align: center; padding-top: 8px; border-top: 1px solid #f0f0ea; margin-top: 8px; }
     .powered span { color: #185FA5; }
 
@@ -67,7 +66,6 @@
     .dept-indicator.di-comercial  { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
     .dept-indicator.di-prl        { background: #FEF3C7; color: #92400e; border: 1px solid #FDE68A; }
     .dept-indicator.di-admin      { background: #EDE9FE; color: #5b21b6; border: 1px solid #DDD6FE; }
-    .dept-indicator.di-jefe_obra  { background: #E1F5EE; color: #0F6E56; border: 1px solid #A7DEC9; }
 
     /* METRICS */
     .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
@@ -294,27 +292,6 @@
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect y="2" width="18" height="2" rx="1" fill="#555"/><rect y="8" width="18" height="2" rx="1" fill="#555"/><rect y="14" width="18" height="2" rx="1" fill="#555"/></svg>
 </div>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-
-<!-- PANEL JEFE DE OBRA -->
-<div id="panel-jefe-obra" class="panel" style="max-width:700px;margin:0 auto;padding:2rem 1.5rem;">
-  <!-- CABECERA JEFE OBRA -->
-  <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e5e5e0;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
-      <div style="width:44px;height:44px;background:#0F6E56;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0;">BYG</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:16px;font-weight:600;color:#1a1a1a;" id="jo-title">Mis proyectos</div>
-        <div style="font-size:13px;font-weight:500;color:#0F6E56;" id="jo-nombre"></div>
-        <div style="font-size:11px;color:#888;" id="jo-email"></div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn-refresh" onclick="loadDashboardJefeObra()" style="font-size:12px;">↻ Actualizar</button>
-      <button onclick="doLogout()" style="padding:6px 14px;border-radius:7px;border:1px solid #ddd;background:white;font-size:12px;cursor:pointer;color:#666;">Cerrar sesión</button>
-    </div>
-  </div>
-  <div id="jo-alerta-banner" style="display:none;"></div>
-  <div id="jo-proyectos-content"><div class="loading">Cargando proyectos...</div></div>
-</div>
 
 <!-- PANTALLA DE LOGIN -->
 <div id="login-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#f5f5f0;z-index:9999;display:flex;align-items:center;justify-content:center;">
@@ -832,7 +809,7 @@
   <div id="ej-tab-gastos" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <div style="font-size:13px;color:#888;">Albaranes, facturas y otros gastos registrados en obra</div>
-      <button class="btn btn-primary btn-sm" id="btn-registrar-gasto" onclick="abrirCargaGasto()" style="display:none;">+ Registrar gasto</button>
+      <button class="btn btn-primary btn-sm" onclick="abrirCargaGasto()">+ Registrar gasto</button>
     </div>
     <!-- Input archivo oculto -->
     <input type="file" id="gasto-file-input" accept="image/*,application/pdf" style="display:none;" onchange="procesarArchivoGasto(this)">
@@ -1370,8 +1347,7 @@ var deptConfig = {
   direccion: { name:'Dirección',        email:'direccion@bygsoluciones.es', badge:'DIRECCIÓN', desc:'Vista: Dirección - Seguimiento global y aprobaciones ejecutivas' },
   comercial: { name:'Dept. Comercial',  email:'comercial@bygsoluciones.es', badge:'COMERCIAL', desc:'Vista: Departamento Comercial - Gestión de ofertas y relación con clientes' },
   prl:       { name:'Dept. PRL',        email:'prl@bygsoluciones.es',       badge:'PRL',       desc:'Vista: Prevención de Riesgos Laborales - Documentación y cumplimiento' },
-  admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración - Datos maestros y gestión del sistema' },
-  jefe_obra: { name:'Jefe/a de Obra',   email:'',                            badge:'OBRA',      desc:'Vista: Jefe/a de Obra - Gestión de mis proyectos en ejecución' }
+  admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración - Datos maestros y gestión del sistema' }
 };
 
 var badgeMap = {
@@ -1470,10 +1446,6 @@ function irAFaseEjecucion() { showProyectosFase('en_ejecucion'); }
 
 async function loadDashboard() {
   var dept = currentDept || 'tecnico';
-  if (dept === 'jefe_obra') {
-    loadDashboardJefeObra();
-    return;
-  }
   resetDashboardUI();
   document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
 
@@ -3821,22 +3793,11 @@ function volverDesdeAdjudicado() {
 var currentUser = null;
 
 var deptByEmail = {
-  'tecnico@bygsoluciones.es':             'tecnico',
-  'direccion@bygsoluciones.es':           'direccion',
-  'comercial@bygsoluciones.es':           'comercial',
-  'prl@bygsoluciones.es':                 'prl',
-  'admin@bygsoluciones.es':               'admin',
-  // Jefes de Obra
-  'marcelino.garzon@bygsoluciones.es':    'jefe_obra',
-  'emilio.miranda@bygsoluciones.es':      'jefe_obra',
-  'antonio.sanchez@bygsoluciones.es':     'jefe_obra',
-  'ariadna.zerpa@bygsoluciones.es':       'jefe_obra',
-  'cristina.lazaro@bygsoluciones.es':     'jefe_obra',
-  'miriam.tinajero@bygsoluciones.es':     'jefe_obra',
-  'rebeca.anton@bygsoluciones.es':        'jefe_obra',
-  'antonio.villalon@bygsoluciones.es':    'jefe_obra',
-  'efren.colina@bygsoluciones.es':        'jefe_obra',
-  'yaromir.gonzalez@bygsoluciones.es':    'jefe_obra'
+  'tecnico@bygsoluciones.es':   'tecnico',
+  'direccion@bygsoluciones.es': 'direccion',
+  'comercial@bygsoluciones.es': 'comercial',
+  'prl@bygsoluciones.es':       'prl',
+  'admin@bygsoluciones.es':     'admin'
 };
 
 async function checkSession() {
@@ -4078,13 +4039,6 @@ async function abrirEjecucion(id, nameEnc) {
     cargarGastos(id);
     cargarCertificaciones(id);
 
-    // Mostrar botón registrar gasto solo para depts autorizados
-    var btnGasto = document.getElementById('btn-registrar-gasto');
-    if (btnGasto) {
-      var deptsGasto = ['tecnico','jefe_obra','admin','direccion'];
-      btnGasto.style.display = deptsGasto.indexOf(currentDept) > -1 ? 'inline-block' : 'none';
-    }
-
   } catch(e) { console.error('Error abriendo ejecución:',e); }
 }
 
@@ -4184,7 +4138,7 @@ async function cargarGastos(projectId) {
       '<div style="background:#EAF3DE;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Aprobado</div><div style="font-size:18px;font-weight:600;color:#3B6D11;">' + totalAprobado.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
       '<div style="background:#FCEBEB;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Pendiente aprobación</div><div style="font-size:18px;font-weight:600;color:#A32D2D;">' + (total-totalAprobado).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
       '</div>' +
-      '<table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>IA</th><th>Doc.</th></tr></thead><tbody>' +
+      '<table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>IA</th></tr></thead><tbody>' +
       res.data.map(function(g) {
         return '<tr>' +
           '<td>' + new Date(g.expense_date).toLocaleDateString('es-ES') + '</td>' +
@@ -4192,10 +4146,8 @@ async function cargarGastos(projectId) {
           '<td style="font-size:11px;">' + (g.supplier_name||'-') + '</td>' +
           '<td style="font-size:11px;">' + (g.concept||'-') + '</td>' +
           '<td style="text-align:right;font-weight:500;">' + parseFloat(g.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
-          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : (currentDept === 'jefe_obra' || currentDept === 'tecnico' ? '<button class="btn btn-sm btn-success" style="padding:3px 8px;font-size:11px;" onclick="aprobarGasto(' + g.id + ',' + projectId + ')">Aprobar</button>' : '<span class="badge b-review">Pendiente</span>')) + '</td>' +
+          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : '<button class="btn btn-sm btn-success" style="padding:3px 8px;font-size:11px;" onclick="aprobarGasto(' + g.id + ',' + projectId + ')">Aprobar</button>') + '</td>' +
           '<td>' + (g.ai_extracted ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:2px 6px;border-radius:4px;">IA</span>' : '-') + '</td>' +
-          '<td>' + (g.document_url && ['jefe_obra','admin','direccion'].indexOf(currentDept) > -1 ?
-            '<button onclick="verDocumentoGasto(&quot;' + g.document_url + '&quot;,&quot;' + (g.document_name||'documento') + '&quot;)" style="background:none;border:none;cursor:pointer;font-size:16px;" title="Ver documento original">📄</button>' : '') + '</td>' +
           '</tr>';
       }).join('') + '</tbody></table>';
   } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando gastos</div>'; }
@@ -4347,26 +4299,10 @@ async function confirmarGasto() {
     concept: document.getElementById('gasto-concepto').value || null,
     expense_date: document.getElementById('gasto-fecha').value || new Date().toISOString().split('T')[0],
     ai_extracted: true,
-    approved: false,
-    uploaded_by: currentUser ? currentUser.email : null
+    approved: false
   };
 
   try {
-    // Subir documento a Supabase Storage si existe
-    var fileInput = document.getElementById('gasto-file-input');
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-      var file = fileInput.files[0];
-      var fileName = ejProyecto.id + '_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-      var uploadRes = await db.storage.from('gastos-documentos').upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-      if (!uploadRes.error) {
-        data.document_url = fileName;
-        data.document_name = file.name;
-      }
-    }
-
     await db.from('project_expenses').insert(data);
     document.getElementById('gasto-modal').style.display = 'none';
     cargarGastos(ejProyecto.id);
@@ -4381,13 +4317,8 @@ function cancelarGasto() {
 
 function volverDesdeEjecución() {
   ejProyecto = null;
-  if (currentDept === 'jefe_obra') {
-    loadDashboardJefeObra();
-  } else if (currentFase) {
-    showProyectosFase(currentFase);
-  } else {
-    showPanel('dashboard');
-  }
+  if (currentFase) showProyectosFase(currentFase);
+  else showPanel('dashboard');
 }
 
 // ---- PLANNING DE OBRA ----
@@ -4953,30 +4884,7 @@ function generarTimelinePlanning(hitos) {
 
 async function aprobarGasto(gastoId, projectId) {
   try {
-    await db.from('project_expenses').update({
-      approved: true,
-      approved_by: currentUser ? currentUser.email : null,
-      approved_at: new Date().toISOString()
-    }).eq('id', gastoId);
-
-    // Insertar notificación para Admin y Dirección
-    var gastoData = await db.from('project_expenses').select('amount,concept,supplier_name,expense_date').eq('id',gastoId).single();
-    if (gastoData.data) {
-      var g = gastoData.data;
-      var texto = 'Gasto aprobado por Jefe de Obra: ' +
-        parseFloat(g.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR' +
-        (g.supplier_name ? ' — ' + g.supplier_name : '') +
-        (g.concept ? ' (' + g.concept + ')' : '');
-      await db.from('project_planning_comments').insert({
-        project_id: projectId,
-        author_email: currentUser ? currentUser.email : 'sistema',
-        author_name: 'Jefe de Obra',
-        author_role: 'tecnico',
-        comment: texto,
-        is_read: false
-      });
-    }
-
+    await db.from('project_expenses').update({approved: true}).eq('id', gastoId);
     cargarGastos(projectId);
     cargarEconomico(projectId);
   } catch(e) { alert('Error al aprobar: ' + e.message); }
@@ -5082,7 +4990,6 @@ function renderFichaEmpleado(e, editable) {
       {label:'Nombre *', key:'nombre', val:e.nombre, required:true},
       {label:'Apellidos *', key:'apellidos', val:e.apellidos, required:true},
       {label:'DNI / NIE', key:'dni_nie', val:e.dni_nie},
-      {label:'Nº Seguridad Social *', key:'numero_ss', val:e.numero_ss, required:true},
       {label:'Fecha de nacimiento', key:'fecha_nacimiento', val:e.fecha_nacimiento, type:'date'}
     ]},
     { titulo: 'Contacto', campos: [
@@ -5163,7 +5070,7 @@ function renderFichaEmpleado(e, editable) {
 }
 
 async function guardarEmpleado() {
-  var campos = ['nombre','apellidos','dni_nie','numero_ss','fecha_nacimiento','email_corporativo','email_personal',
+  var campos = ['nombre','apellidos','dni_nie','fecha_nacimiento','email_corporativo','email_personal',
     'telefono_movil','telefono_fijo','telefono_emergencia','contacto_emergencia',
     'departamento','cargo','fecha_alta','tipo_contrato','jornada','estado','salario_bruto_anual',
     'rol_app','email_login','formacion_prl_fecha','formacion_prl_vencimiento',
@@ -5182,8 +5089,8 @@ async function guardarEmpleado() {
   });
 
   // Validar obligatorios
-  if (!data.nombre || !data.apellidos || !data.departamento || !data.cargo || !data.numero_ss) {
-    alert('Los campos Nombre, Apellidos, Departamento, Cargo y Nº Seguridad Social son obligatorios.');
+  if (!data.nombre || !data.apellidos || !data.departamento || !data.cargo) {
+    alert('Los campos Nombre, Apellidos, Departamento y Cargo son obligatorios.');
     return;
   }
 
@@ -5257,151 +5164,7 @@ async function loadAlertasPRL() {
   } catch(e) { console.error(e); el.innerHTML = '<div class="empty">Error cargando alertas PRL</div>'; }
 }
 
-// ---- DASHBOARD JEFE DE OBRA ----
-async function loadDashboardJefeObra() {
-  // Mostrar panel jefe de obra — ocultar sidebar para interfaz simplificada
-  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  document.getElementById('panel-jefe-obra').classList.add('active');
-  // Ocultar sidebar y hamburger, ajustar main
-  var sidebar = document.querySelector('.sidebar');
-  var main = document.querySelector('.main');
-  var hamburger = document.getElementById('hamburger-btn');
-  if (sidebar) sidebar.style.display = 'none';
-  if (main) main.style.marginLeft = '0';
-  if (hamburger) hamburger.style.display = 'none';
-
-  var email = currentUser ? currentUser.email : '';
-  var nombre = email.split('@')[0].replace('.',' ');
-  document.getElementById('jo-title').textContent = 'Mis proyectos';
-  var joEmail = document.getElementById('jo-email');
-  if (joEmail) joEmail.textContent = email;
-  // Buscar nombre completo del empleado
-  try {
-    var empNombre = await db.from('employees').select('nombre,apellidos').eq('email_login', email).single();
-    var joNombre = document.getElementById('jo-nombre');
-    if (joNombre && empNombre.data) {
-      joNombre.textContent = empNombre.data.nombre + ' ' + empNombre.data.apellidos;
-    }
-  } catch(en) {}
-
-  var el = document.getElementById('jo-proyectos-content');
-  el.innerHTML = '<div class="loading">Cargando proyectos...</div>';
-
-  try {
-    // Buscar el empleado por email para obtener su id
-    var empRes = await db.from('employees').select('id,nombre,apellidos').eq('email_login', email).single();
-
-    // Buscar en project_managers por email o nombre
-    var pmRes = await db.from('project_managers').select('id,full_name').ilike('email', email);
-    var pmIds = pmRes.data ? pmRes.data.map(function(p){return p.id;}) : [];
-
-    // Si no hay coincidencia exacta buscar por nombre
-    if (!pmIds.length && empRes.data) {
-      var nombreCompleto = empRes.data.nombre + ' ' + empRes.data.apellidos;
-      var pmRes2 = await db.from('project_managers').select('id,full_name').ilike('full_name', '%' + empRes.data.apellidos + '%');
-      if (pmRes2.data && pmRes2.data.length) pmIds = pmRes2.data.map(function(p){return p.id;});
-    }
-
-    // Buscar proyectos asignados (activos e histórico)
-    var proyectos = [];
-    if (pmIds.length) {
-      var projRes = await db.from('projects')
-        .select('id,name,code,project_code,project_manager_id,project_statuses(code,name),project_managers(full_name)')
-        .in('project_manager_id', pmIds)
-        .order('created_at', {ascending:false});
-      proyectos = projRes.data || [];
-    }
-
-    // También buscar en historial de asignaciones
-    var histRes = await db.from('project_manager_assignments')
-      .select('project_id,is_current,project_managers(full_name)')
-      .in('project_manager_id', pmIds);
-
-    var histIds = histRes.data ? histRes.data.map(function(h){return h.project_id;}) : [];
-    var idsYaEnListado = proyectos.map(function(p){return p.id;});
-    var histPendientes = histIds.filter(function(id){return !idsYaEnListado.includes(id);});
-
-    if (histPendientes.length) {
-      var histProj = await db.from('projects')
-        .select('id,name,code,project_code,project_manager_id,project_statuses(code,name)')
-        .in('id', histPendientes);
-      if (histProj.data) proyectos = proyectos.concat(histProj.data);
-    }
-
-    if (!proyectos.length) {
-      el.innerHTML = '<div class="card"><div class="empty">No tienes proyectos asignados actualmente.</div></div>';
-      return;
-    }
-
-    // Separar activos (en_ejecucion) e histórico
-    var activos = proyectos.filter(function(p){ return p.project_statuses && p.project_statuses.code === 'en_ejecucion'; });
-    var historico = proyectos.filter(function(p){ return !p.project_statuses || p.project_statuses.code !== 'en_ejecucion'; });
-
-    var html = '';
-
-    // Alerta si hay proyectos activos
-    var banner = document.getElementById('jo-alerta-banner');
-    if (activos.length) {
-      banner.style.display = 'block';
-      banner.innerHTML = '<div style="background:#E1F5EE;border:1px solid #A7DEC9;border-radius:8px;padding:10px 16px;margin-bottom:1rem;font-size:13px;font-weight:500;color:#0F6E56;">' +
-        '● ' + activos.length + ' proyecto' + (activos.length>1?'s':'') + ' en ejecución actualmente</div>';
-    } else {
-      banner.style.display = 'none';
-    }
-
-    function renderProyecto(p, esActivo) {
-      var stCode = p.project_statuses ? p.project_statuses.code : '';
-      var stName = p.project_statuses ? p.project_statuses.name : 'Desconocido';
-      var badgeColor = esActivo ? '#0F6E56' : '#888';
-      var badgeBg = esActivo ? '#E1F5EE' : '#f5f5f0';
-      return '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e5e5e0;border-radius:8px;margin-bottom:8px;background:white;cursor:pointer;" onclick="abrirProyectoJefeObra(' + p.id + ',&quot;' + stCode + '&quot;)">' +
-        '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + (p.name||p.code||'#'+p.id) + '</div>' +
-        '<div style="font-size:11px;color:#888;margin-top:2px;">' + (p.project_code||p.code||'') + '</div>' +
-        '</div>' +
-        '<span style="font-size:11px;padding:3px 10px;border-radius:99px;background:' + badgeBg + ';color:' + badgeColor + ';font-weight:500;">' + stName + '</span>' +
-        '<span style="color:#185FA5;font-size:12px;">Ver →</span>' +
-        '</div>';
-    }
-
-    if (activos.length) {
-      html += '<div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;color:#0F6E56;">En ejecución</div>';
-      html += activos.map(function(p){return renderProyecto(p, true);}).join('');
-    }
-
-    if (historico.length) {
-      html += '<div style="font-size:13px;font-weight:600;margin:1rem 0 0.75rem;color:#888;">Histórico</div>';
-      html += historico.map(function(p){return renderProyecto(p, false);}).join('');
-    }
-
-    el.innerHTML = html;
-
-  } catch(e) {
-    console.error('Error jefe obra dashboard:', e);
-    el.innerHTML = '<div class="empty">Error cargando proyectos</div>';
-  }
-}
-
-function abrirProyectoJefeObra(id, stCode) {
-  if (stCode === 'en_ejecucion') {
-    abrirEjecucion(id, '');
-  } else {
-    // Para histórico mostrar vista de solo lectura
-    abrirEjecucion(id, '');
-  }
-}
-
-async function verDocumentoGasto(fileName, displayName) {
-  try {
-    var res = await db.storage.from('gastos-documentos').createSignedUrl(fileName, 300); // 5 min
-    if (res.data && res.data.signedUrl) {
-      window.open(res.data.signedUrl, '_blank');
-    } else {
-      alert('No se pudo obtener el documento.');
-    }
-  } catch(e) { alert('Error al abrir documento: ' + e.message); }
-}
-
 </script>
 </body>
 </html>
+
