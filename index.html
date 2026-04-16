@@ -2269,7 +2269,11 @@ function imprimirListadoClientes() {
     '<h2>BYG Soluciones - Listado de Clientes</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
-    '<tbody>'+rows+'</tbody></table>';
+    '<tbody>'+rows+'</tbody></table>' +
+    '</body></html>');
+  win.document.close();
+  win.print();
+}
 
 // ============================================================
 // MÓDULO NUEVO PROYECTO
@@ -2766,24 +2770,24 @@ async function cargarAdjuntosProyecto(projectId, contenedorId) {
       return;
     }
     var iconos = {excel:'📊', pdf:'📄', word:'📝', imagen:'🖼️', otro:'📎'};
-    el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;">' +
-      adjuntos.map(function(a) {
-        var icono = iconos[a.file_type] || '📎';
-        var esMed = a.is_measurements;
-        return '<div onclick="anDescargarArchivo('' + a.file_path + '','' + a.file_name + '')" ' +
-          'style="display:flex;align-items:center;gap:5px;padding:5px 10px;background:' + (esMed?'#EAF3DE':'#f5f5f0') + ';border:1px solid ' + (esMed?'#C0DD97':'#ddd') + ';border-radius:6px;cursor:pointer;font-size:11px;" ' +
-          'title="' + a.file_name + '">' +
-          icono + ' ' + (a.file_name.length > 25 ? a.file_name.substring(0,22)+'...' : a.file_name) +
-          (esMed ? ' <span style="color:#3B6D11;font-size:9px;font-weight:600;">MED</span>' : '') +
-          '</div>';
-      }).join('') + '</div>';
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+    adjuntos.forEach(function(a) {
+      var icono = iconos[a.file_type] || '📎';
+      var esMed = a.is_measurements;
+      var div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;gap:5px;padding:5px 10px;background:' +
+        (esMed ? '#EAF3DE' : '#f5f5f0') + ';border:1px solid ' +
+        (esMed ? '#C0DD97' : '#ddd') + ';border-radius:6px;cursor:pointer;font-size:11px;';
+      div.title = a.file_name;
+      var nombre = a.file_name.length > 25 ? a.file_name.substring(0,22)+'...' : a.file_name;
+      div.innerHTML = icono + ' ' + nombre + (esMed ? ' <span style="color:#3B6D11;font-size:9px;font-weight:600;">MED</span>' : '');
+      div.onclick = (function(path, name){ return function(){ anDescargarArchivo(path, name); }; })(a.file_path, a.file_name);
+      wrapper.appendChild(div);
+    });
+    el.innerHTML = '';
+    el.appendChild(wrapper);
   } catch(e) { console.error(e); }
-}
-</script>
-
-</body></html>');
-  win.document.close();
-  win.print();
 }
 
 function imprimirFichaCliente() {
