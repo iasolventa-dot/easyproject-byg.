@@ -4239,6 +4239,11 @@ async function abrirEjecucion(id, nameEnc) {
       var deptsGasto = ['tecnico','jefe_obra','admin','direccion'];
       btnGasto.style.display = deptsGasto.indexOf(currentDept) > -1 ? 'inline-block' : 'none';
     }
+    var btnHito = document.getElementById('btn-nuevo-hito');
+    if (btnHito) {
+      var deptsHito = ['tecnico','jefe_obra','direccion'];
+      btnHito.style.display = deptsHito.indexOf(currentDept) > -1 ? 'inline-block' : 'none';
+    }
 
   } catch(e) { console.error('Error abriendo ejecución:',e); }
 }
@@ -4267,21 +4272,48 @@ async function cargarHitos(projectId) {
     // TIMELINE
     var hitosConFecha = hitos.filter(function(h){ return h.planned_date || h.actual_date; });
     var timelineHtml = '';
-    if (hitosConFecha.length >= 2) {
-      var fechas = hitosConFecha.map(function(h){ return new Date(h.actual_date || h.planned_date).getTime(); });
-      var minF = Math.min.apply(null, fechas);
-      var maxF = Math.max.apply(null, fechas);
-      var rango = maxF - minF || 1;
-      var W = 700, H = 110, mH = 40, lineY = 55;
+    if (hitosConFecha.length >= 1) {
+      // Ventana de 1 mes visible, scroll si hay más hitos fuera
       var hoy = Date.now();
-      var hoyX = mH + Math.round(((Math.min(hoy, maxF) - minF) / rango) * W);
+      var unMes = 30 * 24 * 60 * 60 * 1000;
+      // Calcular rango total de todos los hitos
+      var todasFechas = hitosConFecha.map(function(h){ return new Date(h.actual_date || h.planned_date).getTime(); });
+      var minTotal = Math.min.apply(null, todasFechas);
+      var maxTotal = Math.max.apply(null, todasFechas);
+      // La ventana visible es 1 mes centrada en hoy (o en el primer hito si no hay hitos futuros)
+      var ventanaInicio = hoy - (unMes * 0.3);  // hoy menos 9 días
+      var ventanaFin = ventanaInicio + unMes;
+      // Si todos los hitos están fuera de la ventana, ajustar al rango de hitos
+      var rangoTotal = Math.max(maxTotal - minTotal, unMes);
+      // Píxeles por milisegundo: 1 mes = 800px (scrollable)
+      var pxPorMs = 800 / unMes;
+      var totalWidth = Math.max(800, Math.round(rangoTotal * pxPorMs) + 80);
+      var H = 110, mH = 40, lineY = 55;
+      var hoyX = mH + Math.round((hoy - minTotal) * pxPorMs);
       var svg = [];
-      svg.push('<svg viewBox="0 0 ' + (W + mH*2) + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:100%;margin-bottom:0.5rem;">');
-      svg.push('<line x1="'+mH+'" y1="'+lineY+'" x2="'+(W+mH)+'" y2="'+lineY+'" stroke="#e5e5e0" stroke-width="3" stroke-linecap="round"/>');
-      svg.push('<line x1="'+mH+'" y1="'+lineY+'" x2="'+hoyX+'" y2="'+lineY+'" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>');
+      svg.push('<svg viewBox="0 0 ' + (totalWidth) + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:' + totalWidth + 'px;height:' + H + 'px;min-width:100%;">');
+      // Línea base completa
+      svg.push('<line x1="'+mH+'" y1="'+lineY+'" x2="'+(totalWidth-mH)+'" y2="'+lineY+'" stroke="#e5e5e0" stroke-width="3" stroke-linecap="round"/>');
+      // Línea completada hasta hoy
+      var hoyXclamp = Math.min(Math.max(hoyX, mH), totalWidth-mH);
+      svg.push('<line x1="'+mH+'" y1="'+lineY+'" x2="'+hoyXclamp+'" y2="'+lineY+'" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>');
+      // Marcas de mes en el eje
+      var mesActual = new Date(minTotal);
+      mesActual.setDate(1); mesActual.setHours(0,0,0,0);
+      while (mesActual.getTime() <= maxTotal + unMes) {
+        var mx = mH + Math.round((mesActual.getTime() - minTotal) * pxPorMs);
+        if (mx >= mH && mx <= totalWidth - mH) {
+          svg.push('<line x1="'+mx+'" y1="'+(lineY-5)+'" x2="'+mx+'" y2="'+(lineY+5)+'" stroke="#ddd" stroke-width="1"/>');
+          var mesLabel = mesActual.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+          mesLabel = mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1).replace(' de ', '-').replace(' ', '-');
+          svg.push('<text x="'+mx+'" y="'+(lineY+18)+'" text-anchor="middle" font-size="8" fill="#ccc">'+mesLabel+'</text>');
+        }
+        mesActual.setMonth(mesActual.getMonth() + 1);
+      }
+      // Hitos
       hitosConFecha.forEach(function(h, i) {
         var f = new Date(h.actual_date || h.planned_date).getTime();
-        var cx = mH + Math.round(((f - minF) / rango) * W);
+        var cx = mH + Math.round((f - minTotal) * pxPorMs);
         var comp = h.completed;
         var retr = !comp && f < hoy;
         var col = comp ? '#0F6E56' : (retr ? '#C0392B' : '#185FA5');
@@ -4290,25 +4322,39 @@ async function cargarHitos(projectId) {
         var arriba = (i%2===0);
         var lY = arriba ? lineY-22 : lineY+22;
         var lY2 = arriba ? lineY-11 : lineY+33;
-        var nom = h.milestone_name ? (h.milestone_name.length>14 ? h.milestone_name.substring(0,12)+'...' : h.milestone_name) : 'Hito';
-        var fechaLabel = (h.actual_date || h.planned_date) ? new Date(h.actual_date || h.planned_date).toLocaleDateString('es-ES', {day:'2-digit',month:'2-digit'}) : '';
+        var nom = h.milestone_name ? (h.milestone_name.length>16 ? h.milestone_name.substring(0,14)+'...' : h.milestone_name) : 'Hito';
+        var fechaLabel = '';
+        if (h.actual_date || h.planned_date) {
+          var fd = new Date(h.actual_date || h.planned_date);
+          var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+          fechaLabel = meses[fd.getMonth()] + '-' + fd.getFullYear();
+        }
         svg.push('<text x="'+cx+'" y="'+lY+'" text-anchor="middle" font-size="9" fill="'+col+'" font-weight="600">'+nom+'</text>');
         svg.push('<text x="'+cx+'" y="'+lY2+'" text-anchor="middle" font-size="8" fill="#aaa">'+fechaLabel+'</text>');
       });
-      if (hoy >= minF && hoy <= maxF) {
-        svg.push('<line x1="'+hoyX+'" y1="'+(lineY-14)+'" x2="'+hoyX+'" y2="'+(lineY+14)+'" stroke="#E67E22" stroke-width="2" stroke-dasharray="3,2"/>');
-      }
+      // Línea de hoy
+      svg.push('<line x1="'+hoyXclamp+'" y1="'+(lineY-14)+'" x2="'+hoyXclamp+'" y2="'+(lineY+14)+'" stroke="#E67E22" stroke-width="2" stroke-dasharray="3,2"/>');
+      svg.push('<text x="'+hoyXclamp+'" y="'+(lineY-17)+'" text-anchor="middle" font-size="8" fill="#E67E22">Hoy</text>');
       svg.push('</svg>');
+      // Calcular scroll inicial para centrar en hoy
+      var scrollInicio = Math.max(0, hoyXclamp - 400);
       timelineHtml = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;">' +
-        '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Timeline de hitos</div>' +
-        svg.join('') +
-        '<div style="display:flex;gap:1rem;font-size:10px;color:#888;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
+        '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;">Timeline de hitos</div>' +
+        '<div style="font-size:10px;color:#aaa;">← Desliza para navegar →</div></div>' +
+        '<div id="hitos-timeline-scroll" style="overflow-x:auto;overflow-y:hidden;padding-bottom:4px;cursor:grab;" onmousedown="hitosScrollStart(event)" ontouchstart="hitosScrollStart(event)">' +
+        svg.join('') + '</div>' +
+        '<div style="display:flex;gap:1rem;font-size:10px;color:#888;margin-top:0.5rem;">' +
         '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0F6E56;margin-right:3px;"></span>Completado</span>' +
         '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#185FA5;margin-right:3px;"></span>Pendiente</span>' +
         '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C0392B;margin-right:3px;"></span>Retrasado</span>' +
         '</div></div>';
+      // Script para scroll inicial y drag
+      timelineHtml += '<script>setTimeout(function(){' +
+        'var sc=document.getElementById("hitos-timeline-scroll");' +
+        'if(sc){sc.scrollLeft='+scrollInicio+';}' +
+        '},100);</' + 'script>';
     }
-
     // LISTA
     var listaHtml = '<div style="margin-bottom:0.75rem;font-size:12px;color:#888;">'+completados+' de '+total+' hitos completados</div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;">' +
@@ -4323,11 +4369,45 @@ async function cargarHitos(projectId) {
           '<div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+(m.milestone_name||m.name||'-')+'</div>' +
           '<div style="font-size:11px;color:#888;">'+fecha+retr+'</div></div>' +
           (comp?'':'<button class="btn btn-sm" style="font-size:11px;" onclick="marcarHitoCompletado('+m.id+','+projectId+')">Completar</button>') +
+          '<button class="btn btn-sm" style="font-size:11px;margin-left:4px;" onclick="editarFechaHito('+m.id+','+projectId+',\''+( m.planned_date ? m.planned_date.split('T')[0] : '')+'\')" title="Editar fecha">✏️</button>' +
           '</div>';
       }).join('') + '</div>';
 
     el.innerHTML = timelineHtml + listaHtml;
   } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando hitos</div>'; }
+}
+
+function hitosScrollStart(e) {
+  var el = document.getElementById('hitos-timeline-scroll');
+  if (!el) return;
+  var startX = (e.touches ? e.touches[0].clientX : e.clientX);
+  var scrollLeft = el.scrollLeft;
+  el.style.cursor = 'grabbing';
+  function onMove(ev) {
+    var x = (ev.touches ? ev.touches[0].clientX : ev.clientX);
+    el.scrollLeft = scrollLeft - (x - startX);
+  }
+  function onEnd() {
+    el.style.cursor = 'grab';
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onEnd);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchmove', onMove);
+  document.addEventListener('touchend', onEnd);
+}
+
+async function editarFechaHito(hitoId, projectId, fechaActual) {
+  var nueva = prompt('Nueva fecha del hito (YYYY-MM-DD):', fechaActual || '');
+  if (!nueva) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(nueva)) { alert('Formato incorrecto. Usa YYYY-MM-DD'); return; }
+  try {
+    await db.from('project_milestones').update({ planned_date: nueva }).eq('id', hitoId);
+    cargarHitos(projectId);
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 async function marcarHitoCompletado(hitoId, projectId) {
