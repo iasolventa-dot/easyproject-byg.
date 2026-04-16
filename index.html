@@ -5326,113 +5326,110 @@ function irAObrasPlanningPendiente() {
 function generarTimelinePlanning(hitos) {
   if (!hitos || hitos.length === 0) return '';
 
-  var hoy = new Date();
-  hoy.setHours(0,0,0,0);
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-  // Calcular rango de fechas
-  var fechas = hitos
-    .filter(function(h){ return h.planned_date || h.actual_date; })
-    .map(function(h){ return new Date(h.actual_date || h.planned_date); });
+  // Ordenar por fecha planificada
+  var hitosOrdenados = hitos.filter(function(h){ return h.planned_date; }).slice();
+  hitosOrdenados.sort(function(a,b){ return new Date(a.planned_date)-new Date(b.planned_date); });
+  if (!hitosOrdenados.length) return '';
 
-  if (fechas.length === 0) return '';
+  // Escala: 150px por hito mínimo, scroll horizontal
+  var pxPorHito = 160;
+  var mH = 70;
+  var H = 130;
+  var lineY = 60;
+  var totalWidth = Math.max(900, hitosOrdenados.length * pxPorHito + mH * 2);
 
-  var minFecha = new Date(Math.min.apply(null, fechas));
-  var maxFecha = new Date(Math.max.apply(null, fechas));
-
-  // Extender rango un poco para que no quede pegado a los bordes
-  minFecha.setDate(minFecha.getDate() - 10);
-  maxFecha.setDate(maxFecha.getDate() + 10);
-
-  var rangoTotal = maxFecha - minFecha; // ms
-
-  function posX(fecha, width) {
-    return Math.round(((fecha - minFecha) / rangoTotal) * width);
-  }
-
-  var W = 800; // ancho interno SVG
-  var H = 140;
-  var lineY = 72; // Y de la línea principal
-  var margenH = 40; // margen horizontal
-
-  // Generar meses en el eje X
-  var meses = [];
-  var cur = new Date(minFecha.getFullYear(), minFecha.getMonth(), 1);
-  while (cur <= maxFecha) {
-    meses.push(new Date(cur));
-    cur.setMonth(cur.getMonth() + 1);
-  }
-
-  var nombresMes = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
-  var svgParts = [];
-  svgParts.push('<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:1.5rem;">');
-  svgParts.push('<div style="font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:8px;">Timeline de hitos</div>');
-  svgParts.push('<svg viewBox="0 0 ' + (W + margenH*2) + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:500px;max-width:900px;font-family:-apple-system,sans-serif;">');
-
-  // Fondo
-  svgParts.push('<rect width="' + (W + margenH*2) + '" height="' + H + '" fill="#fafaf8" rx="8"/>');
-
-  // Líneas de mes y etiquetas
-  meses.forEach(function(m) {
-    var x = posX(m, W) + margenH;
-    svgParts.push('<line x1="' + x + '" y1="20" x2="' + x + '" y2="' + (H-10) + '" stroke="#e5e5e0" stroke-width="1" stroke-dasharray="3,3"/>');
-    svgParts.push('<text x="' + (x+4) + '" y="16" font-size="9" fill="#aaa">' + nombresMes[m.getMonth()] + ' ' + m.getFullYear() + '</text>');
+  var posiciones = hitosOrdenados.map(function(h, i) {
+    if (hitosOrdenados.length === 1) return totalWidth / 2;
+    return mH + Math.round(i * (totalWidth - mH * 2) / (hitosOrdenados.length - 1));
   });
 
-  // Línea principal horizontal
-  svgParts.push('<line x1="' + margenH + '" y1="' + lineY + '" x2="' + (W+margenH) + '" y2="' + lineY + '" stroke="#ddd" stroke-width="2"/>');
+  var svg = [];
+  svg.push('<svg viewBox="0 0 ' + totalWidth + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:' + totalWidth + 'px;height:' + H + 'px;display:block;">');
 
-  // Línea "Hoy"
-  var hoyX = posX(hoy, W) + margenH;
-  if (hoyX >= margenH && hoyX <= W + margenH) {
-    svgParts.push('<line x1="' + hoyX + '" y1="22" x2="' + hoyX + '" y2="' + (H-10) + '" stroke="#185FA5" stroke-width="1.5" stroke-dasharray="4,3"/>');
-    svgParts.push('<text x="' + (hoyX+3) + '" y="32" font-size="9" fill="#185FA5" font-weight="600">HOY</text>');
+  // Línea base
+  svg.push('<line x1="' + mH + '" y1="' + lineY + '" x2="' + (totalWidth-mH) + '" y2="' + lineY + '" stroke="#e5e5e0" stroke-width="3" stroke-linecap="round"/>');
+
+  // Línea completada hasta último hito completado
+  var lastComp = -1;
+  hitosOrdenados.forEach(function(h,i){ if(h.completed) lastComp=i; });
+  if (lastComp >= 0) {
+    svg.push('<line x1="' + mH + '" y1="' + lineY + '" x2="' + posiciones[lastComp] + '" y2="' + lineY + '" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>');
   }
 
-  // Barras de Gantt (fila inferior) y puntos (línea principal)
-  hitos.forEach(function(h, idx) {
-    var fechaObj = h.actual_date ? new Date(h.actual_date) : (h.planned_date ? new Date(h.planned_date) : null);
-    if (!fechaObj) return;
+  // Hoy
+  var minF = new Date(hitosOrdenados[0].planned_date).getTime();
+  var maxF = new Date(hitosOrdenados[hitosOrdenados.length-1].planned_date).getTime();
+  if (hoy.getTime() >= minF && hoy.getTime() <= maxF && hitosOrdenados.length > 1) {
+    var rango = maxF - minF;
+    var hoyX = mH + Math.round(((hoy.getTime() - minF) / rango) * (totalWidth - mH*2));
+    svg.push('<line x1="' + hoyX + '" y1="' + (lineY-14) + '" x2="' + hoyX + '" y2="' + (lineY+14) + '" stroke="#E67E22" stroke-width="2" stroke-dasharray="3,2"/>');
+    svg.push('<text x="' + hoyX + '" y="' + (lineY+26) + '" text-anchor="middle" font-size="8" fill="#E67E22">Hoy</text>');
+  }
 
-    var retrasado = !h.completed && h.planned_date && new Date(h.planned_date) < hoy;
-    var color = h.completed ? '#0F6E56' : (retrasado ? '#A32D2D' : '#185FA5');
-    var colorClaro = h.completed ? '#E1F5EE' : (retrasado ? '#FCEBEB' : '#E6F1FB');
+  // Hitos
+  hitosOrdenados.forEach(function(h, i) {
+    var cx = posiciones[i];
+    var comp = h.completed;
+    var retr = !comp && new Date(h.planned_date) < hoy;
+    var col = comp ? '#0F6E56' : (retr ? '#C0392B' : '#185FA5');
+    var r = comp ? 11 : 9;
+    var nom = h.milestone_name || 'Hito';
+    if (nom.length > 16) nom = nom.substring(0,14) + '…';
+    var fd = new Date(h.planned_date);
+    var fechaLabel = meses[fd.getMonth()] + '-' + fd.getFullYear();
 
-    var cx = posX(fechaObj, W) + margenH;
+    // Punto
+    svg.push('<circle cx="' + cx + '" cy="' + lineY + '" r="' + r + '" fill="' + col + '" stroke="white" stroke-width="2"/>');
+    if (comp) svg.push('<text x="' + cx + '" y="' + (lineY+4) + '" text-anchor="middle" font-size="11" fill="white" font-weight="bold">✓</text>');
 
-    // Punto en la línea principal
-    svgParts.push('<circle cx="' + cx + '" cy="' + lineY + '" r="8" fill="' + color + '"/>');
-    if (h.completed) {
-      svgParts.push('<text x="' + cx + '" y="' + (lineY+4) + '" font-size="9" fill="white" text-anchor="middle" font-weight="700">✓</text>');
+    // Etiquetas alternadas arriba/abajo
+    if (i % 2 === 0) {
+      svg.push('<line x1="' + cx + '" y1="' + (lineY-r) + '" x2="' + cx + '" y2="' + (lineY-32) + '" stroke="' + col + '" stroke-width="1" opacity="0.3"/>');
+      svg.push('<text x="' + cx + '" y="' + (lineY-44) + '" text-anchor="middle" font-size="10" fill="' + col + '" font-weight="600">' + nom + '</text>');
+      svg.push('<text x="' + cx + '" y="' + (lineY-32) + '" text-anchor="middle" font-size="9" fill="#999">' + fechaLabel + '</text>');
     } else {
-      svgParts.push('<text x="' + cx + '" y="' + (lineY+4) + '" font-size="9" fill="white" text-anchor="middle" font-weight="700">' + (idx+1) + '</text>');
+      svg.push('<line x1="' + cx + '" y1="' + (lineY+r) + '" x2="' + cx + '" y2="' + (lineY+30) + '" stroke="' + col + '" stroke-width="1" opacity="0.3"/>');
+      svg.push('<text x="' + cx + '" y="' + (lineY+42) + '" text-anchor="middle" font-size="10" fill="' + col + '" font-weight="600">' + nom + '</text>');
+      svg.push('<text x="' + cx + '" y="' + (lineY+54) + '" text-anchor="middle" font-size="9" fill="#999">' + fechaLabel + '</text>');
     }
-
-    // Etiqueta del hito (alterna arriba/abajo para evitar solapamiento)
-    var labelY = idx % 2 === 0 ? lineY - 16 : lineY - 28;
-    var nombre = h.milestone_name.length > 18 ? h.milestone_name.substring(0,16) + '...' : h.milestone_name;
-    svgParts.push('<text x="' + cx + '" y="' + labelY + '" font-size="9" fill="' + color + '" text-anchor="middle" font-weight="500">' + nombre + '</text>');
-
-    // Fecha bajo el punto
-    var fechaStr = fechaObj.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'});
-    svgParts.push('<text x="' + cx + '" y="' + (lineY+20) + '" font-size="8" fill="#888" text-anchor="middle">' + fechaStr + '</text>');
-
-
   });
 
-  // Leyenda
-  var legY = H - 10;
-  svgParts.push('<circle cx="' + (margenH) + '" cy="' + legY + '" r="4" fill="#0F6E56"/>');
-  svgParts.push('<text x="' + (margenH+8) + '" y="' + (legY+3) + '" font-size="8" fill="#0F6E56">Completado</text>');
-  svgParts.push('<circle cx="' + (margenH+75) + '" cy="' + legY + '" r="4" fill="#185FA5"/>');
-  svgParts.push('<text x="' + (margenH+83) + '" y="' + (legY+3) + '" font-size="8" fill="#185FA5">Pendiente</text>');
-  svgParts.push('<circle cx="' + (margenH+150) + '" cy="' + legY + '" r="4" fill="#A32D2D"/>');
-  svgParts.push('<text x="' + (margenH+158) + '" y="' + (legY+3) + '" font-size="8" fill="#A32D2D">Retrasado</text>');
+  svg.push('</svg>');
 
-  svgParts.push('</svg>');
-  svgParts.push('</div>');
+  var scrollInicio = 0;
+  var lastCompIdx = -1;
+  hitosOrdenados.forEach(function(h,i){ if(!h.completed) { if(lastCompIdx===-1) lastCompIdx=i; } });
+  if (lastCompIdx > 0) scrollInicio = Math.max(0, posiciones[lastCompIdx] - 400);
 
-  return svgParts.join('');
+  var html = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.25rem;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">';
+  html += '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;">Timeline de hitos del planning</div>';
+  html += '<div style="font-size:10px;color:#bbb;">← Arrastra para navegar →</div></div>';
+  html += '<div id="planning-timeline-scroll" style="overflow-x:auto;overflow-y:hidden;padding-bottom:4px;-webkit-overflow-scrolling:touch;cursor:grab;user-select:none;">';
+  html += svg.join('');
+  html += '</div>';
+  html += '<div style="display:flex;gap:1.5rem;font-size:10px;color:#888;margin-top:0.75rem;">';
+  html += '<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#185FA5;margin-right:3px;"></span>Pendiente</span>';
+  html += '<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0F6E56;margin-right:3px;"></span>Completado</span>';
+  html += '<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C0392B;margin-right:3px;"></span>Retrasado</span>';
+  html += '</div></div>';
+
+  // Scroll drag
+  html += '<scr' + 'ipt>setTimeout(function(){' +
+    'var sc=document.getElementById("planning-timeline-scroll");' +
+    'if(sc){sc.scrollLeft=' + scrollInicio + ';' +
+    'sc.addEventListener("mousedown",function(e){' +
+    'var startX=e.clientX,sl=sc.scrollLeft;sc.style.cursor="grabbing";' +
+    'function mm(e){sc.scrollLeft=sl-(e.clientX-startX);}' +
+    'function mu(){sc.style.cursor="grab";document.removeEventListener("mousemove",mm);document.removeEventListener("mouseup",mu);}' +
+    'document.addEventListener("mousemove",mm);document.addEventListener("mouseup",mu);' +
+    '});}' +
+    '},200);</' + 'script>';
+
+  return html;
 }
 
 async function aprobarGasto(gastoId, projectId) {
