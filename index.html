@@ -837,12 +837,25 @@
     </div>
     <!-- Input archivo oculto -->
     <input type="file" id="gasto-file-input" accept="image/*,application/pdf" style="display:none;" onchange="procesarArchivoGasto(this)">
+    <!-- Zona de arrastre gastos -->
+    <div id="gasto-dropzone" style="display:none;border:2px dashed #BFDBFE;border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;margin-bottom:1rem;background:#f8faff;transition:all 0.2s;"
+      ondrop="gastoDrop(event)" ondragover="gastoDragOver(event)" ondragleave="gastoDragLeave(event)" onclick="document.getElementById('gasto-file-input').click()">
+      <div style="font-size:2rem;margin-bottom:8px;">📄</div>
+      <div style="font-size:13px;font-weight:500;color:#3b82f6;margin-bottom:4px;">Arrastra el albarán o factura aquí</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:1rem;">o toca para seleccionar de tu galería o archivos</div>
+      <div style="display:inline-block;background:#185FA5;color:white;padding:7px 18px;border-radius:7px;font-size:12px;">Seleccionar archivo</div>
+    </div>
     <!-- Modal confirmación IA -->
     <div id="gasto-modal" style="display:none;background:#f0f4ff;border:1px solid #BFDBFE;border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
         <span style="font-size:16px;">🤖</span>
         <div style="font-size:13px;font-weight:600;color:#1e40af;">Datos extraídos por IA — revisa y confirma</div>
         <div id="gasto-loading" style="display:none;font-size:11px;color:#888;margin-left:auto;">Analizando documento...</div>
+        <div id="gasto-preview-btn" style="display:none;margin-left:auto;">
+          <button onclick="gastoVerDocumento()" style="background:#f0f4ff;border:1px solid #BFDBFE;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;color:#185FA5;display:flex;align-items:center;gap:5px;">
+            <span>📄</span> Ver documento
+          </button>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
         <div>
@@ -4365,12 +4378,57 @@ async function cargarCertificaciones(projectId) {
 
 function abrirCargaGasto() {
   document.getElementById('gasto-file-input').value = '';
-  document.getElementById('gasto-file-input').click();
+  var dz = document.getElementById('gasto-dropzone');
+  if (dz) {
+    dz.style.display = dz.style.display === 'none' ? 'block' : 'none';
+  } else {
+    document.getElementById('gasto-file-input').click();
+  }
+}
+
+function gastoDragOver(e) {
+  e.preventDefault();
+  var dz = document.getElementById('gasto-dropzone');
+  if (dz) { dz.style.borderColor='#185FA5'; dz.style.background='#eff6ff'; }
+}
+
+function gastoDragLeave(e) {
+  var dz = document.getElementById('gasto-dropzone');
+  if (dz) { dz.style.borderColor='#BFDBFE'; dz.style.background='#f8faff'; }
+}
+
+function gastoDrop(e) {
+  e.preventDefault();
+  gastoDragLeave(e);
+  var files = e.dataTransfer.files;
+  if (files && files.length > 0) {
+    var input = document.getElementById('gasto-file-input');
+    // Crear un DataTransfer para asignar el archivo al input
+    var dt = new DataTransfer();
+    dt.items.add(files[0]);
+    input.files = dt.files;
+    procesarArchivoGasto(input);
+  }
+}
+
+var _gastoArchivoActual = null;
+var _gastoBase64Actual = null;
+var _gastoMediaTypeActual = null;
+
+function gastoVerDocumento() {
+  if (!_gastoBase64Actual || !_gastoMediaTypeActual) return;
+  var url = 'data:' + _gastoMediaTypeActual + ';base64,' + _gastoBase64Actual;
+  window.open(url, '_blank');
 }
 
 async function procesarArchivoGasto(input) {
   var file = input.files[0];
   if (!file) return;
+  _gastoArchivoActual = file;
+
+  // Ocultar dropzone al seleccionar archivo
+  var dz = document.getElementById('gasto-dropzone');
+  if (dz) dz.style.display = 'none';
 
   // Mostrar modal con loading
   var modal = document.getElementById('gasto-modal');
@@ -4439,6 +4497,11 @@ async function procesarArchivoGasto(input) {
 
     // Llamar al webhook de n8n (evita CORS)
     var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/gastos-ia';
+    // Guardar para preview
+    _gastoBase64Actual = base64;
+    _gastoMediaTypeActual = mediaType;
+    var prevBtn = document.getElementById('gasto-preview-btn');
+    if (prevBtn) prevBtn.style.display = 'block';
     var payload = {
       base64: base64,
       mediaType: mediaType,
