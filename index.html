@@ -4258,29 +4258,71 @@ async function cargarHitos(projectId) {
   var el = document.getElementById('ej-hitos-content');
   if (!el) return;
   try {
-    var res = await db.from('project_milestones').select('*').eq('project_id',projectId).order('planned_date');
+    var res = await db.from('project_milestones').select('*').eq('project_id', projectId).order('planned_date');
     if (!res.data || !res.data.length) { el.innerHTML = '<div class="empty">No hay hitos registrados</div>'; return; }
-    var completados = res.data.filter(function(m){return m.completed;}).length;
-    var total = res.data.length;
-    el.innerHTML = '<div style="margin-bottom:1rem;font-size:12px;color:#888;">' + completados + ' de ' + total + ' hitos completados</div>' +
+    var hitos = res.data;
+    var completados = hitos.filter(function(m){return m.completed;}).length;
+    var total = hitos.length;
+
+    // TIMELINE
+    var hitosConFecha = hitos.filter(function(h){ return h.planned_date || h.actual_date; });
+    var timelineHtml = '';
+    if (hitosConFecha.length >= 2) {
+      var fechas = hitosConFecha.map(function(h){ return new Date(h.actual_date || h.planned_date).getTime(); });
+      var minF = Math.min.apply(null, fechas);
+      var maxF = Math.max.apply(null, fechas);
+      var rango = maxF - minF || 1;
+      var W = 700, H = 90, mH = 40, lineY = 45;
+      var hoy = Date.now();
+      var hoyX = mH + Math.round(((Math.min(hoy, maxF) - minF) / rango) * W);
+      var svg = [];
+      svg.push('<svg viewBox="0 0 ' + (W + mH*2) + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:100%;margin-bottom:0.5rem;">');
+      svg.push('<line x1="'+mH+'" y1="'+lineY+'" x2="'+(W+mH)+'" y2="'+lineY+'" stroke="#e5e5e0" stroke-width="3" stroke-linecap="round"/>');
+      svg.push('<line x1="'+mH+'" y1="'+lineY+'" x2="'+hoyX+'" y2="'+lineY+'" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>');
+      hitosConFecha.forEach(function(h, i) {
+        var f = new Date(h.actual_date || h.planned_date).getTime();
+        var cx = mH + Math.round(((f - minF) / rango) * W);
+        var comp = h.completed;
+        var retr = !comp && f < hoy;
+        var col = comp ? '#0F6E56' : (retr ? '#C0392B' : '#185FA5');
+        svg.push('<circle cx="'+cx+'" cy="'+lineY+'" r="'+(comp?10:8)+'" fill="'+col+'" stroke="white" stroke-width="2"/>');
+        if (comp) svg.push('<text x="'+cx+'" y="'+(lineY+4)+'" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>');
+        var lY = (i%2===0) ? lineY-18 : lineY+24;
+        var nom = h.name ? (h.name.length>14 ? h.name.substring(0,12)+'...' : h.name) : 'Hito';
+        svg.push('<text x="'+cx+'" y="'+lY+'" text-anchor="middle" font-size="9" fill="'+col+'" font-weight="500">'+nom+'</text>');
+      });
+      if (hoy >= minF && hoy <= maxF) {
+        svg.push('<line x1="'+hoyX+'" y1="'+(lineY-14)+'" x2="'+hoyX+'" y2="'+(lineY+14)+'" stroke="#E67E22" stroke-width="2" stroke-dasharray="3,2"/>');
+      }
+      svg.push('</svg>');
+      timelineHtml = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;">' +
+        '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Timeline de hitos</div>' +
+        svg.join('') +
+        '<div style="display:flex;gap:1rem;font-size:10px;color:#888;">' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0F6E56;margin-right:3px;"></span>Completado</span>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#185FA5;margin-right:3px;"></span>Pendiente</span>' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C0392B;margin-right:3px;"></span>Retrasado</span>' +
+        '</div></div>';
+    }
+
+    // LISTA
+    var listaHtml = '<div style="margin-bottom:0.75rem;font-size:12px;color:#888;">'+completados+' de '+total+' hitos completados</div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;">' +
-      res.data.map(function(m, idx) {
-        var completado = m.completed;
-        var bg = completado ? '#E1F5EE' : 'white';
-        var border = completado ? '#A7DEC9' : '#e5e5e0';
-        var fecha = m.actual_date ? new Date(m.actual_date).toLocaleDateString('es-ES') : (m.planned_date ? 'Previsto: ' + new Date(m.planned_date).toLocaleDateString('es-ES') : '-');
-        var retraso = (!completado && m.planned_date && new Date(m.planned_date) < new Date()) ?
+      hitos.map(function(m, i) {
+        var comp = m.completed;
+        var fecha = m.actual_date ? new Date(m.actual_date).toLocaleDateString('es-ES') : (m.planned_date ? 'Previsto: '+new Date(m.planned_date).toLocaleDateString('es-ES') : '-');
+        var retr = (!comp && m.planned_date && new Date(m.planned_date) < new Date()) ?
           '<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:2px 6px;border-radius:4px;margin-left:8px;">Retrasado</span>' : '';
-        return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:'+bg+';border:1px solid '+border+';border-radius:8px;">' +
-          '<div style="width:28px;height:28px;border-radius:50%;background:'+(completado?'#0F6E56':'#ddd')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-          '<span style="font-size:11px;color:white;font-weight:700;">'+(completado?'OK':(idx+1))+'</span></div>' +
-          '<div style="flex:1;">' +
-          '<div style="font-size:13px;font-weight:500;color:'+(completado?'#065F46':'#1a1a1a')+';display:flex;align-items:center;">' + m.milestone_name + retraso + '</div>' +
-          '<div style="font-size:11px;color:#888;margin-top:2px;">' + fecha + '</div>' +
-          '</div>' +
-          (completado ? '<span class="badge b-adjudicado">Completado</span>' : '<button class="btn btn-sm btn-success" onclick="marcarHitoCompletado('+m.id+','+projectId+')">Marcar completado</button>') +
+        return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:'+(comp?'#E1F5EE':'white')+';border:1px solid '+(comp?'#A7DEC9':'#e5e5e0')+';border-radius:8px;">' +
+          '<div style="width:28px;height:28px;border-radius:50%;background:'+(comp?'#0F6E56':'#ddd')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+          '<span style="color:white;font-size:'+(comp?'14':'12')+'px;">'+(comp?'✓':(i+1))+'</span></div>' +
+          '<div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+m.name+'</div>' +
+          '<div style="font-size:11px;color:#888;">'+fecha+retr+'</div></div>' +
+          (comp?'':'<button class="btn btn-sm" style="font-size:11px;" onclick="marcarHitoCompletado('+m.id+','+projectId+')">Completar</button>') +
           '</div>';
       }).join('') + '</div>';
+
+    el.innerHTML = timelineHtml + listaHtml;
   } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando hitos</div>'; }
 }
 
