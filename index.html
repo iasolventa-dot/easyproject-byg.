@@ -4452,7 +4452,9 @@ async function procesarArchivoGasto(input) {
     });
 
     var texto = await res.text();
-    var extracted = JSON.parse(typeof texto === 'string' ? texto : JSON.stringify(texto));
+    var respuesta = JSON.parse(typeof texto === 'string' ? texto : JSON.stringify(texto));
+    // Soportar tanto respuesta directa como respuesta anidada en resultado
+    var extracted = (respuesta.resultado && typeof respuesta.resultado === 'object') ? respuesta.resultado : respuesta;
 
     // Rellenar campos con los datos extraídos
     if (extracted.importe) document.getElementById('gasto-importe').value = extracted.importe;
