@@ -6679,6 +6679,7 @@ async function analizarMedicionesConIA(adj, projectId) {
   } catch(e) { console.error('IA error:', e); return null; }
 }
 
+
 function mostrarResultadoMediciones(resultado, projectId, loadingDiv) {
   _medicionesResultado = resultado;
   _medicionesProjectId = projectId;
@@ -6690,47 +6691,91 @@ function mostrarResultadoMediciones(resultado, projectId, loadingDiv) {
   wrap.id = 'mediciones-resultado-wrap';
   wrap.style.marginTop = '1rem';
 
-  // Header con estado de confirmación
+  // Header
   var header = document.createElement('div');
   header.style.cssText = 'background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;';
-  header.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-    '<div><div style="font-size:13px;font-weight:600;color:#0C447C;">✅ Análisis completado' + (resultado.fromIA ? ' (IA)' : ' (SheetJS)') + '</div>' +
-    '<div style="font-size:11px;color:#185FA5;margin-top:2px;">Obra: ' + resultado.obra + ' · ' + resultado.total + ' gremios · Pulsa cada gremio para revisar sus partidas</div></div>' +
-    '<div style="display:flex;gap:8px;align-items:center;">' +
-    '<span id="med-confirmados-count" style="font-size:11px;color:#888;">0 / ' + resultado.total + ' confirmados</span>' +
-    '<button class="btn btn-success btn-sm" id="btn-confirmar-mediciones" onclick="confirmarMediciones()" disabled style="opacity:0.5;">Guardar todo</button></div></div>';
+  
+  var headerLeft = document.createElement('div');
+  headerLeft.innerHTML = '<div style="font-size:13px;font-weight:600;color:#0C447C;">✅ Análisis completado ' + (resultado.fromIA ? '(IA)' : '(SheetJS)') + '</div>' +
+    '<div style="font-size:11px;color:#185FA5;margin-top:2px;">Obra: ' + resultado.obra + ' · ' + resultado.total + ' gremios · Pulsa cada gremio para revisar sus partidas</div>';
+  
+  var headerRight = document.createElement('div');
+  headerRight.style.cssText = 'display:flex;gap:8px;align-items:center;';
+  
+  var countEl = document.createElement('span');
+  countEl.id = 'med-confirmados-count';
+  countEl.style.cssText = 'font-size:11px;color:#888;';
+  countEl.textContent = '0 / ' + resultado.total + ' confirmados';
+  
+  var btnGuardar = document.createElement('button');
+  btnGuardar.id = 'btn-confirmar-mediciones';
+  btnGuardar.className = 'btn btn-success btn-sm';
+  btnGuardar.textContent = 'Guardar todo';
+  btnGuardar.disabled = true;
+  btnGuardar.style.opacity = '0.5';
+  btnGuardar.onclick = confirmarMediciones;
+  
+  headerRight.appendChild(countEl);
+  headerRight.appendChild(btnGuardar);
+  
+  var headerFlex = document.createElement('div');
+  headerFlex.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+  headerFlex.appendChild(headerLeft);
+  headerFlex.appendChild(headerRight);
+  header.appendChild(headerFlex);
   wrap.appendChild(header);
 
   // Sin mapear
   if (resultado.sinMapear && resultado.sinMapear.length > 0) {
     var warn = document.createElement('div');
     warn.style.cssText = 'background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:11px;color:#92400e;';
-    warn.textContent = '⚠️ Capítulos sin gremio asignado: ' + resultado.sinMapear.join(', ');
+    warn.textContent = '⚠️ Capítulos sin gremio: ' + resultado.sinMapear.join(', ');
     wrap.appendChild(warn);
   }
 
-  // Grid de tarjetas de gremio
+  // Grid tarjetas
   var grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:1rem;';
 
-  Object.entries(resultado.gremios).forEach(function(entry) {
+  Object.entries(resultado.gremios).forEach(function(entry, idx) {
     var nombre = entry[0], data = entry[1];
     var nPartidas = data.capitulos.reduce(function(s,c){ return s + (c.partidas ? c.partidas.length : 0); }, 0);
+    
     var card = document.createElement('div');
-    card.id = 'med-card-' + nombre.replace(/\s/g,'_');
+    card.id = 'med-card-' + idx;
     card.style.cssText = 'background:white;border:2px solid ' + data.color + ';border-radius:8px;padding:12px;cursor:pointer;transition:all 0.2s;position:relative;';
-    card.innerHTML = '<div style="width:100%;height:5px;background:' + data.color + ';border-radius:3px;margin-bottom:8px;"></div>' +
-      '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:3px;">' + nombre + '</div>' +
-      '<div style="font-size:11px;color:#888;">' + nPartidas + ' partida' + (nPartidas !== 1 ? 's' : '') + '</div>' +
-      '<div id="med-check-' + nombre.replace(/\s/g,'_') + '" style="display:none;position:absolute;top:8px;right:8px;width:20px;height:20px;background:#0F6E56;border-radius:50%;display:none;align-items:center;justify-content:center;color:white;font-size:11px;">✓</div>';
-    card.addEventListener('click', (function(n, d){ return function(){ verPartIdasGremio(n, d); }; })(nombre, data));
+    
+    var bar = document.createElement('div');
+    bar.style.cssText = 'width:100%;height:5px;background:' + data.color + ';border-radius:3px;margin-bottom:8px;';
+    
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:3px;';
+    title.textContent = nombre;
+    
+    var count = document.createElement('div');
+    count.style.cssText = 'font-size:11px;color:#888;';
+    count.textContent = nPartidas + ' partida' + (nPartidas !== 1 ? 's' : '');
+    
+    var check = document.createElement('div');
+    check.id = 'med-check-' + idx;
+    check.style.cssText = 'display:none;position:absolute;top:8px;right:8px;width:20px;height:20px;background:#0F6E56;border-radius:50%;align-items:center;justify-content:center;color:white;font-size:11px;';
+    check.textContent = '✓';
+    
+    card.appendChild(bar);
+    card.appendChild(title);
+    card.appendChild(count);
+    card.appendChild(check);
+    
+    card.addEventListener('click', (function(n, d, i){ return function(){ verPartidasGremio(n, d, i); }; })(nombre, data, idx));
     card.addEventListener('mouseenter', function(){ if (!this.dataset.confirmed) this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'; });
     card.addEventListener('mouseleave', function(){ if (!this.dataset.confirmed) this.style.boxShadow = ''; });
+    
     grid.appendChild(card);
   });
+  
   wrap.appendChild(grid);
 
-  // Panel de revisión de partidas (se rellena al clicar)
+  // Panel revisión
   var reviewPanel = document.createElement('div');
   reviewPanel.id = 'med-review-panel';
   reviewPanel.style.display = 'none';
@@ -6740,12 +6785,15 @@ function mostrarResultadoMediciones(resultado, projectId, loadingDiv) {
 }
 
 var _medicionesGremioActual = '';
-function verPartIdasGremio(nombre, data) {
+var _medicionesGremioIdx = 0;
+
+function verPartidasGremio(nombre, data, idx) {
   _medicionesGremioActual = nombre;
+  _medicionesGremioIdx = idx;
+
   var panel = document.getElementById('med-review-panel');
   if (!panel) return;
 
-  // Recopilar todas las partidas de este gremio
   var todasPartidas = [];
   data.capitulos.forEach(function(cap) {
     (cap.partidas || []).forEach(function(p) {
@@ -6756,50 +6804,77 @@ function verPartIdasGremio(nombre, data) {
   panel.style.display = 'block';
   panel.innerHTML = '';
 
-  var header = document.createElement('div');
-  header.style.cssText = 'background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;margin-bottom:0.5rem;';
-
+  // Title bar
   var titleBar = document.createElement('div');
-  titleBar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f9f9f6;border-bottom:1px solid #e5e5e0;';
-  titleBar.innerHTML = '<div style="font-size:13px;font-weight:600;color:#1a1a1a;">📋 ' + nombre + ' — ' + todasPartidas.length + ' partidas</div>' +
-    '<div style="display:flex;gap:8px;">' +
-    '<button class="btn btn-sm" onclick="cerrarRevisionGremio()" style="font-size:11px;">Cerrar</button>' +
-    '<button class="btn btn-success btn-sm" id="btn-conf-gremio" style="font-size:11px;" onclick="confirmarGremio(_medicionesGremioActual)">✓ Confirmar gremio</button>' +
-    '</div>';
-  header.appendChild(titleBar);
+  titleBar.style.cssText = 'background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;margin-bottom:0.5rem;';
+  
+  var titleHead = document.createElement('div');
+  titleHead.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f9f9f6;border-bottom:1px solid #e5e5e0;';
+  
+  var titleText = document.createElement('div');
+  titleText.style.cssText = 'font-size:13px;font-weight:600;color:#1a1a1a;';
+  titleText.textContent = '📋 ' + nombre + ' — ' + todasPartidas.length + ' partidas';
+  
+  var btnsCont = document.createElement('div');
+  btnsCont.style.cssText = 'display:flex;gap:8px;';
+  
+  var btnCerrar = document.createElement('button');
+  btnCerrar.className = 'btn btn-sm';
+  btnCerrar.style.fontSize = '11px';
+  btnCerrar.textContent = 'Cerrar';
+  btnCerrar.onclick = cerrarRevisionGremio;
+  
+  var btnConf = document.createElement('button');
+  btnConf.className = 'btn btn-success btn-sm';
+  btnConf.style.fontSize = '11px';
+  btnConf.textContent = '✓ Confirmar gremio';
+  btnConf.onclick = function(){ confirmarGremio(nombre, idx); };
+  
+  btnsCont.appendChild(btnCerrar);
+  btnsCont.appendChild(btnConf);
+  titleHead.appendChild(titleText);
+  titleHead.appendChild(btnsCont);
+  titleBar.appendChild(titleHead);
 
-  // Tabla de partidas
+  // Table
   var tabla = document.createElement('table');
   tabla.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px;';
-
+  
   var thead = document.createElement('thead');
-  thead.innerHTML = '<tr style="background:#f5f5f0;">' +
-    '<th style="padding:8px 12px;text-align:left;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Capítulo</th>' +
-    '<th style="padding:8px 12px;text-align:left;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Código</th>' +
-    '<th style="padding:8px 12px;text-align:left;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Descripción</th>' +
-    '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Ud</th>' +
-    '<th style="padding:8px 12px;text-align:right;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Cantidad</th>' +
-    '<th style="padding:8px 12px;width:40px;border-bottom:2px solid #e5e5e0;"></th>' +
-    '</tr>';
+  var theadRow = document.createElement('tr');
+  theadRow.style.background = '#f5f5f0';
+  ['Capítulo','Código','Descripción','Ud','Cantidad'].forEach(function(th) {
+    var cell = document.createElement('th');
+    cell.style.cssText = 'padding:8px 12px;text-align:left;font-size:11px;color:#666;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;white-space:nowrap;';
+    cell.textContent = th;
+    theadRow.appendChild(cell);
+  });
+  thead.appendChild(theadRow);
   tabla.appendChild(thead);
 
   var tbody = document.createElement('tbody');
   todasPartidas.forEach(function(item, i) {
     var tr = document.createElement('tr');
-    tr.style.cssText = 'border-bottom:1px solid #f0f0ea;' + (i % 2 === 0 ? '' : 'background:#fafaf8;');
-    tr.innerHTML = '<td style="padding:8px 12px;font-size:11px;color:#888;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (item.capitulo || '-') + '</td>' +
-      '<td style="padding:8px 12px;font-family:monospace;font-size:10px;color:#555;">' + (item.partida.codigo || '-') + '</td>' +
-      '<td style="padding:8px 12px;max-width:250px;">' + (item.partida.descripcion || '-') + '</td>' +
-      '<td style="padding:8px 12px;text-align:center;color:#555;">' + (item.partida.unidad || '-') + '</td>' +
-      '<td style="padding:8px 12px;text-align:right;color:#555;">' + (item.partida.cantidad !== null ? item.partida.cantidad : '-') + '</td>' +
-      '<td style="padding:8px 12px;text-align:center;"><button style="background:none;border:none;cursor:pointer;font-size:12px;color:#aaa;" title="Mover a otro gremio" onclick="moverPartida(' + i + ','' + nombre.replace(/'/g,'') + '')">↕</button></td>';
+    tr.style.cssText = 'border-bottom:1px solid #f0f0ea;' + (i%2===0?'':'background:#fafaf8;');
+    
+    var cells = [
+      item.capitulo || '-',
+      item.partida.codigo || '-',
+      item.partida.descripcion || '-',
+      item.partida.unidad || '-',
+      item.partida.cantidad !== null && item.partida.cantidad !== undefined ? item.partida.cantidad : '-'
+    ];
+    cells.forEach(function(val, ci) {
+      var td = document.createElement('td');
+      td.style.cssText = 'padding:8px 12px;' + (ci===2?'max-width:250px;':'white-space:nowrap;');
+      td.textContent = val;
+      tr.appendChild(td);
+    });
     tbody.appendChild(tr);
   });
   tabla.appendChild(tbody);
-  header.appendChild(tabla);
-  panel.appendChild(header);
-
-  // Scroll to panel
+  titleBar.appendChild(tabla);
+  panel.appendChild(titleBar);
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -6810,45 +6885,27 @@ function cerrarRevisionGremio() {
 
 var _medicionesConfirmados = {};
 
-function confirmarGremio(nombre) {
+function confirmarGremio(nombre, idx) {
   _medicionesConfirmados[nombre] = true;
-  // Update card visual
-  var cardId = 'med-card-' + nombre.replace(/\s/g,'_');
-  var card = document.getElementById(cardId);
+  var card = document.getElementById('med-card-' + idx);
   if (card) {
     card.style.borderColor = '#0F6E56';
     card.style.background = '#F0FBF5';
     card.style.boxShadow = '';
-    var check = card.querySelector('[id^="med-check-"]');
-    if (check) { check.style.display = 'flex'; }
     card.dataset.confirmed = '1';
+    var check = document.getElementById('med-check-' + idx);
+    if (check) check.style.display = 'flex';
   }
   cerrarRevisionGremio();
-
-  // Update counter
   var total = Object.keys(_medicionesResultado.gremios).length;
   var confirmados = Object.keys(_medicionesConfirmados).length;
   var countEl = document.getElementById('med-confirmados-count');
   if (countEl) countEl.textContent = confirmados + ' / ' + total + ' confirmados';
-
-  // Enable save button when all confirmed
-  var btnConfirmar = document.getElementById('btn-confirmar-mediciones');
-  if (btnConfirmar) {
-    if (confirmados >= total) {
-      btnConfirmar.disabled = false;
-      btnConfirmar.style.opacity = '1';
-    }
+  var btnGuardar = document.getElementById('btn-confirmar-mediciones');
+  if (btnGuardar && confirmados >= total) {
+    btnGuardar.disabled = false;
+    btnGuardar.style.opacity = '1';
   }
-}
-
-function moverPartida(idx, gremioActual) {
-  var gremios = Object.keys(_medicionesResultado.gremios);
-  var opciones = gremios.filter(function(g){ return g !== gremioActual; });
-  var destino = prompt('Mover a gremio:\n' + opciones.map(function(g,i){ return (i+1)+'. '+g; }).join('\n') + '\n\nEscribe el número:');
-  if (!destino) return;
-  var idx_dest = parseInt(destino) - 1;
-  if (isNaN(idx_dest) || idx_dest < 0 || idx_dest >= opciones.length) { alert('Número incorrecto'); return; }
-  alert('Partida movida a: ' + opciones[idx_dest] + '\n(En próxima versión se guardará automáticamente)');
 }
 
 var _medicionesProjectId = null;
@@ -6856,455 +6913,26 @@ var _medicionesProjectId = null;
 async function confirmarMediciones() {
   if (!_medicionesResultado || !_medicionesProjectId) return;
   try {
-    // Delete existing specialties for this project
     await db.from('project_specialties').delete().eq('project_id', _medicionesProjectId);
-
-    // Insert one per gremio
     var gremiosArr = Object.keys(_medicionesResultado.gremios);
     for (var i = 0; i < gremiosArr.length; i++) {
       var gremioNombre = gremiosArr[i];
-      var gremioData = _medicionesResultado.gremios[gremioNombre];
-      var nPartidas = gremioData.capitulos.reduce(function(s,c){ return s + (c.partidas ? c.partidas.length : 0); }, 0);
-
-        // Use specialty_code = gremio name, detected_by_ai = false for SheetJS
       await db.from('project_specialties').insert({
         project_id: _medicionesProjectId,
         specialty_code: gremioNombre,
         detected_by_ai: _medicionesResultado.fromIA ? true : false,
-        confidence: _medicionesResultado.fromIA ? 0.85 : 1.0,
+        confidence: 1.0,
         created_at: new Date().toISOString()
       });
     }
-
-    alert('✅ ' + gremiosArr.length + ' gremios guardados correctamente.\n\nEl proyecto puede avanzar a selección de proveedores.');
+    alert('✅ ' + gremiosArr.length + ' gremios guardados correctamente.');
     _medicionesResultado = null;
     _medicionesProjectId = null;
-
-  } catch(e) {
-    // If project_specialties doesn't have all columns, try simpler insert
-    try {
-      var gremiosArr2 = Object.keys(_medicionesResultado.gremios);
-      for (var j = 0; j < gremiosArr2.length; j++) {
-        var gNombre = gremiosArr2[j];
-        await db.from('project_specialties').insert({
-          project_id: _medicionesProjectId,
-          specialty_code: gNombre,
-          detected_by_ai: _medicionesResultado.fromIA ? true : false,
-          confidence: 1.0,
-          created_at: new Date().toISOString()
-        });
-      }
-      alert('✅ Gremios guardados correctamente.');
-      _medicionesResultado = null;
-    } catch(e2) {
-      alert('Error al guardar: ' + e2.message);
-    }
-  }
+    _medicionesConfirmados = {};
+    var wrap = document.getElementById('mediciones-resultado-wrap');
+    if (wrap) wrap.remove();
+  } catch(e) { alert('Error al guardar: ' + e.message); }
 }
-
-
-async function cargarAdjuntosProyecto(projectId, contenedorId) {
-  var el=document.getElementById(contenedorId);
-  if(!el) return;
-  try {
-    var res=await db.from('project_attachments').select('*').eq('project_id',projectId).order('uploaded_at');
-    var adjuntos=res.data||[];
-    el.innerHTML='';
-    if(!adjuntos.length){el.innerHTML='<div style="font-size:11px;color:#aaa;">Sin archivos adjuntos</div>';return;}
-    var iconos={excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
-    var wrapper=document.createElement('div');
-    wrapper.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
-    adjuntos.forEach(function(a){
-      var esMed=a.is_measurements;
-      var div=document.createElement('div');
-      div.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 10px;background:'+(esMed?'#EAF3DE':'#f5f5f0')+';border:1px solid '+(esMed?'#C0DD97':'#ddd')+';border-radius:6px;cursor:pointer;font-size:11px;';
-      div.title=a.file_name;
-      var nombre=a.file_name.length>25?a.file_name.substring(0,22)+'...':a.file_name;
-      div.innerHTML=(iconos[a.file_type]||'📎')+' '+nombre+(esMed?' <strong style="color:#3B6D11;font-size:9px;">MED</strong>':'');
-      div.onclick=(function(p,n){return function(){anDescargarArchivo(p,n);};})(a.file_path,a.file_name);
-      wrapper.appendChild(div);
-    });
-    el.appendChild(wrapper);
-  } catch(e){console.error(e);}
-}
-
-
-// ============================================================
-// MÓDULO INFORMES
-// ============================================================
-
-var _infProyectosData = [];
-var _infGastosData = [];
-var _infDesvData = [];
-
-// ── UTILIDADES ──────────────────────────────────────────────
-
-function imprimirInforme(contenedorId) {
-  var el = document.getElementById(contenedorId);
-  if (!el) return;
-  var win = window.open('', '_blank');
-  win.document.write('<html><head><title>Informe EasyProject - ByG Soluciones</title>' +
-    '<style>body{font-family:Arial,sans-serif;font-size:12px;padding:2rem;color:#1a1a1a;}' +
-    'h1{color:#1B3A6B;font-size:16px;margin-bottom:0.5rem;}' +
-    'table{width:100%;border-collapse:collapse;margin-top:1rem;}' +
-    'th{background:#f5f5f0;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;color:#666;border-bottom:2px solid #ddd;}' +
-    'td{padding:8px 10px;border-bottom:1px solid #eee;font-size:11px;}' +
-    'tr:nth-child(even){background:#fafafa;}' +
-    '.badge{padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;}' +
-    '@media print{button{display:none!important;}}' +
-    '</' + 'style></head><body>');
-  win.document.write('<h1>EasyProject by Solventa IA — ByG Soluciones S.L.</h1>');
-  win.document.write('<p style="font-size:10px;color:#888;margin-bottom:1rem;">Impreso el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES') + '</p>');
-  win.document.write(el.innerHTML);
-  win.document.write('</' + 'body></' + 'html>');
-  win.document.close();
-  win.print();
-}
-
-// ── HISTÓRICO PROYECTOS ──────────────────────────────────────
-
-async function cargarInformeProyectos() {
-  var el = document.getElementById('informes-proyectos-content');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">Cargando proyectos...</div>';
-  try {
-    var res = await db.from('projects')
-      .select('id,code,project_code,name,channel,received_at,created_at,contact_email,confidence,project_statuses(code,name),clients(commercial_name,client_code)')
-      .order('created_at', {ascending: false});
-    _infProyectosData = res.data || [];
-    filtrarInformeProyectos();
-  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
-}
-
-function limpiarFiltrosProyectos() {
-  var campos = ['inf-proy-buscar', 'inf-proy-desde', 'inf-proy-hasta'];
-  campos.forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  var estado = document.getElementById('inf-proy-estado');
-  if (estado) estado.value = '';
-  filtrarInformeProyectos();
-}
-
-function filtrarInformeProyectos() {
-  var buscar = (document.getElementById('inf-proy-buscar') ? document.getElementById('inf-proy-buscar').value.toLowerCase() : '');
-  var estado = document.getElementById('inf-proy-estado') ? document.getElementById('inf-proy-estado').value : '';
-  var desde = document.getElementById('inf-proy-desde') ? document.getElementById('inf-proy-desde').value : '';
-  var hasta = document.getElementById('inf-proy-hasta') ? document.getElementById('inf-proy-hasta').value : '';
-
-  var filtered = _infProyectosData.filter(function(p) {
-    var nombre = (p.name || p.code || '').toLowerCase();
-    var cliente = (p.clients ? p.clients.commercial_name || '' : '').toLowerCase();
-    var codigo = (p.project_code || p.code || '').toLowerCase();
-    if (buscar && !nombre.includes(buscar) && !cliente.includes(buscar) && !codigo.includes(buscar)) return false;
-    if (estado && p.project_statuses && p.project_statuses.code !== estado) return false;
-    if (desde && p.received_at && p.received_at < desde) return false;
-    if (hasta && p.received_at && p.received_at > hasta + 'T23:59:59') return false;
-    return true;
-  });
-
-  var count = document.getElementById('inf-proy-count');
-  if (count) count.textContent = filtered.length + ' proyecto' + (filtered.length !== 1 ? 's' : '') + ' encontrado' + (filtered.length !== 1 ? 's' : '');
-
-  renderInformeProyectos(filtered);
-}
-
-function renderInformeProyectos(data) {
-  var el = document.getElementById('informes-proyectos-content');
-  if (!el) return;
-  if (!data.length) { el.innerHTML = '<div class="empty">No hay proyectos con los filtros aplicados</div>'; return; }
-
-  var estadoColors = {
-    solicitado: '#E3F0FF', en_analisis: '#FFF8E1', oferta_en_curso: '#FFF3E0',
-    oferta_enviada: '#E8F5E9', adjudicado: '#E8F5E9', en_ejecucion: '#E0F2F1', cancelled: '#FFEBEE'
-  };
-  var estadoLabels = {
-    solicitado: 'Solicitado', en_analisis: 'En análisis', oferta_en_curso: 'Oferta en curso',
-    oferta_enviada: 'Oferta enviada', adjudicado: 'Adjudicado', en_ejecucion: 'En ejecución', cancelled: 'Cancelado'
-  };
-
-  var html = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;">' +
-    '<table><thead><tr>' +
-    '<th>Código</th><th>Proyecto</th><th>Cliente</th><th>Canal</th>' +
-    '<th>Fecha solicitud</th><th>Estado</th><th>Confianza IA</th><th>Acciones</th>' +
-    '</tr></thead><tbody>';
-
-  data.forEach(function(p) {
-    var estado = p.project_statuses ? p.project_statuses.code : '';
-    var estadoLabel = estadoLabels[estado] || estado;
-    var estadoColor = estadoColors[estado] || '#f5f5f0';
-    var fecha = p.received_at ? new Date(p.received_at).toLocaleDateString('es-ES') : (p.created_at ? new Date(p.created_at).toLocaleDateString('es-ES') : '-');
-    var cliente = p.clients ? (p.clients.commercial_name || '-') : '-';
-    var confianza = p.confidence ? Math.round(p.confidence * 100) + '%' : '-';
-    var canal = p.channel === 'manual' ? '✍️ Manual' : '📧 Email';
-
-    html += '<tr>' +
-      '<td style="font-family:monospace;font-size:11px;color:#555;">' + (p.project_code || p.code || '-') + '</td>' +
-      '<td style="font-weight:500;max-width:200px;">' + (p.name || '-') + '</td>' +
-      '<td>' + cliente + '</td>' +
-      '<td style="font-size:11px;">' + canal + '</td>' +
-      '<td>' + fecha + '</td>' +
-      '<td><span style="padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600;background:' + estadoColor + ';">' + estadoLabel + '</span></td>' +
-      '<td style="text-align:center;">' + confianza + '</td>' +
-      '<td><button class="btn btn-sm" style="font-size:11px;" onclick="verDetalleProyectoInforme(' + p.id + ')">Ver detalle</button></td>' +
-      '</tr>';
-  });
-
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
-}
-
-async function verDetalleProyectoInforme(projectId) {
-  try {
-    // Load project with all related data
-    var [projRes, evalRes, gastosRes] = await Promise.all([
-      db.from('projects').select('*,project_statuses(name),clients(commercial_name,commercial_email,contact_name)').eq('id', projectId).single(),
-      db.from('project_evaluations').select('*').eq('project_id', projectId),
-      db.from('project_expenses').select('*').eq('project_id', projectId).order('expense_date', {ascending: false})
-    ]);
-
-    var p = projRes.data;
-    var evals = evalRes.data || [];
-    var gastos = gastosRes.data || [];
-
-    var win = window.open('', '_blank');
-    var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-    var html = '<html><head><title>Detalle Proyecto - ' + (p.name||p.code) + '</title>' +
-      '<style>body{font-family:Arial,sans-serif;font-size:12px;padding:2rem;color:#1a1a1a;max-width:900px;margin:0 auto;}' +
-      'h1{color:#1B3A6B;font-size:18px;}h2{color:#185FA5;font-size:14px;margin:1.5rem 0 0.5rem;border-bottom:2px solid #e5e5e0;padding-bottom:4px;}' +
-      '.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}' +
-      '.field{margin-bottom:8px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.05em;display:block;}' +
-      '.value{font-size:13px;font-weight:500;}' +
-      'table{width:100%;border-collapse:collapse;margin-top:0.5rem;}' +
-      'th{background:#f5f5f0;padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;color:#666;border-bottom:2px solid #ddd;}' +
-      'td{padding:7px 10px;border-bottom:1px solid #eee;font-size:11px;}' +
-      '.aprobado{color:#0F6E56;font-weight:600;}.rechazado{color:#C0392B;font-weight:600;}' +
-      '@media print{button{display:none!important;}}' +
-      '</style></head><body>';
-
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
-    html += '<div><h1>' + (p.name || p.code || 'Proyecto') + '</h1>';
-    html += '<p style="color:#888;font-size:11px;">' + (p.project_code || p.code || '') + ' · Generado el ' + new Date().toLocaleDateString('es-ES') + '</p></div>';
-    html += '<button onclick="window.print()" style="background:#185FA5;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;">🖨️ Imprimir / PDF</button>';
-    html += '</div>';
-
-    // Datos generales
-    html += '<h2>Datos generales</h2><div class="grid">';
-    html += '<div class="field"><span class="label">Cliente</span><span class="value">' + (p.clients ? p.clients.commercial_name : '-') + '</span></div>';
-    html += '<div class="field"><span class="label">Contacto</span><span class="value">' + (p.clients ? (p.clients.contact_name || '-') : '-') + '</span></div>';
-    html += '<div class="field"><span class="label">Email contacto</span><span class="value">' + (p.contact_email || '-') + '</span></div>';
-    html += '<div class="field"><span class="label">Estado actual</span><span class="value">' + (p.project_statuses ? p.project_statuses.name : '-') + '</span></div>';
-    html += '<div class="field"><span class="label">Fecha solicitud</span><span class="value">' + (p.received_at ? new Date(p.received_at).toLocaleDateString('es-ES') : '-') + '</span></div>';
-    html += '<div class="field"><span class="label">Canal entrada</span><span class="value">' + (p.channel === 'manual' ? 'Alta manual' : 'Email automático') + '</span></div>';
-    html += '<div class="field"><span class="label">Descripción / Petición</span><span class="value" style="font-weight:normal;">' + (p.description || p.subject || '-') + '</span></div>';
-    html += '</div>';
-
-    // Evaluaciones
-    if (evals.length > 0) {
-      html += '<h2>Evaluaciones tripartitas</h2>';
-      html += '<table><thead><tr><th>Departamento</th><th>Decisión</th><th>Observaciones</th><th>Fecha</th></tr></thead><tbody>';
-      var deptNames = {tecnico: 'Dept. Técnico', comercial: 'Dept. Comercial', direccion: 'Dirección'};
-      evals.forEach(function(e) {
-        html += '<tr>' +
-          '<td>' + (deptNames[e.department] || e.department) + '</td>' +
-          '<td class="' + (e.decision === 'approved' ? 'aprobado' : 'rechazado') + '">' + (e.decision === 'approved' ? '✓ Aprobado' : '✗ Rechazado') + '</td>' +
-          '<td>' + (e.rejection_reason || '-') + '</td>' +
-          '<td>' + (e.evaluated_at ? new Date(e.evaluated_at).toLocaleDateString('es-ES') : '-') + '</td>' +
-          '</tr>';
-      });
-      html += '</tbody></table>';
-    }
-
-    // Gastos
-    if (gastos.length > 0) {
-      var totalGastos = gastos.reduce(function(s,g){ return s + (parseFloat(g.amount)||0); }, 0);
-      html += '<h2>Gastos registrados — Total: ' + totalGastos.toLocaleString('es-ES', {minimumFractionDigits:2}) + ' EUR</h2>';
-      html += '<table><thead><tr><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th>Importe</th><th>Fecha</th><th>Estado</th><th>Documento</th></tr></thead><tbody>';
-      gastos.forEach(function(g) {
-        html += '<tr>' +
-          '<td>' + (g.expense_type || '-') + '</td>' +
-          '<td>' + (g.supplier_name || '-') + '</td>' +
-          '<td>' + (g.description || '-') + '</td>' +
-          '<td style="font-weight:600;">' + (parseFloat(g.amount)||0).toLocaleString('es-ES', {minimumFractionDigits:2}) + ' €</td>' +
-          '<td>' + (g.expense_date ? new Date(g.expense_date).toLocaleDateString('es-ES') : '-') + '</td>' +
-          '<td>' + (g.approved ? '<span style="color:#0F6E56;font-weight:600;">Aprobado</span>' : '<span style="color:#E67E22;">Pendiente</span>') + '</td>' +
-          '<td>' + (g.file_name ? '<a href="#" onclick="verDocGasto(\''+g.file_name+'\')" style="color:#185FA5;font-size:11px;">Ver doc.</a>' : '-') + '</td>' +
-          '</tr>';
-      });
-      html += '</tbody></table>';
-    }
-
-    html += '</body></html>';
-    win.document.write(html);
-    win.document.close();
-  } catch(e) { alert('Error: ' + e.message); }
-}
-
-// ── GASTOS ───────────────────────────────────────────────────
-
-async function cargarInformeGastos() {
-  var el = document.getElementById('informes-gastos-content');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">Cargando gastos...</div>';
-  try {
-    var res = await db.from('project_expenses')
-      .select('*,projects(name,project_code,code)')
-      .order('expense_date', {ascending: false})
-      .limit(500);
-    _infGastosData = res.data || [];
-    filtrarInformeGastos();
-  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
-}
-
-function filtrarInformeGastos() {
-  var buscar = (document.getElementById('inf-gas-buscar') ? document.getElementById('inf-gas-buscar').value.toLowerCase() : '');
-  var aprobado = document.getElementById('inf-gas-aprobado') ? document.getElementById('inf-gas-aprobado').value : '';
-  var desde = document.getElementById('inf-gas-desde') ? document.getElementById('inf-gas-desde').value : '';
-  var hasta = document.getElementById('inf-gas-hasta') ? document.getElementById('inf-gas-hasta').value : '';
-
-  var filtered = _infGastosData.filter(function(g) {
-    var proy = g.projects ? (g.projects.name || g.projects.project_code || '').toLowerCase() : '';
-    var prov = (g.supplier_name || '').toLowerCase();
-    var conc = (g.description || '').toLowerCase();
-    if (buscar && !proy.includes(buscar) && !prov.includes(buscar) && !conc.includes(buscar)) return false;
-    if (aprobado === '1' && !g.approved) return false;
-    if (aprobado === '0' && g.approved) return false;
-    if (desde && g.expense_date && g.expense_date < desde) return false;
-    if (hasta && g.expense_date && g.expense_date > hasta) return false;
-    return true;
-  });
-
-  var total = filtered.reduce(function(s,g){ return s + (parseFloat(g.amount)||0); }, 0);
-  var totalEl = document.getElementById('inf-gas-total');
-  if (totalEl) totalEl.innerHTML = filtered.length + ' gasto' + (filtered.length !== 1 ? 's' : '') +
-    ' · Total: <span style="color:#185FA5;">' + total.toLocaleString('es-ES', {minimumFractionDigits:2}) + ' EUR</span>' +
-    ' · Aprobados: <span style="color:#0F6E56;">' + filtered.filter(function(g){return g.approved;}).reduce(function(s,g){return s+(parseFloat(g.amount)||0);},0).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</span>';
-
-  renderInformeGastos(filtered);
-}
-
-function renderInformeGastos(data) {
-  var el = document.getElementById('informes-gastos-content');
-  if (!el) return;
-  if (!data.length) { el.innerHTML = '<div class="empty">No hay gastos con los filtros aplicados</div>'; return; }
-
-  var html = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;">' +
-    '<table><thead><tr>' +
-    '<th>Proyecto</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th>' +
-    '<th>Importe</th><th>Fecha</th><th>Registrado por</th><th>Estado</th><th>Documento</th>' +
-    '</tr></thead><tbody>';
-
-  data.forEach(function(g) {
-    var proy = g.projects ? (g.projects.name || g.projects.project_code || g.projects.code || '-') : '-';
-    html += '<tr>' +
-      '<td style="font-size:11px;max-width:150px;">' + proy + '</td>' +
-      '<td style="font-size:11px;">' + (g.expense_type || '-') + '</td>' +
-      '<td>' + (g.supplier_name || '-') + '</td>' +
-      '<td style="max-width:180px;">' + (g.description || '-') + '</td>' +
-      '<td style="font-weight:600;text-align:right;">' + (parseFloat(g.amount)||0).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' €</td>' +
-      '<td>' + (g.expense_date ? new Date(g.expense_date).toLocaleDateString('es-ES') : '-') + '</td>' +
-      '<td style="font-size:11px;">' + (g.registered_by || '-') + '</td>' +
-      '<td>' + (g.approved ? '<span style="color:#0F6E56;font-weight:600;font-size:11px;">✓ Aprobado</span>' : '<span style="color:#E67E22;font-size:11px;">Pendiente</span>') + '</td>' +
-      '<td>' + (g.file_name ? '<button class="btn btn-sm" style="font-size:10px;" onclick="verDocumentoGastoInforme(\''+g.file_name+'\',\''+g.file_name+'\')">📄 Ver</button>' : '-') + '</td>' +
-      '</tr>';
-  });
-
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
-}
-
-async function verDocumentoGastoInforme(fileName, displayName) {
-  try {
-    var res = await db.storage.from('gastos-documentos').createSignedUrl(fileName, 300);
-    if (res.data && res.data.signedUrl) window.open(res.data.signedUrl, '_blank');
-    else alert('No se pudo generar el enlace.');
-  } catch(e) { alert('Error: ' + e.message); }
-}
-
-// ── DESVIACIONES ─────────────────────────────────────────────
-
-async function cargarInformeDesviaciones() {
-  var el = document.getElementById('informes-desviaciones-content');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">Cargando datos...</div>';
-  try {
-    // Get projects in execution or completed
-    var projRes = await db.from('projects')
-      .select('id,name,project_code,code,clients(commercial_name),project_managers(full_name)')
-      .in('project_status_id', (await db.from('project_statuses').select('id').in('code',['en_ejecucion','adjudicado'])).data.map(function(s){return s.id;}));
-
-    var proyectos = projRes.data || [];
-    _infDesvData = proyectos;
-    filtrarInformeDesviaciones();
-  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
-}
-
-function filtrarInformeDesviaciones() {
-  var buscar = (document.getElementById('inf-desv-buscar') ? document.getElementById('inf-desv-buscar').value.toLowerCase() : '');
-  var filtered = _infDesvData.filter(function(p) {
-    var nombre = (p.name || p.code || '').toLowerCase();
-    var jefe = (p.project_managers ? p.project_managers.full_name || '' : '').toLowerCase();
-    if (buscar && !nombre.includes(buscar) && !jefe.includes(buscar)) return false;
-    return true;
-  });
-  renderInformeDesviaciones(filtered);
-}
-
-async function renderInformeDesviaciones(proyectos) {
-  var el = document.getElementById('informes-desviaciones-content');
-  if (!el) return;
-  if (!proyectos.length) { el.innerHTML = '<div class="empty">No hay proyectos en ejecución</div>'; return; }
-
-  el.innerHTML = '<div class="loading">Cargando hitos...</div>';
-
-  // For each project load milestones
-  var rows = [];
-  for (var i = 0; i < proyectos.length; i++) {
-    var p = proyectos[i];
-    var hitosRes = await db.from('project_milestones').select('*').eq('project_id', p.id).order('planned_date');
-    var hitos = hitosRes.data || [];
-    var completados = hitos.filter(function(h){ return h.completed && h.actual_date; });
-    var retrasados = hitos.filter(function(h){ return !h.completed && h.planned_date && new Date(h.planned_date) < new Date(); });
-    var desvMedia = 0;
-    if (completados.length > 0) {
-      completados.forEach(function(h) {
-        desvMedia += Math.round((new Date(h.actual_date) - new Date(h.planned_date)) / (1000*60*60*24));
-      });
-      desvMedia = Math.round(desvMedia / completados.length);
-    }
-    rows.push({ p: p, hitos: hitos, completados: completados, retrasados: retrasados, desvMedia: desvMedia });
-  }
-
-  var html = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;">' +
-    '<table><thead><tr>' +
-    '<th>Proyecto</th><th>Cliente</th><th>Jefe de Obra</th>' +
-    '<th style="text-align:center;">Hitos total</th><th style="text-align:center;">Completados</th>' +
-    '<th style="text-align:center;">Retrasados</th><th style="text-align:center;">Desv. media</th>' +
-    '<th>Estado general</th>' +
-    '</tr></thead><tbody>';
-
-  rows.forEach(function(r) {
-    var semaforo = r.retrasados.length === 0 ? '🟢' : (r.retrasados.length <= 2 ? '🟡' : '🔴');
-    var desvColor = r.desvMedia > 7 ? '#C0392B' : r.desvMedia > 0 ? '#E67E22' : '#0F6E56';
-    html += '<tr>' +
-      '<td style="font-weight:500;">' + (r.p.name || r.p.project_code || r.p.code || '-') + '</td>' +
-      '<td style="font-size:11px;">' + (r.p.clients ? r.p.clients.commercial_name : '-') + '</td>' +
-      '<td style="font-size:11px;">' + (r.p.project_managers ? r.p.project_managers.full_name : '-') + '</td>' +
-      '<td style="text-align:center;">' + r.hitos.length + '</td>' +
-      '<td style="text-align:center;color:#0F6E56;font-weight:600;">' + r.completados.length + '</td>' +
-      '<td style="text-align:center;color:#C0392B;font-weight:600;">' + r.retrasados.length + '</td>' +
-      '<td style="text-align:center;font-weight:600;color:' + desvColor + ';">' + (r.desvMedia !== 0 ? (r.desvMedia > 0 ? '+' : '') + r.desvMedia + ' días' : '—') + '</td>' +
-      '<td style="font-size:16px;">' + semaforo + '</td>' +
-      '</tr>';
-  });
-
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
-}
-
-// Informes cargados desde showPanel
 
 </script>
 </body>
