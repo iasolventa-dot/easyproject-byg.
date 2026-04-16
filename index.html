@@ -1356,7 +1356,7 @@
 <!-- PANEL NUEVO PROYECTO -->
 <div id="panel-nuevo-proyecto" class="panel">
   <div class="topbar"><h1>Nuevo proyecto</h1><button class="btn btn-back" onclick="cerrarNuevoProyecto()">Cancelar</button></div>
-  <div style="display:flex;margin-bottom:1.5rem;background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.5rem;align-items:center;gap:0;">
+  <div style="display:flex;margin-bottom:1.5rem;background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.5rem;align-items:center;">
     <div style="flex:1;text-align:center;"><div id="np-dot-1" style="width:28px;height:28px;border-radius:50%;background:#185FA5;color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">1</div><div id="np-lbl-1" style="font-size:11px;color:#185FA5;font-weight:500;">Cliente</div></div>
     <div style="height:2px;background:#e5e5e0;flex:0.5;"></div>
     <div style="flex:1;text-align:center;"><div id="np-dot-2" style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">2</div><div id="np-lbl-2" style="font-size:11px;color:#aaa;">Datos</div></div>
@@ -1366,7 +1366,7 @@
     <div style="flex:1;text-align:center;"><div id="np-dot-4" style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">4</div><div id="np-lbl-4" style="font-size:11px;color:#aaa;">Confirmar</div></div>
   </div>
   <div id="np-paso-1"><div class="card" style="max-width:700px;">
-    <div class="card-header"><div class="card-title">Paso 1 - Seleccion de cliente</div></div>
+    <div class="card-header"><div class="card-title">Paso 1 - Cliente</div></div>
     <div style="display:flex;gap:8px;margin-bottom:1.5rem;"><button id="np-btn-existente" class="btn btn-primary" onclick="npSetClienteTipo('existente')">Cliente registrado</button><button id="np-btn-nuevo" class="btn" onclick="npSetClienteTipo('nuevo')">Nuevo cliente</button></div>
     <div id="np-cliente-existente">
       <div class="form-field" style="margin-bottom:1rem;"><label>Buscar cliente</label><input type="text" id="np-buscar-cliente" placeholder="Nombre o acronimo..." style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" oninput="npFiltrarClientes(this.value)"></div>
@@ -1374,31 +1374,30 @@
       <div id="np-cliente-seleccionado" style="display:none;margin-top:1rem;background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 14px;"><div style="font-size:12px;font-weight:600;color:#27500A;" id="np-cli-sel-nombre"></div><div style="font-size:11px;color:#3B6D11;" id="np-cli-sel-email"></div></div>
     </div>
     <div id="np-cliente-nuevo" style="display:none;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-      <div class="form-field"><label>Nombre comercial *</label><input type="text" id="np-new-nombre" placeholder="Nombre empresa" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
-      <div class="form-field"><label>Acronimo (3 letras) *</label><input type="text" id="np-new-acronimo" placeholder="Ej: GSS" maxlength="3" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
-      <div class="form-field"><label>Persona de contacto *</label><input type="text" id="np-new-contacto" placeholder="Nombre y apellidos" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
-      <div class="form-field"><label>Email de contacto *</label><input type="email" id="np-new-email" placeholder="email@empresa.com" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
-      <div class="form-field"><label>Telefono</label><input type="text" id="np-new-telefono" placeholder="+34 ..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
-      <div class="form-field"><label>Tipo de cliente</label><input type="text" id="np-new-tipo" placeholder="Retail, CC..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
-    </div><div style="font-size:11px;color:#888;margin-top:8px;">Este cliente se creara como lead.</div></div>
+      <div class="form-field"><label>Nombre comercial *</label><input type="text" id="np-new-nombre" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Acronimo 3 letras *</label><input type="text" id="np-new-acronimo" maxlength="3" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="form-field"><label>Persona de contacto *</label><input type="text" id="np-new-contacto" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Email *</label><input type="email" id="np-new-email" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Telefono</label><input type="text" id="np-new-telefono" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Tipo cliente</label><input type="text" id="np-new-tipo" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+    </div></div>
     <div style="display:flex;justify-content:flex-end;margin-top:1.5rem;"><button class="btn btn-primary" onclick="npSiguiente(1)">Siguiente</button></div>
   </div></div>
   <div id="np-paso-2" style="display:none;"><div class="card" style="max-width:700px;">
     <div class="card-header"><div class="card-title">Paso 2 - Datos del proyecto</div></div>
     <div style="display:flex;flex-direction:column;gap:1rem;">
-      <div class="form-field"><label>Nombre del proyecto *</label><input type="text" id="np-proj-nombre" placeholder="Ej: Reforma local 12B CC Viladecans" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Nombre del proyecto *</label><input type="text" id="np-proj-nombre" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
       <div class="form-field"><label>Fecha de recepcion *</label><input type="date" id="np-proj-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
-      <div class="form-field"><label>Texto de la peticion</label><textarea id="np-proj-texto" placeholder="Pega aqui el texto del email del cliente..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:140px;resize:vertical;font-family:inherit;line-height:1.6;"></textarea></div>
-      <div class="form-field"><label>Observaciones internas</label><textarea id="np-proj-notas" placeholder="Notas internas..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:80px;resize:vertical;font-family:inherit;"></textarea></div>
+      <div class="form-field"><label>Texto de la peticion</label><textarea id="np-proj-texto" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:140px;resize:vertical;font-family:inherit;"></textarea></div>
+      <div class="form-field"><label>Observaciones internas</label><textarea id="np-proj-notas" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:80px;resize:vertical;font-family:inherit;"></textarea></div>
     </div>
     <div style="display:flex;justify-content:space-between;margin-top:1.5rem;"><button class="btn" onclick="npAnterior(2)">Anterior</button><button class="btn btn-primary" onclick="npSiguiente(2)">Siguiente</button></div>
   </div></div>
   <div id="np-paso-3" style="display:none;"><div class="card" style="max-width:700px;">
-    <div class="card-header"><div class="card-title">Paso 3 - Archivos adjuntos</div><span style="font-size:11px;color:#888;">Arrastra o selecciona todos los archivos</span></div>
+    <div class="card-header"><div class="card-title">Paso 3 - Archivos adjuntos</div></div>
     <div id="np-dropzone" ondrop="npHandleDrop(event)" ondragover="npDragOver(event)" ondragleave="npDragLeave(event)" onclick="document.getElementById('np-file-input').click()" style="border:2px dashed #ccc;border-radius:10px;padding:2rem;text-align:center;cursor:pointer;margin-bottom:1rem;">
-      <div style="font-size:2.5rem;margin-bottom:8px;">&#128206;</div>
-      <div style="font-size:13px;font-weight:500;color:#444;margin-bottom:4px;">Arrastra los archivos aqui</div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:1rem;">o haz clic para seleccionar desde tu ordenador</div>
+      <div style="font-size:2rem;margin-bottom:8px;">&#128206;</div>
+      <div style="font-size:13px;font-weight:500;color:#444;margin-bottom:1rem;">Arrastra archivos aqui o haz clic para seleccionar</div>
       <div style="display:inline-block;background:#185FA5;color:white;padding:7px 18px;border-radius:7px;font-size:12px;">Seleccionar archivos</div>
     </div>
     <input type="file" id="np-file-input" multiple style="display:none;" onchange="npAgregarArchivos(this.files)">
@@ -1406,10 +1405,10 @@
     <div style="display:flex;justify-content:space-between;margin-top:1.5rem;"><button class="btn" onclick="npAnterior(3)">Anterior</button><button class="btn btn-primary" onclick="npSiguiente(3)">Siguiente</button></div>
   </div></div>
   <div id="np-paso-4" style="display:none;"><div class="card" style="max-width:700px;">
-    <div class="card-header"><div class="card-title">Paso 4 - Confirmar y registrar</div></div>
+    <div class="card-header"><div class="card-title">Paso 4 - Confirmar</div></div>
     <div id="np-resumen"></div>
-    <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:12px 16px;margin-top:1rem;"><div style="font-size:12px;font-weight:600;color:#27500A;">El proyecto quedara en estado Solicitado</div><div style="font-size:11px;color:#3B6D11;">Se asignara un codigo de expediente automaticamente.</div></div>
-    <div id="np-guardando" style="display:none;text-align:center;padding:1rem;font-size:13px;color:#185FA5;">Guardando proyecto...</div>
+    <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:12px;margin-top:1rem;font-size:12px;color:#27500A;">El proyecto quedara en estado Solicitado con codigo de expediente automatico.</div>
+    <div id="np-guardando" style="display:none;text-align:center;padding:1rem;font-size:13px;color:#185FA5;">Guardando...</div>
     <div style="display:flex;justify-content:space-between;margin-top:1.5rem;"><button class="btn" onclick="npAnterior(4)">Anterior</button><button class="btn btn-success" id="np-btn-guardar" onclick="npGuardar()">Registrar proyecto</button></div>
   </div></div>
 </div>
@@ -2080,349 +2079,7 @@ function imprimirListadoClientes() {
     '<h2>BYG Soluciones - Listado de Clientes</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
-    '<tbody>'+rows+'</tbody></table><script>
-// MÓDULO NUEVO PROYECTO + ADJUNTOS
-var npClienteTipo = 'existente';
-var npClienteSeleccionado = null;
-var npArchivos = [];
-var npClientesCache = [];
-
-function abrirNuevoProyecto() {
-  npReset();
-  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  document.getElementById('panel-nuevo-proyecto').classList.add('active');
-  document.getElementById('np-proj-fecha').value = new Date().toISOString().split('T')[0];
-  npCargarClientes();
-}
-
-function cerrarNuevoProyecto() {
-  npReset();
-  showPanel('dashboard');
-}
-
-function npReset() {
-  npClienteTipo = 'existente';
-  npClienteSeleccionado = null;
-  npArchivos = [];
-  npMostrarPaso(1);
-  npSetClienteTipo('existente');
-  ['np-proj-nombre','np-proj-texto','np-proj-notas','np-new-nombre','np-new-acronimo',
-   'np-new-contacto','np-new-email','np-new-telefono','np-new-tipo','np-buscar-cliente'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  var cliSel = document.getElementById('np-cliente-seleccionado');
-  if (cliSel) cliSel.style.display = 'none';
-  var lista = document.getElementById('np-archivos-lista');
-  if (lista) lista.innerHTML = '';
-  var guardando = document.getElementById('np-guardando');
-  if (guardando) guardando.style.display = 'none';
-  var btnGuardar = document.getElementById('np-btn-guardar');
-  if (btnGuardar) btnGuardar.disabled = false;
-}
-
-function npSetClienteTipo(tipo) {
-  npClienteTipo = tipo;
-  npClienteSeleccionado = null;
-  document.getElementById('np-btn-existente').className = tipo === 'existente' ? 'btn btn-primary' : 'btn';
-  document.getElementById('np-btn-nuevo').className = tipo === 'nuevo' ? 'btn btn-primary' : 'btn';
-  document.getElementById('np-cliente-existente').style.display = tipo === 'existente' ? 'block' : 'none';
-  document.getElementById('np-cliente-nuevo').style.display = tipo === 'nuevo' ? 'block' : 'none';
-}
-
-async function npCargarClientes() {
-  try {
-    var res = await db.from('clients').select('id,internal_code,client_code,commercial_name,contact_name,commercial_email').order('commercial_name');
-    npClientesCache = res.data || [];
-    npRenderClientes(npClientesCache);
-  } catch(e) { console.error(e); }
-}
-
-function npFiltrarClientes(q) {
-  if (!q.trim()) { npRenderClientes(npClientesCache); return; }
-  var lower = q.toLowerCase();
-  npRenderClientes(npClientesCache.filter(function(c) {
-    return (c.commercial_name||'').toLowerCase().includes(lower) ||
-      (c.client_code||'').toLowerCase().includes(lower);
-  }));
-}
-
-function npRenderClientes(data) {
-  var el = document.getElementById('np-lista-clientes');
-  if (!el) return;
-  el.innerHTML = '';
-  if (!data.length) {
-    el.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#aaa;">No se encontraron clientes</div>';
-    return;
-  }
-  data.forEach(function(c) {
-    var div = document.createElement('div');
-    div.style.cssText = 'padding:10px 14px;border-bottom:1px solid #f0f0ea;cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
-    div.addEventListener('mouseenter', function(){ this.style.background='#f5f5f0'; });
-    div.addEventListener('mouseleave', function(){ this.style.background=''; });
-    div.innerHTML = '<div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + c.commercial_name + '</div>' +
-      '<div style="font-size:11px;color:#888;">' + (c.internal_code||'-') + (c.commercial_email?' · '+c.commercial_email:'') + '</div></div>' +
-      '<span style="font-size:11px;color:#185FA5;">Seleccionar</span>';
-    div.onclick = (function(cli){ return function(){ npSeleccionarCliente(cli); }; })(c);
-    el.appendChild(div);
-  });
-}
-
-function npSeleccionarCliente(c) {
-  npClienteSeleccionado = c;
-  var el = document.getElementById('np-cliente-seleccionado');
-  el.style.display = 'block';
-  document.getElementById('np-cli-sel-nombre').textContent = c.commercial_name + (c.client_code?' ['+c.client_code+']':'');
-  document.getElementById('np-cli-sel-email').textContent = (c.contact_name?c.contact_name+' · ':'') + (c.commercial_email||'');
-}
-
-function npMostrarPaso(paso) {
-  [1,2,3,4].forEach(function(p) {
-    var panel = document.getElementById('np-paso-' + p);
-    if (panel) panel.style.display = p === paso ? 'block' : 'none';
-    var dot = document.getElementById('np-dot-' + p);
-    var lbl = document.getElementById('np-lbl-' + p);
-    if (p < paso) {
-      if (dot) { dot.style.background='#3B6D11'; dot.textContent='✓'; dot.style.color='white'; }
-      if (lbl) lbl.style.color='#3B6D11';
-    } else if (p === paso) {
-      if (dot) { dot.style.background='#185FA5'; dot.textContent=String(p); dot.style.color='white'; }
-      if (lbl) lbl.style.color='#185FA5';
-    } else {
-      if (dot) { dot.style.background='#e5e5e0'; dot.textContent=String(p); dot.style.color='#aaa'; }
-      if (lbl) lbl.style.color='#aaa';
-    }
-  });
-}
-
-function npAnterior(p) { npMostrarPaso(p-1); }
-
-function npSiguiente(p) {
-  if (p===1) {
-    if (npClienteTipo==='existente' && !npClienteSeleccionado) { alert('Selecciona un cliente.'); return; }
-    if (npClienteTipo==='nuevo') {
-      var n=document.getElementById('np-new-nombre').value.trim();
-      var a=document.getElementById('np-new-acronimo').value.trim();
-      var co=document.getElementById('np-new-contacto').value.trim();
-      var em=document.getElementById('np-new-email').value.trim();
-      if (!n||!a||!co||!em) { alert('Rellena los campos obligatorios.'); return; }
-      if (a.length!==3) { alert('El acrónimo debe tener exactamente 3 letras.'); return; }
-    }
-  }
-  if (p===2) {
-    if (!document.getElementById('np-proj-nombre').value.trim()) { alert('El nombre del proyecto es obligatorio.'); return; }
-    if (!document.getElementById('np-proj-fecha').value) { alert('La fecha es obligatoria.'); return; }
-  }
-  if (p===3) { npGenerarResumen(); }
-  npMostrarPaso(p+1);
-}
-
-function npDragOver(e) { e.preventDefault(); var dz=document.getElementById('np-dropzone'); if(dz){dz.style.borderColor='#185FA5';dz.style.background='#f0f7ff';} }
-function npDragLeave(e) { var dz=document.getElementById('np-dropzone'); if(dz){dz.style.borderColor='#ccc';dz.style.background='';} }
-function npHandleDrop(e) { e.preventDefault(); npDragLeave(e); if(e.dataTransfer.files.length) npAgregarArchivos(e.dataTransfer.files); }
-
-function npDetectarTipo(file) {
-  var n=file.name.toLowerCase();
-  if(n.endsWith('.xlsx')||n.endsWith('.xls')) return 'excel';
-  if(n.endsWith('.pdf')) return 'pdf';
-  if(n.endsWith('.doc')||n.endsWith('.docx')) return 'word';
-  if(n.match(/\.(jpg|jpeg|png|gif|webp)$/)) return 'imagen';
-  return 'otro';
-}
-
-function npAgregarArchivos(files) {
-  for (var i=0;i<files.length;i++) {
-    var file=files[i];
-    if (npArchivos.some(function(a){return a.file.name===file.name;})) continue;
-    if (file.size>50*1024*1024) { alert(file.name+' supera 50MB.'); continue; }
-    npArchivos.push({file:file, nombre:file.name, tipo:npDetectarTipo(file), esMediciones:false});
-  }
-  npRenderArchivos();
-  document.getElementById('np-file-input').value='';
-}
-
-function npRenderArchivos() {
-  var el=document.getElementById('np-archivos-lista');
-  if (!el) return;
-  el.innerHTML='';
-  if (!npArchivos.length) {
-    el.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:#aaa;">No hay archivos añadidos aún</div>';
-    return;
-  }
-  var iconos={excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
-  npArchivos.forEach(function(a, idx) {
-    var esMed=a.esMediciones;
-    var row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+(esMed?'#EAF3DE':'white')+';border:1px solid '+(esMed?'#C0DD97':'#e5e5e0')+';border-radius:8px;margin-bottom:6px;';
-    var sz=a.file.size>1048576?(a.file.size/1048576).toFixed(1)+' MB':Math.round(a.file.size/1024)+' KB';
-    row.innerHTML='<span style="font-size:20px;flex-shrink:0;">'+(iconos[a.tipo]||'📎')+'</span>'+
-      '<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.nombre+'</div>'+
-      '<div style="font-size:11px;color:#888;">'+sz+(esMed?' &nbsp;<strong style="color:#3B6D11;">MEDICIONES</strong>':'')+'</div></div>'+
-      '<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0;">'+
-      '<input type="checkbox" '+(esMed?'checked':'')+' style="width:14px;height:14px;"> Mediciones</label>'+
-      '<button style="background:none;border:none;cursor:pointer;font-size:16px;color:#aaa;flex-shrink:0;">✕</button>';
-    // Eventos
-    row.querySelector('input[type=checkbox]').onchange = (function(i){ return function(e){ npToggleMediciones(i,e.target.checked); }; })(idx);
-    row.querySelector('button').onclick = (function(i){ return function(){ npEliminarArchivo(i); }; })(idx);
-    el.appendChild(row);
-  });
-}
-
-function npToggleMediciones(idx, checked) {
-  if (checked) npArchivos.forEach(function(a,i){ a.esMediciones=(i===idx); });
-  else npArchivos[idx].esMediciones=false;
-  npRenderArchivos();
-}
-
-function npEliminarArchivo(idx) {
-  npArchivos.splice(idx,1);
-  npRenderArchivos();
-}
-
-function npGenerarResumen() {
-  var el=document.getElementById('np-resumen');
-  if (!el) return;
-  var nomCli='', emCli='';
-  if (npClienteTipo==='existente'&&npClienteSeleccionado) {
-    nomCli=npClienteSeleccionado.commercial_name; emCli=npClienteSeleccionado.commercial_email||'';
-  } else {
-    nomCli=document.getElementById('np-new-nombre').value+' [NUEVO]';
-    emCli=document.getElementById('np-new-email').value;
-  }
-  var med=npArchivos.find(function(a){return a.esMediciones;});
-  var campos=[
-    {label:'Cliente',val:nomCli},{label:'Email',val:emCli},
-    {label:'Nombre proyecto',val:document.getElementById('np-proj-nombre').value},
-    {label:'Fecha petición',val:document.getElementById('np-proj-fecha').value?new Date(document.getElementById('np-proj-fecha').value).toLocaleDateString('es-ES'):'-'},
-    {label:'Archivos adjuntos',val:npArchivos.length+' archivo'+(npArchivos.length!==1?'s':'')},
-    {label:'Archivo de mediciones',val:med?med.nombre:'No marcado (se identificará en análisis)'}
-  ];
-  el.innerHTML=campos.map(function(c){
-    return '<div style="display:flex;padding:9px 0;border-bottom:1px solid #f5f5f0;">'+
-      '<div style="width:180px;font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;flex-shrink:0;">'+c.label+'</div>'+
-      '<div style="font-size:13px;color:#1a1a1a;">'+(c.val||'-')+'</div></div>';
-  }).join('');
-}
-
-async function npGuardar() {
-  var btn=document.getElementById('np-btn-guardar');
-  var loading=document.getElementById('np-guardando');
-  btn.disabled=true; loading.style.display='block';
-  try {
-    var clienteId=null, acronimo='';
-    if (npClienteTipo==='nuevo') {
-      acronimo=document.getElementById('np-new-acronimo').value.trim().toUpperCase();
-      var newCli={commercial_name:document.getElementById('np-new-nombre').value.trim(),
-        client_code:acronimo, contact_name:document.getElementById('np-new-contacto').value.trim(),
-        commercial_email:document.getElementById('np-new-email').value.trim(),
-        phone:document.getElementById('np-new-telefono').value.trim()||null,
-        client_type:document.getElementById('np-new-tipo').value.trim()||null,
-        client_confirmed:false, created_at:new Date().toISOString(), updated_at:new Date().toISOString()};
-      var lastCli=await db.from('clients').select('internal_code').order('id',{ascending:false}).limit(1);
-      var nCli=0;
-      if(lastCli.data&&lastCli.data.length&&lastCli.data[0].internal_code){var mC=lastCli.data[0].internal_code.match(/\d+/);if(mC)nCli=parseInt(mC[0]);}
-      newCli.internal_code='CLI-'+String(nCli+1).padStart(3,'0');
-      var cliRes=await db.from('clients').insert(newCli).select().single();
-      clienteId=cliRes.data.id;
-    } else {
-      clienteId=npClienteSeleccionado.id;
-      acronimo=npClienteSeleccionado.client_code||npClienteSeleccionado.internal_code||'XXX';
-    }
-    var anyo=new Date().getFullYear();
-    var lastProj=await db.from('projects').select('project_code').order('id',{ascending:false}).limit(1);
-    var nProj=1;
-    if(lastProj.data&&lastProj.data.length&&lastProj.data[0].project_code){var mP=lastProj.data[0].project_code.match(/\d+$/);if(mP)nProj=parseInt(mP[0])+1;}
-    var projCode='BYG-'+acronimo.substring(0,3)+'-'+anyo+'-'+String(nProj).padStart(3,'0');
-    var stRes=await db.from('project_statuses').select('id').eq('code','solicitado').single();
-    var statusId=stRes.data?stRes.data.id:null;
-    var newProj={name:document.getElementById('np-proj-nombre').value.trim(), code:projCode, project_code:projCode,
-      client_id:clienteId, contact_email:npClienteTipo==='nuevo'?document.getElementById('np-new-email').value.trim():(npClienteSeleccionado.commercial_email||''),
-      received_at:document.getElementById('np-proj-fecha').value?new Date(document.getElementById('np-proj-fecha').value).toISOString():new Date().toISOString(),
-      project_status_id:statusId, confidence:1.0, notes:document.getElementById('np-proj-texto').value.trim()||null,
-      created_at:new Date().toISOString(), updated_at:new Date().toISOString()};
-    var projRes=await db.from('projects').insert(newProj).select().single();
-    var proyectoId=projRes.data.id;
-    for (var i=0;i<npArchivos.length;i++) {
-      var arch=npArchivos[i];
-      var filePath='proyecto-'+proyectoId+'/'+Date.now()+'-'+arch.file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-      var upRes=await db.storage.from('project-attachments').upload(filePath,arch.file,{cacheControl:'3600',upsert:false});
-      if(upRes.error){console.error('Error subiendo '+arch.nombre+':',upRes.error);continue;}
-      await db.from('project_attachments').insert({project_id:proyectoId,file_name:arch.nombre,file_path:filePath,
-        file_size:arch.file.size,file_type:arch.tipo,mime_type:arch.file.type,is_measurements:arch.esMediciones,
-        uploaded_by:currentUser?currentUser.email:'manual',uploaded_at:new Date().toISOString(),storage_provider:'supabase'});
-    }
-    alert('Proyecto registrado: '+projCode);
-    npReset(); showPanel('dashboard'); loadDashboard();
-  } catch(e) {
-    console.error(e); alert('Error: '+(e.message||JSON.stringify(e)));
-    btn.disabled=false; loading.style.display='none';
-  }
-}
-
-// ADJUNTOS EN ANÁLISIS
-async function anMarcarMediciones(adjuntoId, projectId) {
-  try {
-    await db.from('project_attachments').update({is_measurements:false}).eq('project_id',projectId);
-    await db.from('project_attachments').update({is_measurements:true}).eq('id',adjuntoId);
-    cargarDocumentosAnálisis(projectId, null);
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-async function anDescargarArchivo(filePath, fileName) {
-  try {
-    var res=await db.storage.from('project-attachments').createSignedUrl(filePath,300);
-    if(res.data&&res.data.signedUrl) window.open(res.data.signedUrl,'_blank');
-    else alert('No se pudo generar el enlace.');
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-async function anAgregarArchivos(files, projectId) {
-  for(var i=0;i<files.length;i++){
-    var file=files[i];
-    if(file.size>50*1024*1024){alert(file.name+' supera 50MB.');continue;}
-    var tipo=npDetectarTipo(file);
-    var filePath='proyecto-'+projectId+'/'+Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-    var upRes=await db.storage.from('project-attachments').upload(filePath,file,{cacheControl:'3600',upsert:false});
-    if(upRes.error){console.error(upRes.error);continue;}
-    await db.from('project_attachments').insert({project_id:projectId,file_name:file.name,file_path:filePath,
-      file_size:file.size,file_type:tipo,mime_type:file.type,is_measurements:false,
-      uploaded_by:currentUser?currentUser.email:'manual',uploaded_at:new Date().toISOString(),storage_provider:'supabase'});
-  }
-  document.getElementById('an-file-input').value='';
-  cargarDocumentosAnálisis(projectId,null);
-}
-
-function anAnalizarMediciones(projectId, adjuntoId) {
-  alert('Módulo de análisis con IA: próximamente se integrará el parser SheetJS para separar partidas por gremio.');
-}
-
-async function cargarAdjuntosProyecto(projectId, contenedorId) {
-  var el=document.getElementById(contenedorId);
-  if(!el) return;
-  try {
-    var res=await db.from('project_attachments').select('*').eq('project_id',projectId).order('uploaded_at');
-    var adjuntos=res.data||[];
-    el.innerHTML='';
-    if(!adjuntos.length){el.innerHTML='<div style="font-size:11px;color:#aaa;">Sin archivos adjuntos</div>';return;}
-    var iconos={excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
-    var wrapper=document.createElement('div');
-    wrapper.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
-    adjuntos.forEach(function(a){
-      var esMed=a.is_measurements;
-      var div=document.createElement('div');
-      div.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 10px;background:'+(esMed?'#EAF3DE':'#f5f5f0')+';border:1px solid '+(esMed?'#C0DD97':'#ddd')+';border-radius:6px;cursor:pointer;font-size:11px;';
-      div.title=a.file_name;
-      var nombre=a.file_name.length>25?a.file_name.substring(0,22)+'...':a.file_name;
-      div.innerHTML=(iconos[a.file_type]||'📎')+' '+nombre+(esMed?' <strong style="color:#3B6D11;font-size:9px;">MED</strong>':'');
-      div.onclick=(function(p,n){return function(){anDescargarArchivo(p,n);};})(a.file_path,a.file_name);
-      wrapper.appendChild(div);
-    });
-    el.appendChild(wrapper);
-  } catch(e){console.error(e);}
-}
-
-</script>
-</body></html>');
+    '<tbody>'+rows+'</tbody></table></'+'body></'+'html>');
   win.document.close();
   win.print();
 }
@@ -2459,7 +2116,7 @@ function imprimirFichaCliente() {
     campos.map(function(f){
       return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val||'-')+'</div></div>';
     }).join('') +
-    '</body></html>');
+    '</'+'body></html>');
   win.document.close();
   win.print();
 }
@@ -2662,7 +2319,7 @@ function imprimirListadoProveedores() {
     '<h2>BYG Soluciones - Listado de Proveedores</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Gremios</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
-    '<tbody>'+rows+'</tbody></table></body></html>');
+    '<tbody>'+rows+'</tbody></table></'+'body></html>');
   win.document.close(); win.print();
 }
 
@@ -2708,7 +2365,7 @@ function imprimirFichaProveedor() {
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     campos.map(function(f){
       return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val||'-')+'</div></div>';
-    }).join('')+'</body></html>');
+    }).join('')+'</'+'body></html>');
   win.document.close(); win.print();
 }
 
@@ -2891,7 +2548,7 @@ function imprimirListadoJefes() {
     '<h2>BYG Soluciones - Jefes de Obra</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>ID</th><th>Nombre completo</th><th>Teléfono</th><th>Email</th><th>Proy. activos</th><th>Especialidades</th><th>Disponible</th></tr></thead>' +
-    '<tbody>'+rows+'</tbody></table></body></html>');
+    '<tbody>'+rows+'</tbody></table></'+'body></html>');
   win.document.close(); win.print();
 }
 
@@ -2923,7 +2580,7 @@ function imprimirFichaJefe() {
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     campos.map(function(f){
       return '<div class="row"><div class="lbl">'+f.label+'</div><div class="val">'+(f.val!=null?f.val:'-')+'</div></div>';
-    }).join('')+'</body></html>');
+    }).join('')+'</'+'body></html>');
   win.document.close(); win.print();
 }
 
@@ -3158,82 +2815,46 @@ async function cargarDocumentosAnálisis(projectId, categoria) {
   el.innerHTML = '<div class="loading">Cargando documentos...</div>';
   try {
     var attRes = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
-    var adjuntos = attRes.data || [];
-    var tieneArchivos = adjuntos.length > 0;
-    var archMediciones = adjuntos.find(function(a){return a.is_measurements;});
+    var adj = attRes.data || [];
     el.innerHTML = '';
-    var banner = document.createElement('div');
-    banner.style.cssText = 'background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;';
-    banner.innerHTML = '<span style="font-size:14px;flex-shrink:0;">!</span><div style="font-size:11px;color:#854F0B;">Cuando se active Microsoft 365 los archivos se almacenaran en SharePoint. Actualmente en Supabase Storage.</div>';
-    el.appendChild(banner);
-    if (!tieneArchivos) {
-      var empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.innerHTML = 'No hay archivos adjuntos.<br><span style="font-size:11px;">Puedes anadir archivos desde el boton de abajo.</span>';
-      el.appendChild(empty);
+    var ban = document.createElement('div');
+    ban.style.cssText = 'background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:11px;color:#854F0B;';
+    ban.textContent = 'Cuando se active Microsoft 365, los archivos se almacenaran en SharePoint. Actualmente en Supabase Storage.';
+    el.appendChild(ban);
+    if (!adj.length) {
+      var emp = document.createElement('div'); emp.className='empty';
+      emp.textContent='No hay archivos adjuntos. Puedes anadir archivos con el boton de abajo.';
+      el.appendChild(emp);
     } else {
       var lista = document.createElement('div');
       lista.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;';
-      adjuntos.forEach(function(a) {
-        var iconos = {excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
-        var esMed = a.is_measurements;
-        var size = a.file_size ? (a.file_size>1048576?(a.file_size/1048576).toFixed(1)+' MB':Math.round(a.file_size/1024)+' KB') : '';
-        var row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+(esMed?'#EAF3DE':'white')+';border:1px solid '+(esMed?'#C0DD97':'#e5e5e0')+';border-radius:8px;';
-        var icEl = document.createElement('span');
-        icEl.style.cssText = 'font-size:20px;flex-shrink:0;';
-        icEl.textContent = iconos[a.file_type] || '📎';
-        var info = document.createElement('div');
-        info.style.cssText = 'flex:1;min-width:0;';
-        info.innerHTML = '<div style="font-size:12px;font-weight:500;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+a.file_name+'</div>'+
-          '<div style="font-size:11px;color:#888;">'+size+(esMed?' <strong style="color:#3B6D11;">MEDICIONES</strong>':'')+'</div>';
-        row.appendChild(icEl);
-        row.appendChild(info);
-        if (!esMed) {
-          var btnM = document.createElement('button');
-          btnM.textContent = 'Marcar mediciones';
-          btnM.style.cssText = 'background:#f0f7ff;border:1px solid #B5D4F4;color:#185FA5;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;';
-          btnM.onclick = (function(id,pid){return function(){anMarcarMediciones(id,pid);};})(a.id,projectId);
-          row.appendChild(btnM);
-        }
-        var btnDl = document.createElement('button');
-        btnDl.innerHTML = '&#11015;&#65039;';
-        btnDl.title = 'Ver/Descargar';
-        btnDl.style.cssText = 'background:white;border:1px solid #ddd;padding:5px 10px;border-radius:5px;font-size:14px;cursor:pointer;flex-shrink:0;';
-        btnDl.onclick = (function(p,n){return function(){anDescargarArchivo(p,n);};})(a.file_path,a.file_name);
-        row.appendChild(btnDl);
+      adj.forEach(function(a) {
+        var tipos={excel:'S',pdf:'P',word:'W',imagen:'I',otro:'A'};
+        var esMed=a.is_measurements;
+        var sz=a.file_size?(a.file_size>1048576?(a.file_size/1048576).toFixed(1)+' MB':Math.round(a.file_size/1024)+' KB'):'';
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+(esMed?'#EAF3DE':'white')+';border:1px solid '+(esMed?'#C0DD97':'#e5e5e0')+';border-radius:8px;';
+        var ic=document.createElement('div');
+        ic.style.cssText='width:32px;height:32px;border-radius:6px;background:'+(a.file_type==='excel'?'#217346':a.file_type==='pdf'?'#E02020':'#185FA5')+';color:white;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+        ic.textContent=a.file_type==='excel'?'XLS':a.file_type==='pdf'?'PDF':a.file_type==='word'?'DOC':'FILE';
+        var info=document.createElement('div'); info.style.cssText='flex:1;min-width:0;';
+        info.innerHTML='<div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+a.file_name+'</div><div style="font-size:11px;color:#888;">'+sz+(esMed?' <strong style="color:#3B6D11;">MEDICIONES</strong>':'')+'</div>';
+        row.appendChild(ic); row.appendChild(info);
+        if(!esMed){var bm=document.createElement('button');bm.textContent='Marcar mediciones';bm.style.cssText='background:#f0f7ff;border:1px solid #B5D4F4;color:#185FA5;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;flex-shrink:0;';bm.onclick=(function(id,pid){return function(){anMarcarMediciones(id,pid);};})(a.id,projectId);row.appendChild(bm);}
+        var bd=document.createElement('button');bd.textContent='Ver';bd.style.cssText='background:white;border:1px solid #ddd;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;flex-shrink:0;';bd.onclick=(function(p,n){return function(){anDescargarArchivo(p,n);};})(a.file_path,a.file_name);row.appendChild(bd);
         lista.appendChild(row);
       });
       el.appendChild(lista);
     }
-    var addArea = document.createElement('div');
-    addArea.style.marginTop = '0.5rem';
-    var inp = document.createElement('input');
-    inp.type='file'; inp.multiple=true; inp.id='an-file-input'; inp.style.display='none';
-    inp.onchange = function(){ anAgregarArchivos(this.files, projectId); };
-    var btnAdd = document.createElement('button');
-    btnAdd.className='btn btn-sm'; btnAdd.style.borderStyle='dashed'; btnAdd.textContent='+ Anadir archivos';
-    btnAdd.onclick = function(){ document.getElementById('an-file-input').click(); };
-    addArea.appendChild(inp); addArea.appendChild(btnAdd);
-    el.appendChild(addArea);
-    if (archMediciones) {
-      var medB = document.createElement('div');
-      medB.style.cssText = 'margin-top:1rem;background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem;';
-      var btnAn = document.createElement('button');
-      btnAn.className='btn btn-primary btn-sm'; btnAn.textContent='Analizar mediciones con IA';
-      btnAn.onclick = (function(pid,aid){return function(){anAnalizarMediciones(pid,aid);};})(projectId,archMediciones.id);
-      medB.innerHTML = '<div style="font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Archivo de mediciones: '+archMediciones.file_name+'</div>'+
-        '<div style="font-size:11px;color:#185FA5;margin-bottom:10px;">Analiza este archivo para separar partidas por gremio.</div>';
-      medB.appendChild(btnAn);
-      el.appendChild(medB);
-    } else if (tieneArchivos) {
-      var warnB = document.createElement('div');
-      warnB.style.cssText = 'margin-top:1rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;';
-      warnB.innerHTML = '<div style="font-size:11px;color:#92400e;">Ningun archivo marcado como mediciones. Marcalo para analizar con IA.</div>';
-      el.appendChild(warnB);
-    }
-  } catch(e) { console.error(e); el.innerHTML = '<div class="empty">Error cargando documentos</div>'; }
-  document.getElementById('an-docs-reviewed').checked = análisisData&&análisisData.docs_reviewed||false;
+    var addDiv=document.createElement('div');addDiv.style.marginTop='0.5rem';
+    var inp=document.createElement('input');inp.type='file';inp.multiple=true;inp.id='an-file-input';inp.style.display='none';inp.onchange=function(){anAgregarArchivos(this.files,projectId);};
+    var badd=document.createElement('button');badd.className='btn btn-sm';badd.style.borderStyle='dashed';badd.textContent='+ Anadir archivos';badd.onclick=function(){document.getElementById('an-file-input').click();};
+    addDiv.appendChild(inp);addDiv.appendChild(badd);el.appendChild(addDiv);
+    var archMed=adj.find(function(a){return a.is_measurements;});
+    if(archMed){var mb=document.createElement('div');mb.style.cssText='margin-top:1rem;background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem;';mb.innerHTML='<div style="font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Archivo de mediciones: '+archMed.file_name+'</div><div style="font-size:11px;color:#185FA5;margin-bottom:10px;">Analiza este archivo para separar partidas por gremio.</div>';var ba=document.createElement('button');ba.className='btn btn-primary btn-sm';ba.textContent='Analizar mediciones con IA';ba.onclick=(function(pid,aid){return function(){anAnalizarMediciones(pid,aid);};})(projectId,archMed.id);mb.appendChild(ba);el.appendChild(mb);}
+    else if(adj.length){var wb=document.createElement('div');wb.style.cssText='margin-top:1rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:11px;color:#92400e;';wb.textContent='Ningun archivo marcado como mediciones. Marcalo para analizar con IA.';el.appendChild(wb);}
+  } catch(e){console.error(e);el.innerHTML='<div class="empty">Error cargando documentos</div>';}
+  document.getElementById('an-docs-reviewed').checked=!!(análisisData&&análisisData.docs_reviewed);
 }
 
 var _gremioMap = {};
@@ -5841,6 +5462,348 @@ async function verDocumentoGasto(fileName, displayName) {
       alert('No se pudo obtener el documento.');
     }
   } catch(e) { alert('Error al abrir documento: ' + e.message); }
+}
+
+</script>
+<script>
+// MÓDULO NUEVO PROYECTO + ADJUNTOS
+var npClienteTipo = 'existente';
+var npClienteSeleccionado = null;
+var npArchivos = [];
+var npClientesCache = [];
+
+function abrirNuevoProyecto() {
+  npReset();
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-nuevo-proyecto').classList.add('active');
+  document.getElementById('np-proj-fecha').value = new Date().toISOString().split('T')[0];
+  npCargarClientes();
+}
+
+function cerrarNuevoProyecto() {
+  npReset();
+  showPanel('dashboard');
+}
+
+function npReset() {
+  npClienteTipo = 'existente';
+  npClienteSeleccionado = null;
+  npArchivos = [];
+  npMostrarPaso(1);
+  npSetClienteTipo('existente');
+  ['np-proj-nombre','np-proj-texto','np-proj-notas','np-new-nombre','np-new-acronimo',
+   'np-new-contacto','np-new-email','np-new-telefono','np-new-tipo','np-buscar-cliente'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var cliSel = document.getElementById('np-cliente-seleccionado');
+  if (cliSel) cliSel.style.display = 'none';
+  var lista = document.getElementById('np-archivos-lista');
+  if (lista) lista.innerHTML = '';
+  var guardando = document.getElementById('np-guardando');
+  if (guardando) guardando.style.display = 'none';
+  var btnGuardar = document.getElementById('np-btn-guardar');
+  if (btnGuardar) btnGuardar.disabled = false;
+}
+
+function npSetClienteTipo(tipo) {
+  npClienteTipo = tipo;
+  npClienteSeleccionado = null;
+  document.getElementById('np-btn-existente').className = tipo === 'existente' ? 'btn btn-primary' : 'btn';
+  document.getElementById('np-btn-nuevo').className = tipo === 'nuevo' ? 'btn btn-primary' : 'btn';
+  document.getElementById('np-cliente-existente').style.display = tipo === 'existente' ? 'block' : 'none';
+  document.getElementById('np-cliente-nuevo').style.display = tipo === 'nuevo' ? 'block' : 'none';
+}
+
+async function npCargarClientes() {
+  try {
+    var res = await db.from('clients').select('id,internal_code,client_code,commercial_name,contact_name,commercial_email').order('commercial_name');
+    npClientesCache = res.data || [];
+    npRenderClientes(npClientesCache);
+  } catch(e) { console.error(e); }
+}
+
+function npFiltrarClientes(q) {
+  if (!q.trim()) { npRenderClientes(npClientesCache); return; }
+  var lower = q.toLowerCase();
+  npRenderClientes(npClientesCache.filter(function(c) {
+    return (c.commercial_name||'').toLowerCase().includes(lower) ||
+      (c.client_code||'').toLowerCase().includes(lower);
+  }));
+}
+
+function npRenderClientes(data) {
+  var el = document.getElementById('np-lista-clientes');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!data.length) {
+    el.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#aaa;">No se encontraron clientes</div>';
+    return;
+  }
+  data.forEach(function(c) {
+    var div = document.createElement('div');
+    div.style.cssText = 'padding:10px 14px;border-bottom:1px solid #f0f0ea;cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
+    div.addEventListener('mouseenter', function(){ this.style.background='#f5f5f0'; });
+    div.addEventListener('mouseleave', function(){ this.style.background=''; });
+    div.innerHTML = '<div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + c.commercial_name + '</div>' +
+      '<div style="font-size:11px;color:#888;">' + (c.internal_code||'-') + (c.commercial_email?' · '+c.commercial_email:'') + '</div></div>' +
+      '<span style="font-size:11px;color:#185FA5;">Seleccionar</span>';
+    div.onclick = (function(cli){ return function(){ npSeleccionarCliente(cli); }; })(c);
+    el.appendChild(div);
+  });
+}
+
+function npSeleccionarCliente(c) {
+  npClienteSeleccionado = c;
+  var el = document.getElementById('np-cliente-seleccionado');
+  el.style.display = 'block';
+  document.getElementById('np-cli-sel-nombre').textContent = c.commercial_name + (c.client_code?' ['+c.client_code+']':'');
+  document.getElementById('np-cli-sel-email').textContent = (c.contact_name?c.contact_name+' · ':'') + (c.commercial_email||'');
+}
+
+function npMostrarPaso(paso) {
+  [1,2,3,4].forEach(function(p) {
+    var panel = document.getElementById('np-paso-' + p);
+    if (panel) panel.style.display = p === paso ? 'block' : 'none';
+    var dot = document.getElementById('np-dot-' + p);
+    var lbl = document.getElementById('np-lbl-' + p);
+    if (p < paso) {
+      if (dot) { dot.style.background='#3B6D11'; dot.textContent='✓'; dot.style.color='white'; }
+      if (lbl) lbl.style.color='#3B6D11';
+    } else if (p === paso) {
+      if (dot) { dot.style.background='#185FA5'; dot.textContent=String(p); dot.style.color='white'; }
+      if (lbl) lbl.style.color='#185FA5';
+    } else {
+      if (dot) { dot.style.background='#e5e5e0'; dot.textContent=String(p); dot.style.color='#aaa'; }
+      if (lbl) lbl.style.color='#aaa';
+    }
+  });
+}
+
+function npAnterior(p) { npMostrarPaso(p-1); }
+
+function npSiguiente(p) {
+  if (p===1) {
+    if (npClienteTipo==='existente' && !npClienteSeleccionado) { alert('Selecciona un cliente.'); return; }
+    if (npClienteTipo==='nuevo') {
+      var n=document.getElementById('np-new-nombre').value.trim();
+      var a=document.getElementById('np-new-acronimo').value.trim();
+      var co=document.getElementById('np-new-contacto').value.trim();
+      var em=document.getElementById('np-new-email').value.trim();
+      if (!n||!a||!co||!em) { alert('Rellena los campos obligatorios.'); return; }
+      if (a.length!==3) { alert('El acrónimo debe tener exactamente 3 letras.'); return; }
+    }
+  }
+  if (p===2) {
+    if (!document.getElementById('np-proj-nombre').value.trim()) { alert('El nombre del proyecto es obligatorio.'); return; }
+    if (!document.getElementById('np-proj-fecha').value) { alert('La fecha es obligatoria.'); return; }
+  }
+  if (p===3) { npGenerarResumen(); }
+  npMostrarPaso(p+1);
+}
+
+function npDragOver(e) { e.preventDefault(); var dz=document.getElementById('np-dropzone'); if(dz){dz.style.borderColor='#185FA5';dz.style.background='#f0f7ff';} }
+function npDragLeave(e) { var dz=document.getElementById('np-dropzone'); if(dz){dz.style.borderColor='#ccc';dz.style.background='';} }
+function npHandleDrop(e) { e.preventDefault(); npDragLeave(e); if(e.dataTransfer.files.length) npAgregarArchivos(e.dataTransfer.files); }
+
+function npDetectarTipo(file) {
+  var n=file.name.toLowerCase();
+  if(n.endsWith('.xlsx')||n.endsWith('.xls')) return 'excel';
+  if(n.endsWith('.pdf')) return 'pdf';
+  if(n.endsWith('.doc')||n.endsWith('.docx')) return 'word';
+  if(n.match(/\.(jpg|jpeg|png|gif|webp)$/)) return 'imagen';
+  return 'otro';
+}
+
+function npAgregarArchivos(files) {
+  for (var i=0;i<files.length;i++) {
+    var file=files[i];
+    if (npArchivos.some(function(a){return a.file.name===file.name;})) continue;
+    if (file.size>50*1024*1024) { alert(file.name+' supera 50MB.'); continue; }
+    npArchivos.push({file:file, nombre:file.name, tipo:npDetectarTipo(file), esMediciones:false});
+  }
+  npRenderArchivos();
+  document.getElementById('np-file-input').value='';
+}
+
+function npRenderArchivos() {
+  var el=document.getElementById('np-archivos-lista');
+  if (!el) return;
+  el.innerHTML='';
+  if (!npArchivos.length) {
+    el.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:#aaa;">No hay archivos añadidos aún</div>';
+    return;
+  }
+  var iconos={excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
+  npArchivos.forEach(function(a, idx) {
+    var esMed=a.esMediciones;
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+(esMed?'#EAF3DE':'white')+';border:1px solid '+(esMed?'#C0DD97':'#e5e5e0')+';border-radius:8px;margin-bottom:6px;';
+    var sz=a.file.size>1048576?(a.file.size/1048576).toFixed(1)+' MB':Math.round(a.file.size/1024)+' KB';
+    row.innerHTML='<span style="font-size:20px;flex-shrink:0;">'+(iconos[a.tipo]||'📎')+'</span>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.nombre+'</div>'+
+      '<div style="font-size:11px;color:#888;">'+sz+(esMed?' &nbsp;<strong style="color:#3B6D11;">MEDICIONES</strong>':'')+'</div></div>'+
+      '<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0;">'+
+      '<input type="checkbox" '+(esMed?'checked':'')+' style="width:14px;height:14px;"> Mediciones</label>'+
+      '<button style="background:none;border:none;cursor:pointer;font-size:16px;color:#aaa;flex-shrink:0;">✕</button>';
+    // Eventos
+    row.querySelector('input[type=checkbox]').onchange = (function(i){ return function(e){ npToggleMediciones(i,e.target.checked); }; })(idx);
+    row.querySelector('button').onclick = (function(i){ return function(){ npEliminarArchivo(i); }; })(idx);
+    el.appendChild(row);
+  });
+}
+
+function npToggleMediciones(idx, checked) {
+  if (checked) npArchivos.forEach(function(a,i){ a.esMediciones=(i===idx); });
+  else npArchivos[idx].esMediciones=false;
+  npRenderArchivos();
+}
+
+function npEliminarArchivo(idx) {
+  npArchivos.splice(idx,1);
+  npRenderArchivos();
+}
+
+function npGenerarResumen() {
+  var el=document.getElementById('np-resumen');
+  if (!el) return;
+  var nomCli='', emCli='';
+  if (npClienteTipo==='existente'&&npClienteSeleccionado) {
+    nomCli=npClienteSeleccionado.commercial_name; emCli=npClienteSeleccionado.commercial_email||'';
+  } else {
+    nomCli=document.getElementById('np-new-nombre').value+' [NUEVO]';
+    emCli=document.getElementById('np-new-email').value;
+  }
+  var med=npArchivos.find(function(a){return a.esMediciones;});
+  var campos=[
+    {label:'Cliente',val:nomCli},{label:'Email',val:emCli},
+    {label:'Nombre proyecto',val:document.getElementById('np-proj-nombre').value},
+    {label:'Fecha petición',val:document.getElementById('np-proj-fecha').value?new Date(document.getElementById('np-proj-fecha').value).toLocaleDateString('es-ES'):'-'},
+    {label:'Archivos adjuntos',val:npArchivos.length+' archivo'+(npArchivos.length!==1?'s':'')},
+    {label:'Archivo de mediciones',val:med?med.nombre:'No marcado (se identificará en análisis)'}
+  ];
+  el.innerHTML=campos.map(function(c){
+    return '<div style="display:flex;padding:9px 0;border-bottom:1px solid #f5f5f0;">'+
+      '<div style="width:180px;font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;flex-shrink:0;">'+c.label+'</div>'+
+      '<div style="font-size:13px;color:#1a1a1a;">'+(c.val||'-')+'</div></div>';
+  }).join('');
+}
+
+async function npGuardar() {
+  var btn=document.getElementById('np-btn-guardar');
+  var loading=document.getElementById('np-guardando');
+  btn.disabled=true; loading.style.display='block';
+  try {
+    var clienteId=null, acronimo='';
+    if (npClienteTipo==='nuevo') {
+      acronimo=document.getElementById('np-new-acronimo').value.trim().toUpperCase();
+      var newCli={commercial_name:document.getElementById('np-new-nombre').value.trim(),
+        client_code:acronimo, contact_name:document.getElementById('np-new-contacto').value.trim(),
+        commercial_email:document.getElementById('np-new-email').value.trim(),
+        phone:document.getElementById('np-new-telefono').value.trim()||null,
+        client_type:document.getElementById('np-new-tipo').value.trim()||null,
+        client_confirmed:false, created_at:new Date().toISOString(), updated_at:new Date().toISOString()};
+      var lastCli=await db.from('clients').select('internal_code').order('id',{ascending:false}).limit(1);
+      var nCli=0;
+      if(lastCli.data&&lastCli.data.length&&lastCli.data[0].internal_code){var mC=lastCli.data[0].internal_code.match(/\d+/);if(mC)nCli=parseInt(mC[0]);}
+      newCli.internal_code='CLI-'+String(nCli+1).padStart(3,'0');
+      var cliRes=await db.from('clients').insert(newCli).select().single();
+      clienteId=cliRes.data.id;
+    } else {
+      clienteId=npClienteSeleccionado.id;
+      acronimo=npClienteSeleccionado.client_code||npClienteSeleccionado.internal_code||'XXX';
+    }
+    var anyo=new Date().getFullYear();
+    var lastProj=await db.from('projects').select('project_code').order('id',{ascending:false}).limit(1);
+    var nProj=1;
+    if(lastProj.data&&lastProj.data.length&&lastProj.data[0].project_code){var mP=lastProj.data[0].project_code.match(/\d+$/);if(mP)nProj=parseInt(mP[0])+1;}
+    var projCode='BYG-'+acronimo.substring(0,3)+'-'+anyo+'-'+String(nProj).padStart(3,'0');
+    var stRes=await db.from('project_statuses').select('id').eq('code','solicitado').single();
+    var statusId=stRes.data?stRes.data.id:null;
+    var newProj={name:document.getElementById('np-proj-nombre').value.trim(), code:projCode, project_code:projCode,
+      client_id:clienteId, contact_email:npClienteTipo==='nuevo'?document.getElementById('np-new-email').value.trim():(npClienteSeleccionado.commercial_email||''),
+      received_at:document.getElementById('np-proj-fecha').value?new Date(document.getElementById('np-proj-fecha').value).toISOString():new Date().toISOString(),
+      project_status_id:statusId, confidence:1.0, notes:document.getElementById('np-proj-texto').value.trim()||null,
+      created_at:new Date().toISOString(), updated_at:new Date().toISOString()};
+    var projRes=await db.from('projects').insert(newProj).select().single();
+    var proyectoId=projRes.data.id;
+    for (var i=0;i<npArchivos.length;i++) {
+      var arch=npArchivos[i];
+      var filePath='proyecto-'+proyectoId+'/'+Date.now()+'-'+arch.file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      var upRes=await db.storage.from('project-attachments').upload(filePath,arch.file,{cacheControl:'3600',upsert:false});
+      if(upRes.error){console.error('Error subiendo '+arch.nombre+':',upRes.error);continue;}
+      await db.from('project_attachments').insert({project_id:proyectoId,file_name:arch.nombre,file_path:filePath,
+        file_size:arch.file.size,file_type:arch.tipo,mime_type:arch.file.type,is_measurements:arch.esMediciones,
+        uploaded_by:currentUser?currentUser.email:'manual',uploaded_at:new Date().toISOString(),storage_provider:'supabase'});
+    }
+    alert('Proyecto registrado: '+projCode);
+    npReset(); showPanel('dashboard'); loadDashboard();
+  } catch(e) {
+    console.error(e); alert('Error: '+(e.message||JSON.stringify(e)));
+    btn.disabled=false; loading.style.display='none';
+  }
+}
+
+// ADJUNTOS EN ANÁLISIS
+async function anMarcarMediciones(adjuntoId, projectId) {
+  try {
+    await db.from('project_attachments').update({is_measurements:false}).eq('project_id',projectId);
+    await db.from('project_attachments').update({is_measurements:true}).eq('id',adjuntoId);
+    cargarDocumentosAnálisis(projectId, null);
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function anDescargarArchivo(filePath, fileName) {
+  try {
+    var res=await db.storage.from('project-attachments').createSignedUrl(filePath,300);
+    if(res.data&&res.data.signedUrl) window.open(res.data.signedUrl,'_blank');
+    else alert('No se pudo generar el enlace.');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function anAgregarArchivos(files, projectId) {
+  for(var i=0;i<files.length;i++){
+    var file=files[i];
+    if(file.size>50*1024*1024){alert(file.name+' supera 50MB.');continue;}
+    var tipo=npDetectarTipo(file);
+    var filePath='proyecto-'+projectId+'/'+Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var upRes=await db.storage.from('project-attachments').upload(filePath,file,{cacheControl:'3600',upsert:false});
+    if(upRes.error){console.error(upRes.error);continue;}
+    await db.from('project_attachments').insert({project_id:projectId,file_name:file.name,file_path:filePath,
+      file_size:file.size,file_type:tipo,mime_type:file.type,is_measurements:false,
+      uploaded_by:currentUser?currentUser.email:'manual',uploaded_at:new Date().toISOString(),storage_provider:'supabase'});
+  }
+  document.getElementById('an-file-input').value='';
+  cargarDocumentosAnálisis(projectId,null);
+}
+
+function anAnalizarMediciones(projectId, adjuntoId) {
+  alert('Módulo de análisis con IA: próximamente se integrará el parser SheetJS para separar partidas por gremio.');
+}
+
+async function cargarAdjuntosProyecto(projectId, contenedorId) {
+  var el=document.getElementById(contenedorId);
+  if(!el) return;
+  try {
+    var res=await db.from('project_attachments').select('*').eq('project_id',projectId).order('uploaded_at');
+    var adjuntos=res.data||[];
+    el.innerHTML='';
+    if(!adjuntos.length){el.innerHTML='<div style="font-size:11px;color:#aaa;">Sin archivos adjuntos</div>';return;}
+    var iconos={excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
+    var wrapper=document.createElement('div');
+    wrapper.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
+    adjuntos.forEach(function(a){
+      var esMed=a.is_measurements;
+      var div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 10px;background:'+(esMed?'#EAF3DE':'#f5f5f0')+';border:1px solid '+(esMed?'#C0DD97':'#ddd')+';border-radius:6px;cursor:pointer;font-size:11px;';
+      div.title=a.file_name;
+      var nombre=a.file_name.length>25?a.file_name.substring(0,22)+'...':a.file_name;
+      div.innerHTML=(iconos[a.file_type]||'📎')+' '+nombre+(esMed?' <strong style="color:#3B6D11;font-size:9px;">MED</strong>':'');
+      div.onclick=(function(p,n){return function(){anDescargarArchivo(p,n);};})(a.file_path,a.file_name);
+      wrapper.appendChild(div);
+    });
+    el.appendChild(wrapper);
+  } catch(e){console.error(e);}
 }
 
 </script>
