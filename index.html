@@ -2872,10 +2872,41 @@ async function cargarDocumentosAnálisis(projectId, categoria) {
       });
       el.appendChild(lista);
     }
-    var addDiv=document.createElement('div');addDiv.style.marginTop='0.5rem';
-    var inp=document.createElement('input');inp.type='file';inp.multiple=true;inp.id='an-file-input';inp.style.display='none';inp.onchange=function(){anAgregarArchivos(this.files,projectId);};
-    var badd=document.createElement('button');badd.className='btn btn-sm';badd.style.borderStyle='dashed';badd.textContent='+ Anadir archivos';badd.onclick=function(){document.getElementById('an-file-input').click();};
-    addDiv.appendChild(inp);addDiv.appendChild(badd);el.appendChild(addDiv);
+    // Zona de arrastre + botón seleccionar
+    var addDiv=document.createElement('div');
+    addDiv.style.marginTop='0.75rem';
+    
+    var inp=document.createElement('input');
+    inp.type='file';inp.multiple=true;inp.id='an-file-input';inp.style.display='none';
+    inp.onchange=function(){anAgregarArchivos(this.files,projectId);};
+    
+    var dropzone=document.createElement('div');
+    dropzone.id='an-dropzone';
+    dropzone.style.cssText='border:2px dashed #ccc;border-radius:8px;padding:1.25rem;text-align:center;cursor:pointer;transition:all 0.2s;';
+    dropzone.innerHTML='<div style="font-size:1.5rem;margin-bottom:6px;">&#128206;</div>'+
+      '<div style="font-size:12px;color:#666;margin-bottom:8px;">Arrastra archivos aqui o haz clic para seleccionar</div>'+
+      '<div style="display:inline-block;background:#185FA5;color:white;padding:5px 14px;border-radius:6px;font-size:11px;">Seleccionar archivos</div>';
+    
+    dropzone.onclick=function(){ document.getElementById('an-file-input').click(); };
+    dropzone.ondragover=function(e){
+      e.preventDefault();
+      dropzone.style.borderColor='#185FA5';
+      dropzone.style.background='#f0f7ff';
+    };
+    dropzone.ondragleave=function(){
+      dropzone.style.borderColor='#ccc';
+      dropzone.style.background='';
+    };
+    dropzone.ondrop=function(e){
+      e.preventDefault();
+      dropzone.style.borderColor='#ccc';
+      dropzone.style.background='';
+      if(e.dataTransfer.files.length) anAgregarArchivos(e.dataTransfer.files, projectId);
+    };
+    
+    addDiv.appendChild(inp);
+    addDiv.appendChild(dropzone);
+    el.appendChild(addDiv);
     var archsMed=adj.filter(function(a){return a.is_measurements;});
     if(archsMed.length){
       var mb=document.createElement('div');
