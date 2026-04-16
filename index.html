@@ -4272,7 +4272,7 @@ async function cargarHitos(projectId) {
       var minF = Math.min.apply(null, fechas);
       var maxF = Math.max.apply(null, fechas);
       var rango = maxF - minF || 1;
-      var W = 700, H = 90, mH = 40, lineY = 45;
+      var W = 700, H = 110, mH = 40, lineY = 55;
       var hoy = Date.now();
       var hoyX = mH + Math.round(((Math.min(hoy, maxF) - minF) / rango) * W);
       var svg = [];
@@ -4287,9 +4287,13 @@ async function cargarHitos(projectId) {
         var col = comp ? '#0F6E56' : (retr ? '#C0392B' : '#185FA5');
         svg.push('<circle cx="'+cx+'" cy="'+lineY+'" r="'+(comp?10:8)+'" fill="'+col+'" stroke="white" stroke-width="2"/>');
         if (comp) svg.push('<text x="'+cx+'" y="'+(lineY+4)+'" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>');
-        var lY = (i%2===0) ? lineY-18 : lineY+24;
-        var nom = h.name ? (h.name.length>14 ? h.name.substring(0,12)+'...' : h.name) : 'Hito';
-        svg.push('<text x="'+cx+'" y="'+lY+'" text-anchor="middle" font-size="9" fill="'+col+'" font-weight="500">'+nom+'</text>');
+        var arriba = (i%2===0);
+        var lY = arriba ? lineY-22 : lineY+22;
+        var lY2 = arriba ? lineY-11 : lineY+33;
+        var nom = h.milestone_name ? (h.milestone_name.length>14 ? h.milestone_name.substring(0,12)+'...' : h.milestone_name) : 'Hito';
+        var fechaLabel = (h.actual_date || h.planned_date) ? new Date(h.actual_date || h.planned_date).toLocaleDateString('es-ES', {day:'2-digit',month:'2-digit'}) : '';
+        svg.push('<text x="'+cx+'" y="'+lY+'" text-anchor="middle" font-size="9" fill="'+col+'" font-weight="600">'+nom+'</text>');
+        svg.push('<text x="'+cx+'" y="'+lY2+'" text-anchor="middle" font-size="8" fill="#aaa">'+fechaLabel+'</text>');
       });
       if (hoy >= minF && hoy <= maxF) {
         svg.push('<line x1="'+hoyX+'" y1="'+(lineY-14)+'" x2="'+hoyX+'" y2="'+(lineY+14)+'" stroke="#E67E22" stroke-width="2" stroke-dasharray="3,2"/>');
@@ -4316,7 +4320,7 @@ async function cargarHitos(projectId) {
         return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:'+(comp?'#E1F5EE':'white')+';border:1px solid '+(comp?'#A7DEC9':'#e5e5e0')+';border-radius:8px;">' +
           '<div style="width:28px;height:28px;border-radius:50%;background:'+(comp?'#0F6E56':'#ddd')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
           '<span style="color:white;font-size:'+(comp?'14':'12')+'px;">'+(comp?'✓':(i+1))+'</span></div>' +
-          '<div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+m.name+'</div>' +
+          '<div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+(m.milestone_name||m.name||'-')+'</div>' +
           '<div style="font-size:11px;color:#888;">'+fecha+retr+'</div></div>' +
           (comp?'':'<button class="btn btn-sm" style="font-size:11px;" onclick="marcarHitoCompletado('+m.id+','+projectId+')">Completar</button>') +
           '</div>';
