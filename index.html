@@ -1314,7 +1314,7 @@
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
 
     <!-- TÉCNICO -->
-    <div class="card" id="eval-card-técnico">
+    <div class="card" id="eval-card-tecnico">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
         <div style="width:32px;height:32px;border-radius:8px;background:#f0f0ea;display:flex;align-items:center;justify-content:center;font-size:14px;">⚙️</div>
         <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dpto. Técnico</div><div style="font-size:11px;color:#888;">Capacidad y viabilidad técnica</div></div>
@@ -1322,9 +1322,9 @@
       <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
         Evalúa si ByG dispone de los recursos técnicos, experiencia y capacidad de ejecución para este proyecto.
       </div>
-      <div id="eval-estado-técnico" style="margin-bottom:0.75rem;"></div>
-      <div id="eval-form-técnico">
-        <textarea id="eval-reason-técnico" placeholder="Observaciones técnicas (obligatorio si rechaza)..."
+      <div id="eval-estado-tecnico" style="margin-bottom:0.75rem;"></div>
+      <div id="eval-form-tecnico">
+        <textarea id="eval-reason-tecnico" placeholder="Observaciones técnicas (obligatorio si rechaza)..."
           style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:80px;resize:vertical;margin-bottom:8px;font-family:inherit;"></textarea>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluación('tecnico','rejected')">Rechazar</button>
@@ -1354,7 +1354,7 @@
     </div>
 
     <!-- DIRECCIÓN -->
-    <div class="card" id="eval-card-dirección">
+    <div class="card" id="eval-card-direccion">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
         <div style="width:32px;height:32px;border-radius:8px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:14px;">🏢</div>
         <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dirección</div><div style="font-size:11px;color:#888;">Visto bueno ejecutivo</div></div>
@@ -1362,9 +1362,9 @@
       <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
         Aprobación final de Dirección para que el proyecto entre en fase de análisis y presupuestación.
       </div>
-      <div id="eval-estado-dirección" style="margin-bottom:0.75rem;"></div>
-      <div id="eval-form-dirección">
-        <textarea id="eval-reason-dirección" placeholder="Observaciones de dirección (obligatorio si rechaza)..."
+      <div id="eval-estado-direccion" style="margin-bottom:0.75rem;"></div>
+      <div id="eval-form-direccion">
+        <textarea id="eval-reason-direccion" placeholder="Observaciones de dirección (obligatorio si rechaza)..."
           style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:80px;resize:vertical;margin-bottom:8px;font-family:inherit;"></textarea>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-danger btn-sm" style="flex:1;" onclick="registrarEvaluación('direccion','rejected')">Rechazar</button>
@@ -2700,7 +2700,7 @@ async function abrirEvaluacion(id, nameEnc) {
   try {
     var res = await db.from('projects').select('id,name,code,contact_email,category,received_at,project_statuses(code,name)').eq('id',id).single();
     evalProyecto = res.data;
-    document.getElementById('eval-title').textContent = 'Evaluación - '+(evalProyecto.name||evalProyecto.code||'#'+id);
+    document.getElementById('eval-title').textContent = 'Evaluación de Propuesta - '+(evalProyecto.name||evalProyecto.code||'#'+id);
     document.getElementById('eval-name').textContent = evalProyecto.name||evalProyecto.code||'#'+id;
     document.getElementById('eval-client').textContent = evalProyecto.contact_email||'-';
     document.getElementById('eval-cat').textContent = evalProyecto.category||'-';
@@ -2784,7 +2784,7 @@ async function registrarEvaluación(dept, decision) {
     alert('El campo de observaciones es obligatorio al rechazar.');
     return;
   }
-  var deptNames = {técnico:'Dept. Técnico', comercial:'Dept. Comercial', dirección:'Dirección'};
+  var deptNames = {tecnico:'Dept. Técnico', comercial:'Dept. Comercial', direccion:'Dirección'};
   var evalData = {
     project_id:       evalProyecto.id,
     department:       dept,
