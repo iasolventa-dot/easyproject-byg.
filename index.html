@@ -432,7 +432,7 @@
     <h1><span class="live-dot"></span>Dashboard<span class="last-update" id="last-update"></span></h1>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="btn-refresh" onclick="loadDashboard()">Actualizar</button>
-      <button class="btn-refresh" style="background:#3B6D11;" onclick="abrirNuevoProyecto()">+ Nuevo proyecto</button>
+      <button id="btn-nuevo-proyecto" class="btn-refresh" style="background:#3B6D11;" onclick="abrirNuevoProyecto()">+ Nuevo proyecto</button>
       <div class="dept-select" id="dept-select-wrap">
         <button class="dept-btn active-tecnico" onclick="setDept('tecnico',this)">Técnico</button>
         <button class="dept-btn" onclick="setDept('direccion',this)">Dirección</button>
@@ -1522,6 +1522,11 @@ function setDept(dept, btn) {
   document.getElementById('dept-badge').className = 'dept-badge dept-'+dept+'-badge';
   document.getElementById('dept-indicator').textContent = cfg.desc;
   document.getElementById('dept-indicator').className = 'dept-indicator di-'+dept;
+  // Mostrar botón nuevo proyecto solo para técnico, dirección y comercial
+  var btnNP = document.getElementById('btn-nuevo-proyecto');
+  if (btnNP) {
+    btnNP.style.display = ['tecnico','direccion','comercial'].indexOf(dept) > -1 ? 'inline-block' : 'none';
+  }
   loadDashboard();
 }
 
@@ -1572,6 +1577,19 @@ async function cargarMetricasDept(dept) {
   if (dept === 'tecnico') {
     if (labels[2]) labels[2].textContent = 'Pendiente revisión';
     try {
+      // Notificaciones de nuevos proyectos
+      var notifResult = await cargarNotificacionesNuevosProyectos('tecnico');
+      if (notifResult && notifResult.notifs.length && banner) {
+        var msgNotif = notifResult.notifs[0].error_message;
+        banner.style.display = 'block';
+        banner.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosFase('solicitado')">' +
+          '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">+</div>' +
+          '<div><div style="font-size:13px;font-weight:600;color:#27500A;">' + notifResult.notifs.length + ' nuevo(s) proyecto(s) registrado(s)</div>' +
+          '<div style="font-size:11px;color:#3B6D11;">' + msgNotif + '</div></div></div>' +
+          '<button onclick="event.stopPropagation();marcarNotificacionesLeidas([' + notifResult.ids.join(',') + ']).then(function(){loadDashboard();})" style="background:none;border:none;font-size:16px;cursor:pointer;color:#888;" title="Marcar como leído">✓</button></div>';
+        return;
+      }
       var stCodes = ['en_analisis','oferta_en_curso','pending_tech_review'];
       var stRes = await db.from('project_statuses').select('id').in('code', stCodes);
       var ids = stRes.data ? stRes.data.map(function(s){return s.id;}) : [];
@@ -1597,6 +1615,17 @@ async function cargarMetricasDept(dept) {
     if (labels[1]) labels[1].textContent = 'Obras en ejecucion';
     if (labels[2]) labels[2].textContent = 'Importe adjudicado';
     try {
+      var notifDir = await cargarNotificacionesNuevosProyectos('direccion');
+      if (notifDir && notifDir.notifs.length && banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosFase('solicitado')">' +
+          '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">+</div>' +
+          '<div><div style="font-size:13px;font-weight:600;color:#27500A;">' + notifDir.notifs.length + ' nuevo(s) proyecto(s) registrado(s)</div>' +
+          '<div style="font-size:11px;color:#3B6D11;">' + notifDir.notifs[0].error_message + '</div></div></div>' +
+          '<button onclick="event.stopPropagation();marcarNotificacionesLeidas([' + notifDir.ids.join(',') + ']).then(function(){loadDashboard();})" style="background:none;border:none;font-size:16px;cursor:pointer;color:#888;">✓</button></div>';
+        return;
+      }
       var adjRes = await db.from('project_awards').select('awarded_amount').eq('award_type','adjudicado');
       var totalAdj = adjRes.data ? adjRes.data.reduce(function(acc,a){return acc+(parseFloat(a.awarded_amount)||0);},0) : 0;
       mReview.textContent = totalAdj > 0 ? totalAdj.toLocaleString('es-ES',{maximumFractionDigits:0}) + ' EUR' : '0 EUR';
@@ -1634,6 +1663,17 @@ async function cargarMetricasDept(dept) {
     if (labels[1]) labels[1].textContent = 'Ofertas pendientes';
     if (labels[2]) labels[2].textContent = 'Proyectos perdidos';
     try {
+      var notifCom = await cargarNotificacionesNuevosProyectos('comercial');
+      if (notifCom && notifCom.notifs.length && banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosFase('solicitado')">' +
+          '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">+</div>' +
+          '<div><div style="font-size:13px;font-weight:600;color:#27500A;">' + notifCom.notifs.length + ' nuevo(s) proyecto(s) registrado(s)</div>' +
+          '<div style="font-size:11px;color:#3B6D11;">' + notifCom.notifs[0].error_message + '</div></div></div>' +
+          '<button onclick="event.stopPropagation();marcarNotificacionesLeidas([' + notifCom.ids.join(',') + ']).then(function(){loadDashboard();})" style="background:none;border:none;font-size:16px;cursor:pointer;color:#888;">✓</button></div>';
+        return;
+      }
       var stOE = await db.from('project_statuses').select('id').eq('code','oferta_enviada').single();
       var oeCount = 0;
       if (stOE.data) {
@@ -4077,6 +4117,11 @@ function iniciarApp() {
   var activeBtn = document.querySelector('.dept-btn[onclick*="' + dept + '"]');
   if (activeBtn) activeBtn.classList.add('active-' + dept);
 
+  // Mostrar botón nuevo proyecto según departamento
+  var btnNP2 = document.getElementById('btn-nuevo-proyecto');
+  if (btnNP2) {
+    btnNP2.style.display = ['tecnico','direccion','comercial'].indexOf(dept) > -1 ? 'inline-block' : 'none';
+  }
   loadDashboard();
 }
 
@@ -4861,6 +4906,31 @@ async function guardarCliente() {
 }
 
 // ---- ALERTAS PLANNING PARA DIRECCION ----
+async function cargarNotificacionesNuevosProyectos(dept) {
+  try {
+    var res = await db.from('automation_errors')
+      .select('*')
+      .eq('flow_name', 'NOTIFICACION')
+      .eq('node_name', dept)
+      .order('created_at', {ascending: false})
+      .limit(5);
+    
+    var notifs = res.data || [];
+    if (!notifs.length) return null;
+    
+    // Marcar como leídas después de mostrar (borrar)
+    var ids = notifs.map(function(n){ return n.id; });
+    
+    return {notifs: notifs, ids: ids};
+  } catch(e) { return null; }
+}
+
+async function marcarNotificacionesLeidas(ids) {
+  try {
+    await db.from('automation_errors').delete().in('id', ids);
+  } catch(e) { console.error(e); }
+}
+
 async function cargarAlertasPlanning() {
   try {
     // Proyectos en ejecucion con planning enviado
@@ -5749,7 +5819,21 @@ async function npGuardar() {
         file_size:arch.file.size,file_type:arch.tipo,mime_type:arch.file.type,is_measurements:arch.esMediciones,
         uploaded_by:currentUser?currentUser.email:'manual',uploaded_at:new Date().toISOString(),storage_provider:'supabase'});
     }
-    alert('Proyecto registrado: '+projCode);
+    // Crear notificaciones para los otros departamentos
+    var deptCreador = currentDept || 'tecnico';
+    var deptNames = {tecnico:'Dept. Técnico', direccion:'Dirección', comercial:'Dept. Comercial'};
+    var notifDepts = ['tecnico','direccion','comercial'].filter(function(d){ return d !== deptCreador; });
+    for (var nd = 0; nd < notifDepts.length; nd++) {
+      try {
+        await db.from('automation_errors').insert({
+          flow_name: 'NOTIFICACION',
+          node_name: notifDepts[nd],
+          error_message: 'Nuevo proyecto creado por ' + (deptNames[deptCreador]||deptCreador) + ': ' + projCode + ' - ' + document.getElementById('np-proj-nombre').value.trim(),
+          created_at: new Date().toISOString()
+        });
+      } catch(ne) { console.error('Error notif:', ne); }
+    }
+    alert('Proyecto registrado: ' + projCode + '\n\nSe ha notificado a los departamentos correspondientes.');
     npReset(); showPanel('dashboard'); loadDashboard();
   } catch(e) {
     console.error(e); alert('Error: '+(e.message||JSON.stringify(e)));
