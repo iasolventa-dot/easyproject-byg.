@@ -1630,6 +1630,9 @@ function showPanel(name) {
   if (name==='jefes') loadJefes();
   if (name==='gremios') loadGremios();
   if (name==='alertas') loadAlertas();
+  if (name==='informes-proyectos') cargarInformeProyectos();
+  if (name==='informes-gastos') cargarInformeGastos();
+  if (name==='informes-desviaciones') cargarInformeDesviaciones();
 }
 
 var currentDept = 'tecnico';
@@ -6838,15 +6841,7 @@ async function renderInformeDesviaciones(proyectos) {
   el.innerHTML = html;
 }
 
-// ── SHOW PANEL HOOK ──────────────────────────────────────────
-// Override showPanel to load data when entering informes panels
-var _originalShowPanel = showPanel;
-function showPanel(panelId) {
-  _originalShowPanel(panelId);
-  if (panelId === 'informes-proyectos') cargarInformeProyectos();
-  else if (panelId === 'informes-gastos') cargarInformeGastos();
-  else if (panelId === 'informes-desviaciones') cargarInformeDesviaciones();
-}
+// Informes cargados desde showPanel
 
 </script>
 </body>
