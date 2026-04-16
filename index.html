@@ -811,14 +811,25 @@
   <!-- TAB HITOS -->
   <div id="ej-tab-hitos" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-size:13px;color:#888;">Hitos en ejecución — marca cada uno al completarlo</div>
-      <button class="btn btn-primary btn-sm" onclick="mostrarFormHitoEjecución()">+ Nuevo hito</button>
+      <div style="font-size:13px;color:#888;">Seguimiento real de hitos — registra el cumplimiento vs. lo planificado</div>
+      <button class="btn btn-primary btn-sm" id="btn-nuevo-hito" onclick="mostrarFormHitoEjecucion()" style="display:none;">+ Nuevo hito</button>
     </div>
     <div id="ej-form-hito-exec" style="display:none;background:#f9f9f6;border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem;">
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">
-        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Nombre del hito</label><input type="text" id="hito-exec-nombre" placeholder="Ej: Cierre electricidad" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>
-        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Fecha prevista</label><input type="date" id="hito-exec-fecha" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>
-        <div style="display:flex;gap:6px;"><button class="btn btn-primary btn-sm" onclick="guardarHitoEjecución()">Guardar</button><button class="btn btn-sm" onclick="document.getElementById('ej-form-hito-exec').style.display='none'">Cancelar</button></div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end;">
+        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Nombre del hito</label><input type="text" id="hito-exec-nombre" placeholder="Ej: Inicio instalación eléctrica" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>
+        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Fecha planificada</label><input type="date" id="hito-exec-fecha-plan" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>
+        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Tipo</label>
+          <select id="hito-exec-tipo" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+            <option value="hito">Hito general</option>
+            <option value="inicio">Inicio de obra</option>
+            <option value="fin">Fin de obra</option>
+            <option value="entrega">Entrega parcial</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-sm" onclick="guardarHitoEjecucion()">Guardar</button>
+          <button class="btn btn-sm" onclick="document.getElementById('ej-form-hito-exec').style.display='none'">Cancelar</button>
+        </div>
       </div>
     </div>
     <div id="ej-hitos-content"><div class="loading">Cargando hitos...</div></div>
@@ -4264,144 +4275,235 @@ async function cargarHitos(projectId) {
   if (!el) return;
   try {
     var res = await db.from('project_milestones').select('*').eq('project_id', projectId).order('planned_date');
-    if (!res.data || !res.data.length) { el.innerHTML = '<div class="empty">No hay hitos registrados</div>'; return; }
+    if (!res.data || !res.data.length) {
+      el.innerHTML = '<div class="empty">No hay hitos registrados. El Departamento Técnico puede añadir el planning de hitos.</div>';
+      return;
+    }
     var hitos = res.data;
-    var completados = hitos.filter(function(m){return m.completed;}).length;
-    var total = hitos.length;
+    var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-    // TIMELINE
-    var hitosConFecha = hitos.filter(function(h){ return h.planned_date || h.actual_date; });
+    function fmtFecha(d) {
+      if (!d) return '-';
+      var fd = new Date(d);
+      return meses[fd.getMonth()] + '-' + fd.getFullYear();
+    }
+    function fmtFechaCorta(d) {
+      if (!d) return '-';
+      var fd = new Date(d);
+      return fd.toLocaleDateString('es-ES');
+    }
+
+    // Métricas de desviación
+    var completados = hitos.filter(function(h){ return h.completed && h.actual_date; });
+    var totalDesviacion = 0;
+    completados.forEach(function(h) {
+      var plan = new Date(h.planned_date).getTime();
+      var real = new Date(h.actual_date).getTime();
+      var dias = Math.round((real - plan) / (1000*60*60*24));
+      totalDesviacion += dias;
+    });
+    var hitoInicio = hitos.find(function(h){ return h.milestone_type === 'inicio' || (h.milestone_name && h.milestone_name.toLowerCase().includes('inicio')); });
+    var hitoFin = hitos.find(function(h){ return h.milestone_type === 'fin' || (h.milestone_name && h.milestone_name.toLowerCase().includes('fin')); });
+    var desvTotal = 0;
+    if (hitoInicio && hitoFin && hitoInicio.planned_date && hitoFin.planned_date) {
+      var planDuracion = Math.round((new Date(hitoFin.planned_date) - new Date(hitoInicio.planned_date)) / (1000*60*60*24));
+      if (hitoFin.actual_date && hitoInicio.actual_date) {
+        var realDuracion = Math.round((new Date(hitoFin.actual_date) - new Date(hitoInicio.actual_date)) / (1000*60*60*24));
+        desvTotal = realDuracion - planDuracion;
+      }
+    }
+
+    // MÉTRICAS BANNER
+    var metricasHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem;">' +
+      '<div style="background:white;border:1px solid #e5e5e0;border-radius:8px;padding:12px;text-align:center;">' +
+      '<div style="font-size:11px;color:#888;margin-bottom:3px;">Hitos completados</div>' +
+      '<div style="font-size:20px;font-weight:700;color:#0F6E56;">' + completados.length + ' / ' + hitos.length + '</div></div>' +
+      '<div style="background:white;border:1px solid #e5e5e0;border-radius:8px;padding:12px;text-align:center;">' +
+      '<div style="font-size:11px;color:#888;margin-bottom:3px;">Desviación media</div>' +
+      '<div style="font-size:20px;font-weight:700;color:' + (totalDesviacion > 0 ? '#C0392B' : '#0F6E56') + ';">' +
+      (completados.length > 0 ? (totalDesviacion > 0 ? '+' : '') + Math.round(totalDesviacion/completados.length) + ' días' : '-') + '</div></div>' +
+      '<div style="background:white;border:1px solid #e5e5e0;border-radius:8px;padding:12px;text-align:center;">' +
+      '<div style="font-size:11px;color:#888;margin-bottom:3px;">Desviación total obra</div>' +
+      '<div style="font-size:20px;font-weight:700;color:' + (desvTotal > 0 ? '#C0392B' : desvTotal < 0 ? '#0F6E56' : '#888') + ';">' +
+      (desvTotal !== 0 ? (desvTotal > 0 ? '+' : '') + desvTotal + ' días' : '-') + '</div></div>' +
+      '</div>';
+
+    // TIMELINE DUAL
+    var hitosConFecha = hitos.filter(function(h){ return h.planned_date; });
     var timelineHtml = '';
     if (hitosConFecha.length >= 1) {
-      // Ventana de 1 mes visible, scroll si hay más hitos fuera
       var hoy = Date.now();
-      var unMes = 30 * 24 * 60 * 60 * 1000;
-      // Calcular rango total de todos los hitos
-      var todasFechas = hitosConFecha.map(function(h){ return new Date(h.actual_date || h.planned_date).getTime(); });
-      var minTotal = Math.min.apply(null, todasFechas);
-      var maxTotal = Math.max.apply(null, todasFechas);
-      // La ventana visible es 1 mes centrada en hoy (o en el primer hito si no hay hitos futuros)
-      var ventanaInicio = hoy - (unMes * 0.3);  // hoy menos 9 días
-      var ventanaFin = ventanaInicio + unMes;
-      // Si todos los hitos están fuera de la ventana, ajustar al rango de hitos
-      var rangoTotal = Math.max(maxTotal - minTotal, unMes);
-      // Píxeles por milisegundo: 1 mes = 800px (scrollable)
-      var pxPorMs = 800 / unMes;
-      var totalWidth = Math.max(800, Math.round(rangoTotal * pxPorMs) + 80);
-      var H = 110, mH = 40, lineY = 55;
-      var hoyX = mH + Math.round((hoy - minTotal) * pxPorMs);
-      var svg = [];
-      svg.push('<svg viewBox="0 0 ' + (totalWidth) + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:' + totalWidth + 'px;height:' + H + 'px;min-width:100%;">');
-      // Línea base completa
-      svg.push('<line x1="'+mH+'" y1="'+lineY+'" x2="'+(totalWidth-mH)+'" y2="'+lineY+'" stroke="#e5e5e0" stroke-width="3" stroke-linecap="round"/>');
-      // Línea completada hasta hoy
-      var hoyXclamp = Math.min(Math.max(hoyX, mH), totalWidth-mH);
-      svg.push('<line x1="'+mH+'" y1="'+lineY+'" x2="'+hoyXclamp+'" y2="'+lineY+'" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>');
-      // Marcas de mes en el eje
-      var mesActual = new Date(minTotal);
-      mesActual.setDate(1); mesActual.setHours(0,0,0,0);
-      while (mesActual.getTime() <= maxTotal + unMes) {
-        var mx = mH + Math.round((mesActual.getTime() - minTotal) * pxPorMs);
-        if (mx >= mH && mx <= totalWidth - mH) {
-          svg.push('<line x1="'+mx+'" y1="'+(lineY-5)+'" x2="'+mx+'" y2="'+(lineY+5)+'" stroke="#ddd" stroke-width="1"/>');
-          var mesLabel = mesActual.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
-          mesLabel = mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1).replace(' de ', '-').replace(' ', '-');
-          svg.push('<text x="'+mx+'" y="'+(lineY+18)+'" text-anchor="middle" font-size="8" fill="#ccc">'+mesLabel+'</text>');
-        }
-        mesActual.setMonth(mesActual.getMonth() + 1);
-      }
-      // Hitos
-      hitosConFecha.forEach(function(h, i) {
-        var f = new Date(h.actual_date || h.planned_date).getTime();
-        var cx = mH + Math.round((f - minTotal) * pxPorMs);
-        var comp = h.completed;
-        var retr = !comp && f < hoy;
-        var col = comp ? '#0F6E56' : (retr ? '#C0392B' : '#185FA5');
-        svg.push('<circle cx="'+cx+'" cy="'+lineY+'" r="'+(comp?10:8)+'" fill="'+col+'" stroke="white" stroke-width="2"/>');
-        if (comp) svg.push('<text x="'+cx+'" y="'+(lineY+4)+'" text-anchor="middle" font-size="10" fill="white" font-weight="bold">✓</text>');
-        var arriba = (i%2===0);
-        var lY = arriba ? lineY-22 : lineY+22;
-        var lY2 = arriba ? lineY-11 : lineY+33;
-        var nom = h.milestone_name ? (h.milestone_name.length>16 ? h.milestone_name.substring(0,14)+'...' : h.milestone_name) : 'Hito';
-        var fechaLabel = '';
-        if (h.actual_date || h.planned_date) {
-          var fd = new Date(h.actual_date || h.planned_date);
-          var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-          fechaLabel = meses[fd.getMonth()] + '-' + fd.getFullYear();
-        }
-        svg.push('<text x="'+cx+'" y="'+lY+'" text-anchor="middle" font-size="9" fill="'+col+'" font-weight="600">'+nom+'</text>');
-        svg.push('<text x="'+cx+'" y="'+lY2+'" text-anchor="middle" font-size="8" fill="#aaa">'+fechaLabel+'</text>');
+      hitosConFecha.sort(function(a,b){ return new Date(a.planned_date)-new Date(b.planned_date); });
+      var pxPorHito = 150;
+      var mH = 60, H = 140, lineYplan = 45, lineYreal = 95;
+      var totalWidth = Math.max(800, hitosConFecha.length * pxPorHito + mH * 2);
+      var posiciones = hitosConFecha.map(function(h, i) {
+        if (hitosConFecha.length === 1) return totalWidth / 2;
+        return mH + Math.round(i * (totalWidth - mH * 2) / (hitosConFecha.length - 1));
       });
-      // Línea de hoy
-      svg.push('<line x1="'+hoyXclamp+'" y1="'+(lineY-14)+'" x2="'+hoyXclamp+'" y2="'+(lineY+14)+'" stroke="#E67E22" stroke-width="2" stroke-dasharray="3,2"/>');
-      svg.push('<text x="'+hoyXclamp+'" y="'+(lineY-17)+'" text-anchor="middle" font-size="8" fill="#E67E22">Hoy</text>');
+      var svg = [];
+      svg.push('<svg viewBox="0 0 ' + totalWidth + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:' + totalWidth + 'px;height:' + H + 'px;">');
+      // Etiquetas eje
+      svg.push('<text x="8" y="' + lineYplan + '" font-size="8" fill="#185FA5" font-weight="600">PLAN</text>');
+      svg.push('<text x="8" y="' + lineYreal + '" font-size="8" fill="#0F6E56" font-weight="600">REAL</text>');
+      // Línea planificada
+      svg.push('<line x1="' + mH + '" y1="' + lineYplan + '" x2="' + (totalWidth-mH) + '" y2="' + lineYplan + '" stroke="#BFDBFE" stroke-width="2" stroke-linecap="round"/>');
+      // Línea real
+      svg.push('<line x1="' + mH + '" y1="' + lineYreal + '" x2="' + (totalWidth-mH) + '" y2="' + lineYreal + '" stroke="#D1FAE5" stroke-width="2" stroke-linecap="round"/>');
+      // Línea real completada (verde)
+      var lastComp = -1;
+      hitosConFecha.forEach(function(h,i){ if(h.completed && h.actual_date) lastComp=i; });
+      if (lastComp >= 0) svg.push('<line x1="' + mH + '" y1="' + lineYreal + '" x2="' + posiciones[lastComp] + '" y2="' + lineYreal + '" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>');
+
+      hitosConFecha.forEach(function(h, i) {
+        var cx = posiciones[i];
+        var comp = h.completed && h.actual_date;
+        var hoy2 = Date.now();
+        var retr = !comp && h.planned_date && new Date(h.planned_date).getTime() < hoy2;
+        var colPlan = retr ? '#C0392B' : '#185FA5';
+        var nom = h.milestone_name || 'Hito';
+        if (nom.length > 14) nom = nom.substring(0,12) + '…';
+
+        // Punto planificado (arriba)
+        svg.push('<circle cx="' + cx + '" cy="' + lineYplan + '" r="7" fill="' + colPlan + '" stroke="white" stroke-width="2"/>');
+        svg.push('<text x="' + cx + '" y="' + (lineYplan - 12) + '" text-anchor="middle" font-size="9" fill="' + colPlan + '" font-weight="600">' + nom + '</text>');
+        svg.push('<text x="' + cx + '" y="' + (lineYplan - 2) + '" text-anchor="middle" font-size="8" fill="#999">' + fmtFecha(h.planned_date) + '</text>');
+
+        // Punto real (abajo) - solo si está completado
+        if (comp) {
+          var plan = new Date(h.planned_date).getTime();
+          var real = new Date(h.actual_date).getTime();
+          var dias = Math.round((real - plan) / (1000*60*60*24));
+          var colReal = dias > 0 ? '#C0392B' : '#0F6E56';
+          svg.push('<circle cx="' + cx + '" cy="' + lineYreal + '" r="8" fill="' + colReal + '" stroke="white" stroke-width="2"/>');
+          svg.push('<text x="' + cx + '" y="' + (lineYreal + 4) + '" text-anchor="middle" font-size="8" fill="white" font-weight="bold">✓</text>');
+          svg.push('<text x="' + cx + '" y="' + (lineYreal + 16) + '" text-anchor="middle" font-size="8" fill="#999">' + fmtFecha(h.actual_date) + '</text>');
+          if (dias !== 0) svg.push('<text x="' + cx + '" y="' + (lineYreal + 26) + '" text-anchor="middle" font-size="8" fill="' + colReal + '" font-weight="600">' + (dias > 0 ? '+' : '') + dias + 'd</text>');
+          // Línea vertical conectando plan con real
+          svg.push('<line x1="' + cx + '" y1="' + (lineYplan + 7) + '" x2="' + cx + '" y2="' + (lineYreal - 8) + '" stroke="' + colReal + '" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>');
+        }
+      });
       svg.push('</svg>');
-      // Calcular scroll inicial para centrar en hoy
-      var scrollInicio = Math.max(0, hoyXclamp - 400);
+
+      var scrollInicio = 0;
       timelineHtml = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
-        '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;">Timeline de hitos</div>' +
-        '<div style="font-size:10px;color:#aaa;">← Desliza para navegar →</div></div>' +
-        '<div id="hitos-timeline-scroll" style="overflow-x:auto;overflow-y:hidden;padding-bottom:4px;cursor:grab;" onmousedown="hitosScrollStart(event)" ontouchstart="hitosScrollStart(event)">' +
-        svg.join('') + '</div>' +
-        '<div style="display:flex;gap:1rem;font-size:10px;color:#888;margin-top:0.5rem;">' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0F6E56;margin-right:3px;"></span>Completado</span>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#185FA5;margin-right:3px;"></span>Pendiente</span>' +
-        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C0392B;margin-right:3px;"></span>Retrasado</span>' +
-        '</div></div>';
-      // Script para scroll inicial y drag
-      timelineHtml += '<script>setTimeout(function(){' +
+        '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;">Timeline planificado vs. real</div>' +
+        '<div style="display:flex;gap:1rem;font-size:10px;color:#888;">' +
+        '<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#185FA5;margin-right:3px;"></span>Planificado</span>' +
+        '<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0F6E56;margin-right:3px;"></span>Cumplido</span>' +
+        '<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C0392B;margin-right:3px;"></span>Retrasado</span>' +
+        '</div></div>' +
+        '<div id="hitos-timeline-scroll" style="overflow-x:auto;overflow-y:hidden;padding-bottom:4px;-webkit-overflow-scrolling:touch;cursor:grab;user-select:none;">' +
+        svg.join('') + '</div></div>';
+      timelineHtml += '<scr' + 'ipt>setTimeout(function(){' +
         'var sc=document.getElementById("hitos-timeline-scroll");' +
-        'if(sc){sc.scrollLeft='+scrollInicio+';}' +
-        '},100);</' + 'script>';
+        'if(sc){sc.addEventListener("mousedown",function(e){' +
+        'var startX=e.clientX,sl=sc.scrollLeft;sc.style.cursor="grabbing";' +
+        'function mm(e){sc.scrollLeft=sl-(e.clientX-startX);}' +
+        'function mu(){sc.style.cursor="grab";document.removeEventListener("mousemove",mm);document.removeEventListener("mouseup",mu);}' +
+        'document.addEventListener("mousemove",mm);document.addEventListener("mouseup",mu);' +
+        '});}},200);</' + 'script>';
     }
-    // LISTA
-    var listaHtml = '<div style="margin-bottom:0.75rem;font-size:12px;color:#888;">'+completados+' de '+total+' hitos completados</div>' +
-      '<div style="display:flex;flex-direction:column;gap:6px;">' +
-      hitos.map(function(m, i) {
-        var comp = m.completed;
-        var fecha = m.actual_date ? new Date(m.actual_date).toLocaleDateString('es-ES') : (m.planned_date ? 'Previsto: '+new Date(m.planned_date).toLocaleDateString('es-ES') : '-');
-        var retr = (!comp && m.planned_date && new Date(m.planned_date) < new Date()) ?
-          '<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:2px 6px;border-radius:4px;margin-left:8px;">Retrasado</span>' : '';
-        return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:'+(comp?'#E1F5EE':'white')+';border:1px solid '+(comp?'#A7DEC9':'#e5e5e0')+';border-radius:8px;">' +
-          '<div style="width:28px;height:28px;border-radius:50%;background:'+(comp?'#0F6E56':'#ddd')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-          '<span style="color:white;font-size:'+(comp?'14':'12')+'px;">'+(comp?'✓':(i+1))+'</span></div>' +
-          '<div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+(m.milestone_name||m.name||'-')+'</div>' +
-          '<div style="font-size:11px;color:#888;">'+fecha+retr+'</div></div>' +
-          (comp?'':'<button class="btn btn-sm" style="font-size:11px;" onclick="marcarHitoCompletado('+m.id+','+projectId+')">Completar</button>') +
-          '<button class="btn btn-sm" style="font-size:11px;margin-left:4px;" onclick="editarFechaHito('+m.id+','+projectId+',\''+( m.planned_date ? m.planned_date.split('T')[0] : '')+'\')" title="Editar fecha">✏️</button>' +
-          '</div>';
-      }).join('') + '</div>';
 
-    el.innerHTML = timelineHtml + listaHtml;
+    // TABLA DE HITOS
+    var canEdit = ['tecnico','direccion','jefe_obra'].indexOf(currentDept) > -1;
+    var tablaHtml = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;">' +
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+      '<thead><tr style="background:#f5f5f0;">' +
+      '<th style="padding:10px 14px;text-align:left;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;">Hito</th>' +
+      '<th style="padding:10px 14px;text-align:center;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;">Fecha planificada</th>' +
+      '<th style="padding:10px 14px;text-align:center;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;">Fecha cumplimiento</th>' +
+      '<th style="padding:10px 14px;text-align:center;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;">Desviación</th>' +
+      '<th style="padding:10px 14px;text-align:center;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;">Estado</th>' +
+      '<th style="padding:10px 14px;width:80px;"></th>' +
+      '</tr></thead><tbody>';
+
+    hitos.forEach(function(h) {
+      var comp = h.completed && h.actual_date;
+      var hoy2 = Date.now();
+      var retr = !comp && h.planned_date && new Date(h.planned_date).getTime() < hoy2;
+      var dias = null;
+      if (comp && h.planned_date && h.actual_date) {
+        dias = Math.round((new Date(h.actual_date) - new Date(h.planned_date)) / (1000*60*60*24));
+      }
+      var estadoColor = comp ? '#0F6E56' : (retr ? '#C0392B' : '#185FA5');
+      var estadoLabel = comp ? 'Completado' : (retr ? 'Retrasado' : 'Pendiente');
+      var estadoBg = comp ? '#E1F5EE' : (retr ? '#FCEBEB' : '#EFF6FF');
+      tablaHtml += '<tr style="border-top:1px solid #f0f0ea;">' +
+        '<td style="padding:12px 14px;"><div style="font-weight:500;color:#1a1a1a;">' + (h.milestone_name||'-') + '</div>' +
+        (h.notes ? '<div style="font-size:11px;color:#aaa;">' + h.notes + '</div>' : '') + '</td>' +
+        '<td style="padding:12px 14px;text-align:center;color:#555;">' + fmtFechaCorta(h.planned_date) + '</td>' +
+        '<td style="padding:12px 14px;text-align:center;">' +
+        (comp ? '<span style="color:#0F6E56;font-weight:500;">' + fmtFechaCorta(h.actual_date) + '</span>' :
+          (canEdit ? '<button class="btn btn-sm" style="font-size:11px;" onclick="marcarHitoCumplido(' + h.id + ',' + projectId + ')">Marcar cumplido</button>' : '-')) +
+        '</td>' +
+        '<td style="padding:12px 14px;text-align:center;">' +
+        (dias !== null ? '<span style="font-weight:600;color:' + (dias > 0 ? '#C0392B' : '#0F6E56') + ';">' + (dias > 0 ? '+' : '') + dias + ' días</span>' : '-') +
+        '</td>' +
+        '<td style="padding:12px 14px;text-align:center;"><span style="font-size:11px;padding:3px 8px;border-radius:10px;background:' + estadoBg + ';color:' + estadoColor + ';font-weight:500;">' + estadoLabel + '</span></td>' +
+        '<td style="padding:12px 14px;text-align:center;">' +
+        (canEdit ? '<button onclick="editarFechaHito(' + h.id + ',' + projectId + ',\'' + (h.planned_date||'') + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;" title="Editar fecha planificada">✏️</button>' : '') +
+        '</td></tr>';
+    });
+
+    tablaHtml += '</tbody></table></div>';
+    el.innerHTML = metricasHtml + timelineHtml + tablaHtml;
+
   } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando hitos</div>'; }
 }
 
-function hitosScrollStart(e) {
-  var el = document.getElementById('hitos-timeline-scroll');
-  if (!el) return;
-  var startX = (e.touches ? e.touches[0].clientX : e.clientX);
-  var scrollLeft = el.scrollLeft;
-  el.style.cursor = 'grabbing';
-  function onMove(ev) {
-    var x = (ev.touches ? ev.touches[0].clientX : ev.clientX);
-    el.scrollLeft = scrollLeft - (x - startX);
-  }
-  function onEnd() {
-    el.style.cursor = 'grab';
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onEnd);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('touchend', onEnd);
-  }
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onEnd);
-  document.addEventListener('touchmove', onMove);
-  document.addEventListener('touchend', onEnd);
+function mostrarFormHitoEjecucion() {
+  var f = document.getElementById('ej-form-hito-exec');
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function guardarHitoEjecucion() {
+  var nombre = document.getElementById('hito-exec-nombre') ? document.getElementById('hito-exec-nombre').value.trim() : '';
+  var fechaPlan = document.getElementById('hito-exec-fecha-plan') ? document.getElementById('hito-exec-fecha-plan').value : null;
+  var tipo = document.getElementById('hito-exec-tipo') ? document.getElementById('hito-exec-tipo').value : 'hito';
+  if (!nombre) { alert('Escribe el nombre del hito'); return; }
+  if (!ejProyecto) return;
+  try {
+    await db.from('project_milestones').insert({
+      project_id: ejProyecto.id,
+      milestone_code: 'HIT-' + Date.now(),
+      milestone_name: nombre,
+      planned_date: fechaPlan || null,
+      milestone_type: tipo,
+      completed: false,
+      is_mandatory: false,
+      milestone_order: 99
+    });
+    document.getElementById('ej-form-hito-exec').style.display = 'none';
+    document.getElementById('hito-exec-nombre').value = '';
+    document.getElementById('hito-exec-fecha-plan').value = '';
+    cargarHitos(ejProyecto.id);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function marcarHitoCumplido(hitoId, projectId) {
+  var fecha = prompt('Fecha de cumplimiento (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+  if (!fecha) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { alert('Formato incorrecto. Usa YYYY-MM-DD'); return; }
+  try {
+    var hito = await db.from('project_milestones').select('planned_date').eq('id', hitoId).single();
+    var dias = null;
+    if (hito.data && hito.data.planned_date) {
+      dias = Math.round((new Date(fecha) - new Date(hito.data.planned_date)) / (1000*60*60*24));
+    }
+    await db.from('project_milestones').update({
+      completed: true,
+      actual_date: fecha,
+      deviation_days: dias,
+      completed_by: currentUser ? currentUser.email : null
+    }).eq('id', hitoId);
+    cargarHitos(projectId);
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 async function editarFechaHito(hitoId, projectId, fechaActual) {
-  var nueva = prompt('Nueva fecha del hito (YYYY-MM-DD):', fechaActual || '');
+  var nueva = prompt('Nueva fecha planificada (YYYY-MM-DD):', fechaActual || '');
   if (!nueva) return;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(nueva)) { alert('Formato incorrecto. Usa YYYY-MM-DD'); return; }
   try {
@@ -4410,12 +4512,7 @@ async function editarFechaHito(hitoId, projectId, fechaActual) {
   } catch(e) { alert('Error: ' + e.message); }
 }
 
-async function marcarHitoCompletado(hitoId, projectId) {
-  try {
-    await db.from('project_milestones').update({completed:true, actual_date:new Date().toISOString().split('T')[0]}).eq('id',hitoId);
-    cargarHitos(projectId);
-  } catch(e) { alert('Error: '+e.message); }
-}
+
 
 async function cargarEconomico(projectId) {
   var el = document.getElementById('ej-economico-content');
