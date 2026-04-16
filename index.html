@@ -5720,11 +5720,24 @@ async function npGuardar() {
     var projCode='BYG-'+acronimo.substring(0,3)+'-'+anyo+'-'+String(nProj).padStart(3,'0');
     var stRes=await db.from('project_statuses').select('id').eq('code','solicitado').single();
     var statusId=stRes.data?stRes.data.id:null;
-    var newProj={name:document.getElementById('np-proj-nombre').value.trim(), code:projCode, project_code:projCode,
-      client_id:clienteId, contact_email:npClienteTipo==='nuevo'?document.getElementById('np-new-email').value.trim():(npClienteSeleccionado.commercial_email||''),
+    var newProj={
+      name:document.getElementById('np-proj-nombre').value.trim(),
+      code:projCode,
+      project_code:projCode,
+      message_id:'MANUAL-'+Date.now(),
+      client_id:clienteId,
+      contact_email:npClienteTipo==='nuevo'?document.getElementById('np-new-email').value.trim():(npClienteSeleccionado.commercial_email||''),
+      contact_name:npClienteTipo==='nuevo'?document.getElementById('np-new-contacto').value.trim():(npClienteSeleccionado.contact_name||''),
+      subject:'Entrada manual - '+document.getElementById('np-proj-nombre').value.trim(),
+      description:document.getElementById('np-proj-texto').value.trim()||null,
+      channel:'manual',
       received_at:document.getElementById('np-proj-fecha').value?new Date(document.getElementById('np-proj-fecha').value).toISOString():new Date().toISOString(),
-      project_status_id:statusId, confidence:1.0, notes:document.getElementById('np-proj-texto').value.trim()||null,
-      created_at:new Date().toISOString(), updated_at:new Date().toISOString()};
+      project_status_id:statusId,
+      confidence:1.0,
+      is_lead:false,
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString()
+    };
     var projRes=await db.from('projects').insert(newProj).select().single();
     var proyectoId=projRes.data.id;
     for (var i=0;i<npArchivos.length;i++) {
