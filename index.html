@@ -4492,7 +4492,7 @@ async function cargarHitos(projectId) {
         '</td>' +
         '<td style="padding:12px 14px;text-align:center;"><span style="font-size:11px;padding:3px 8px;border-radius:10px;background:' + estadoBg + ';color:' + estadoColor + ';font-weight:500;">' + estadoLabel + '</span></td>' +
         '<td style="padding:12px 14px;text-align:center;">' +
-        (canEdit ? '<button onclick="modificarHitoConMotivo(' + h.id + ',' + projectId + ',\'' + (h.planned_date||'').split('T')[0] + '\',\'' + (h.milestone_name||'').replace(/\'/g,\'\') + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;" title="Modificar hito">✏️</button>' : '') +
+        (canEdit ? '<button data-hid="'+h.id+'" data-pid="'+projectId+'" data-fecha="'+(h.planned_date||'').split('T')[0]+'" onclick="modificarHitoConMotivo(+this.dataset.hid,+this.dataset.pid,this.dataset.fecha,\'\')" style="background:none;border:none;cursor:pointer;font-size:14px;" title="Modificar hito">✏️</button>' : '') +
         '</td></tr>';
     });
 
