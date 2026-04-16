@@ -1,5 +1,76 @@
-
-<!DOCTYPE html>
+async function cargarDocumentosAnálisis(projectId, categoria) {
+  var el = document.getElementById('an-docs-list');
+  el.innerHTML = '<div class="loading">Cargando documentos...</div>';
+  
+  try {
+    // Cargar adjuntos reales de Supabase
+    var attRes = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
+    var adjuntos = attRes.data || [];
+    
+    var tieneArchivos = adjuntos.length > 0;
+    var archMediciones = adjuntos.find(function(a){return a.is_measurements;});
+    
+    var html = '';
+    
+    // Banner estado conexión SharePoint
+    html += '<div style="background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">' +
+      '<span style="font-size:14px;">!</span>' +
+      '<div style="font-size:11px;color:#854F0B;">Cuando se active la integración con Microsoft 365, los archivos se almacenarán automáticamente en SharePoint. Actualmente se almacenan en Supabase Storage.</div>' +
+      '</div>';
+    
+    if (!tieneArchivos) {
+      html += '<div class="empty">No hay archivos adjuntos en este proyecto.<br><span style="font-size:11px;">Puedes añadir archivos desde el botón de abajo.</span></div>';
+    } else {
+      // Mostrar archivos
+      html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;">';
+      adjuntos.forEach(function(a) {
+        var iconos = {excel:'📊', pdf:'📄', word:'📝', imagen:'🖼️', otro:'📎'};
+        var icono = iconos[a.file_type] || '📎';
+        var esMed = a.is_measurements;
+        var bg = esMed ? '#EAF3DE' : 'white';
+        var border = esMed ? '#C0DD97' : '#e5e5e0';
+        var size = a.file_size ? (a.file_size > 1024*1024 ? (a.file_size/(1024*1024)).toFixed(1)+' MB' : (a.file_size/1024).toFixed(0)+' KB') : '-';
+        
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+bg+';border:1px solid '+border+';border-radius:8px;">' +
+          '<span style="font-size:20px;flex-shrink:0;">'+icono+'</span>' +
+          '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:12px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.file_name+'</div>' +
+          '<div style="font-size:11px;color:#888;">'+size+(esMed ? ' · <span style="color:#3B6D11;font-weight:600;">ARCHIVO DE MEDICIONES</span>' : '')+'</div>' +
+          '</div>' +
+          (esMed ? '' : '<button onclick="anMarcarMediciones('+a.id+','+projectId+')" style="background:#f0f7ff;border:1px solid #B5D4F4;color:#185FA5;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;white-space:nowrap;">Marcar mediciones</button>') +
+          '<button onclick="anDescargarArchivo(''+a.file_path+'',''+a.file_name+'')" style="background:white;border:1px solid #ddd;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;" title="Ver/Descargar">⬇️</button>' +
+          '</div>';
+      });
+      html += '</div>';
+    }
+    
+    // Botón añadir más archivos
+    html += '<div style="margin-top:0.5rem;">' +
+      '<input type="file" id="an-file-input" multiple style="display:none;" onchange="anAgregarArchivos(this.files,'+projectId+')">' +
+      '<button onclick="document.getElementById('an-file-input').click()" class="btn btn-sm" style="border-style:dashed;">+ Añadir archivos</button>' +
+      '</div>';
+    
+    // Sección análisis de mediciones
+    if (archMediciones) {
+      html += '<div style="margin-top:1rem;background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem;">' +
+        '<div style="font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Archivo de mediciones identificado: ' + archMediciones.file_name + '</div>' +
+        '<div style="font-size:11px;color:#185FA5;margin-bottom:10px;">El departamento técnico puede analizar este archivo para separar las partidas por gremio.</div>' +
+        '<button class="btn btn-primary btn-sm" onclick="anAnalizarMediciones('+projectId+','+archMediciones.id+')">Analizar mediciones con IA →</button>' +
+        '</div>';
+    } else if (tieneArchivos) {
+      html += '<div style="margin-top:1rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;">' +
+        '<div style="font-size:11px;color:#92400e;">Ningún archivo está marcado como "Archivo de mediciones". Márcalo para poder analizar las partidas con la IA.</div>' +
+        '</div>';
+    }
+    
+    el.innerHTML = html;
+    
+  } catch(e) {
+    console.error(e);
+    el.innerHTML = '<div class="empty">Error cargando documentos</div>';
+  }
+  
+  document.getElementById('an-docs-reviewed').checked = análisisData&&análisisData.docs_reviewed||false;<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -16,6 +87,7 @@
     body.dept-comercial  { background: #EEF7F0; }
     body.dept-prl        { background: #FEF6EE; }
     body.dept-admin      { background: #F3EEFA; }
+    body.dept-jefe_obra  { background: #F0FAF5; }
 
     .sidebar { width: 230px; background: white; border-right: 1px solid #e5e5e0; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 4px; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; }
     .logo-area { display: flex; align-items: center; gap: 10px; padding: 0 0.5rem 1rem; border-bottom: 1px solid #e5e5e0; margin-bottom: 0.5rem; }
@@ -37,6 +109,7 @@
     .dept-comercial-badge  { background: #DCFCE7; color: #166534; }
     .dept-prl-badge        { background: #FEF3C7; color: #92400e; }
     .dept-admin-badge      { background: #EDE9FE; color: #5b21b6; }
+    .dept-jefe_obra-badge  { background: #E1F5EE; color: #0F6E56; }
     .powered { font-size: 9px; color: #ccc; text-align: center; padding-top: 8px; border-top: 1px solid #f0f0ea; margin-top: 8px; }
     .powered span { color: #185FA5; }
 
@@ -66,6 +139,7 @@
     .dept-indicator.di-comercial  { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
     .dept-indicator.di-prl        { background: #FEF3C7; color: #92400e; border: 1px solid #FDE68A; }
     .dept-indicator.di-admin      { background: #EDE9FE; color: #5b21b6; border: 1px solid #DDD6FE; }
+    .dept-indicator.di-jefe_obra  { background: #E1F5EE; color: #0F6E56; border: 1px solid #A7DEC9; }
 
     /* METRICS */
     .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
@@ -293,6 +367,27 @@
 </div>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
+<!-- PANEL JEFE DE OBRA -->
+<div id="panel-jefe-obra" class="panel" style="max-width:700px;margin:0 auto;padding:2rem 1.5rem;">
+  <!-- CABECERA JEFE OBRA -->
+  <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e5e5e0;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+      <div style="width:44px;height:44px;background:#0F6E56;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0;">BYG</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:16px;font-weight:600;color:#1a1a1a;" id="jo-title">Mis proyectos</div>
+        <div style="font-size:13px;font-weight:500;color:#0F6E56;" id="jo-nombre"></div>
+        <div style="font-size:11px;color:#888;" id="jo-email"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-refresh" onclick="loadDashboardJefeObra()" style="font-size:12px;">↻ Actualizar</button>
+      <button onclick="doLogout()" style="padding:6px 14px;border-radius:7px;border:1px solid #ddd;background:white;font-size:12px;cursor:pointer;color:#666;">Cerrar sesión</button>
+    </div>
+  </div>
+  <div id="jo-alerta-banner" style="display:none;"></div>
+  <div id="jo-proyectos-content"><div class="loading">Cargando proyectos...</div></div>
+</div>
+
 <!-- PANTALLA DE LOGIN -->
 <div id="login-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#f5f5f0;z-index:9999;display:flex;align-items:center;justify-content:center;">
   <div style="background:white;border:1px solid #e5e5e0;border-radius:16px;padding:2.5rem;width:400px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
@@ -409,6 +504,7 @@
     <h1><span class="live-dot"></span>Dashboard<span class="last-update" id="last-update"></span></h1>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="btn-refresh" onclick="loadDashboard()">Actualizar</button>
+      <button class="btn-refresh" style="background:#3B6D11;" onclick="abrirNuevoProyecto()">+ Nuevo proyecto</button>
       <div class="dept-select" id="dept-select-wrap">
         <button class="dept-btn active-tecnico" onclick="setDept('tecnico',this)">Técnico</button>
         <button class="dept-btn" onclick="setDept('direccion',this)">Dirección</button>
@@ -459,7 +555,7 @@
 <div id="panel-proyectos" class="panel">
   <div class="topbar">
     <h1 id="proyectos-title">Proyectos</h1>
-    <button class="btn btn-back" onclick="showPanel('dashboard')">Volver al dashboard</button>
+    <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="abrirNuevoProyecto()">+ Nuevo proyecto</button><button class="btn btn-back" onclick="showPanel('dashboard')">Volver al dashboard</button></div>
   </div>
   <div class="card">
     <table class="data-table" id="proyectos-table">
@@ -809,7 +905,7 @@
   <div id="ej-tab-gastos" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <div style="font-size:13px;color:#888;">Albaranes, facturas y otros gastos registrados en obra</div>
-      <button class="btn btn-primary btn-sm" onclick="abrirCargaGasto()">+ Registrar gasto</button>
+      <button class="btn btn-primary btn-sm" id="btn-registrar-gasto" onclick="abrirCargaGasto()" style="display:none;">+ Registrar gasto</button>
     </div>
     <!-- Input archivo oculto -->
     <input type="file" id="gasto-file-input" accept="image/*,application/pdf" style="display:none;" onchange="procesarArchivoGasto(this)">
@@ -1328,6 +1424,185 @@
 
 </div>
 
+
+<!-- PANEL NUEVO PROYECTO -->
+<div id="panel-nuevo-proyecto" class="panel">
+  <div class="topbar">
+    <h1>Nuevo proyecto</h1>
+    <button class="btn btn-back" onclick="cerrarNuevoProyecto()">Cancelar</button>
+  </div>
+
+  <!-- STEPS INDICATOR -->
+  <div style="display:flex;gap:0;margin-bottom:1.5rem;background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.5rem;">
+    <div class="np-step active" id="np-step-1" style="flex:1;text-align:center;">
+      <div style="width:28px;height:28px;border-radius:50%;background:#185FA5;color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">1</div>
+      <div style="font-size:11px;color:#185FA5;font-weight:500;">Cliente</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;"><div style="height:2px;background:#e5e5e0;width:100%;"></div></div>
+    <div class="np-step" id="np-step-2" style="flex:1;text-align:center;">
+      <div style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">2</div>
+      <div style="font-size:11px;color:#aaa;">Datos proyecto</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;"><div style="height:2px;background:#e5e5e0;width:100%;"></div></div>
+    <div class="np-step" id="np-step-3" style="flex:1;text-align:center;">
+      <div style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">3</div>
+      <div style="font-size:11px;color:#aaa;">Archivos adjuntos</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;"><div style="height:2px;background:#e5e5e0;width:100%;"></div></div>
+    <div class="np-step" id="np-step-4" style="flex:1;text-align:center;">
+      <div style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">4</div>
+      <div style="font-size:11px;color:#aaa;">Confirmar</div>
+    </div>
+  </div>
+
+  <!-- PASO 1: CLIENTE -->
+  <div id="np-paso-1">
+    <div class="card" style="max-width:700px;">
+      <div class="card-header"><div class="card-title">Paso 1 — Selección de cliente</div></div>
+      <div style="display:flex;gap:8px;margin-bottom:1.5rem;">
+        <button id="np-btn-existente" class="btn btn-primary" onclick="npSetClienteTipo('existente')">Cliente registrado</button>
+        <button id="np-btn-nuevo" class="btn" onclick="npSetClienteTipo('nuevo')">Nuevo cliente</button>
+      </div>
+
+      <!-- Cliente existente -->
+      <div id="np-cliente-existente">
+        <div class="form-field" style="margin-bottom:1rem;">
+          <label>Buscar cliente</label>
+          <input type="text" id="np-buscar-cliente" placeholder="Nombre o acrónimo del cliente..." 
+            style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;"
+            oninput="npFiltrarClientes(this.value)">
+        </div>
+        <div id="np-lista-clientes" style="border:1px solid #e5e5e0;border-radius:8px;max-height:220px;overflow-y:auto;"></div>
+        <div id="np-cliente-seleccionado" style="display:none;margin-top:1rem;background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 14px;">
+          <div style="font-size:12px;font-weight:600;color:#27500A;" id="np-cli-sel-nombre"></div>
+          <div style="font-size:11px;color:#3B6D11;" id="np-cli-sel-email"></div>
+        </div>
+      </div>
+
+      <!-- Nuevo cliente -->
+      <div id="np-cliente-nuevo" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-field">
+            <label>Nombre comercial *</label>
+            <input type="text" id="np-new-nombre" placeholder="Nombre de la empresa" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          </div>
+          <div class="form-field">
+            <label>Acrónimo (3 letras) *</label>
+            <input type="text" id="np-new-acronimo" placeholder="Ej: GSS" maxlength="3" 
+              style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;text-transform:uppercase;"
+              oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-field">
+            <label>Persona de contacto *</label>
+            <input type="text" id="np-new-contacto" placeholder="Nombre y apellidos" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          </div>
+          <div class="form-field">
+            <label>Email de contacto *</label>
+            <input type="email" id="np-new-email" placeholder="email@empresa.com" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          </div>
+          <div class="form-field">
+            <label>Teléfono</label>
+            <input type="text" id="np-new-telefono" placeholder="+34 ..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          </div>
+          <div class="form-field">
+            <label>Tipo de cliente</label>
+            <input type="text" id="np-new-tipo" placeholder="Retail, Centro comercial..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          </div>
+        </div>
+        <div style="font-size:11px;color:#888;margin-top:8px;">* Este cliente se creará como lead. Cuando se adjudique el proyecto se completarán sus datos fiscales.</div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:1.5rem;">
+        <button class="btn btn-primary" onclick="npSiguiente(1)">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2: DATOS DEL PROYECTO -->
+  <div id="np-paso-2" style="display:none;">
+    <div class="card" style="max-width:700px;">
+      <div class="card-header"><div class="card-title">Paso 2 — Datos del proyecto</div></div>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="form-field">
+          <label>Nombre del proyecto *</label>
+          <input type="text" id="np-proj-nombre" placeholder="Ej: Reforma local 12B CC Viladecans" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+        </div>
+        <div class="form-field">
+          <label>Fecha de recepción de la petición *</label>
+          <input type="date" id="np-proj-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+        </div>
+        <div class="form-field">
+          <label>Texto de la petición del cliente</label>
+          <textarea id="np-proj-texto" placeholder="Pega aquí el texto del email o descripción de la petición del cliente..." 
+            style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:140px;resize:vertical;font-family:inherit;line-height:1.6;"></textarea>
+        </div>
+        <div class="form-field">
+          <label>Observaciones internas</label>
+          <textarea id="np-proj-notas" placeholder="Notas internas del equipo técnico..." 
+            style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:80px;resize:vertical;font-family:inherit;"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+        <button class="btn" onclick="npAnterior(2)">← Anterior</button>
+        <button class="btn btn-primary" onclick="npSiguiente(2)">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 3: ARCHIVOS ADJUNTOS -->
+  <div id="np-paso-3" style="display:none;">
+    <div class="card" style="max-width:700px;">
+      <div class="card-header">
+        <div class="card-title">Paso 3 — Archivos adjuntos</div>
+        <span style="font-size:11px;color:#888;">Arrastra o selecciona todos los archivos del cliente</span>
+      </div>
+
+      <!-- ZONA DE ARRASTRE -->
+      <div id="np-dropzone"
+        ondrop="npHandleDrop(event)" 
+        ondragover="npDragOver(event)"
+        ondragleave="npDragLeave(event)"
+        onclick="document.getElementById('np-file-input').click()"
+        style="border:2px dashed #ccc;border-radius:10px;padding:2rem;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:1rem;">
+        <div style="font-size:2.5rem;margin-bottom:8px;">📎</div>
+        <div style="font-size:13px;font-weight:500;color:#444;margin-bottom:4px;">Arrastra los archivos aquí</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:1rem;">o haz clic para seleccionar desde tu ordenador</div>
+        <div style="display:inline-block;background:#185FA5;color:white;padding:7px 18px;border-radius:7px;font-size:12px;font-weight:500;">Seleccionar archivos</div>
+        <div style="font-size:10px;color:#ccc;margin-top:8px;">PDF, Excel, Word, imágenes · Sin límite de archivos · Máx. 50MB por archivo</div>
+      </div>
+      <input type="file" id="np-file-input" multiple style="display:none;" onchange="npAgregarArchivos(this.files)">
+
+      <!-- LISTA DE ARCHIVOS -->
+      <div id="np-archivos-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+        <button class="btn" onclick="npAnterior(3)">← Anterior</button>
+        <button class="btn btn-primary" onclick="npSiguiente(3)">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 4: CONFIRMAR -->
+  <div id="np-paso-4" style="display:none;">
+    <div class="card" style="max-width:700px;">
+      <div class="card-header"><div class="card-title">Paso 4 — Confirmar y registrar</div></div>
+      <div id="np-resumen" style="display:flex;flex-direction:column;gap:0;"></div>
+      <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:12px 16px;margin-top:1rem;">
+        <div style="font-size:12px;font-weight:600;color:#27500A;margin-bottom:3px;">El proyecto quedará registrado en estado "Solicitado"</div>
+        <div style="font-size:11px;color:#3B6D11;">Se asignará automáticamente un código de expediente y estará disponible para evaluación por los tres departamentos.</div>
+      </div>
+      <div id="np-guardando" style="display:none;text-align:center;padding:1rem;">
+        <div style="font-size:13px;color:#185FA5;">Guardando proyecto y subiendo archivos...</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+        <button class="btn" onclick="npAnterior(4)">← Anterior</button>
+        <button class="btn btn-success" id="np-btn-guardar" onclick="npGuardar()">Registrar proyecto</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 </div><!-- /main -->
 
 <!-- FOOTER COPYRIGHT -->
@@ -1347,7 +1622,8 @@ var deptConfig = {
   direccion: { name:'Dirección',        email:'direccion@bygsoluciones.es', badge:'DIRECCIÓN', desc:'Vista: Dirección - Seguimiento global y aprobaciones ejecutivas' },
   comercial: { name:'Dept. Comercial',  email:'comercial@bygsoluciones.es', badge:'COMERCIAL', desc:'Vista: Departamento Comercial - Gestión de ofertas y relación con clientes' },
   prl:       { name:'Dept. PRL',        email:'prl@bygsoluciones.es',       badge:'PRL',       desc:'Vista: Prevención de Riesgos Laborales - Documentación y cumplimiento' },
-  admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración - Datos maestros y gestión del sistema' }
+  admin:     { name:'Administración',   email:'admin@bygsoluciones.es',     badge:'ADMIN',     desc:'Vista: Administración - Datos maestros y gestión del sistema' },
+  jefe_obra: { name:'Jefe/a de Obra',   email:'',                            badge:'OBRA',      desc:'Vista: Jefe/a de Obra - Gestión de mis proyectos en ejecución' }
 };
 
 var badgeMap = {
@@ -1446,6 +1722,10 @@ function irAFaseEjecucion() { showProyectosFase('en_ejecucion'); }
 
 async function loadDashboard() {
   var dept = currentDept || 'tecnico';
+  if (dept === 'jefe_obra') {
+    loadDashboardJefeObra();
+    return;
+  }
   resetDashboardUI();
   document.getElementById('last-update').textContent = ' - ' + new Date().toLocaleTimeString('es-ES');
 
@@ -1989,7 +2269,519 @@ function imprimirListadoClientes() {
     '<h2>BYG Soluciones - Listado de Clientes</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
-    '<tbody>'+rows+'</tbody></table></body></html>');
+    '<tbody>'+rows+'</tbody></table>';
+
+// ============================================================
+// MÓDULO NUEVO PROYECTO
+// ============================================================
+var npClienteTipo = 'existente';
+var npClienteSeleccionado = null;
+var npArchivos = []; // {file, nombre, tipo, esMediciones}
+var npPasoActual = 1;
+
+function abrirNuevoProyecto() {
+  npReset();
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-nuevo-proyecto').classList.add('active');
+  // Poner fecha de hoy por defecto
+  var hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('np-proj-fecha').value = hoy;
+  // Cargar clientes
+  npCargarClientes();
+}
+
+function cerrarNuevoProyecto() {
+  npReset();
+  showPanel('dashboard');
+}
+
+function npReset() {
+  npClienteTipo = 'existente';
+  npClienteSeleccionado = null;
+  npArchivos = [];
+  npPasoActual = 1;
+  npMostrarPaso(1);
+  npSetClienteTipo('existente');
+  // Limpiar campos
+  ['np-proj-nombre','np-proj-texto','np-proj-notas','np-new-nombre','np-new-acronimo',
+   'np-new-contacto','np-new-email','np-new-telefono','np-new-tipo','np-buscar-cliente'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var cliSel = document.getElementById('np-cliente-seleccionado');
+  if (cliSel) cliSel.style.display = 'none';
+  var lista = document.getElementById('np-archivos-lista');
+  if (lista) lista.innerHTML = '';
+}
+
+function npSetClienteTipo(tipo) {
+  npClienteTipo = tipo;
+  npClienteSeleccionado = null;
+  document.getElementById('np-btn-existente').className = tipo === 'existente' ? 'btn btn-primary' : 'btn';
+  document.getElementById('np-btn-nuevo').className = tipo === 'nuevo' ? 'btn btn-primary' : 'btn';
+  document.getElementById('np-cliente-existente').style.display = tipo === 'existente' ? 'block' : 'none';
+  document.getElementById('np-cliente-nuevo').style.display = tipo === 'nuevo' ? 'block' : 'none';
+}
+
+var npClientesCache = [];
+async function npCargarClientes() {
+  try {
+    var res = await db.from('clients').select('id,internal_code,client_code,commercial_name,contact_name,commercial_email,phone').order('commercial_name');
+    npClientesCache = res.data || [];
+    npRenderClientes(npClientesCache);
+  } catch(e) { console.error(e); }
+}
+
+function npFiltrarClientes(q) {
+  if (!q.trim()) { npRenderClientes(npClientesCache); return; }
+  var lower = q.toLowerCase();
+  var filtered = npClientesCache.filter(function(c) {
+    return (c.commercial_name||'').toLowerCase().includes(lower) ||
+      (c.client_code||'').toLowerCase().includes(lower) ||
+      (c.internal_code||'').toLowerCase().includes(lower);
+  });
+  npRenderClientes(filtered);
+}
+
+function npRenderClientes(data) {
+  var el = document.getElementById('np-lista-clientes');
+  if (!el) return;
+  if (!data.length) {
+    el.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#aaa;">No se encontraron clientes</div>';
+    return;
+  }
+  el.innerHTML = data.map(function(c) {
+    return '<div onclick="npSeleccionarCliente(' + c.id + ')" style="padding:10px 14px;border-bottom:1px solid #f0f0ea;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" ' +
+      'onmouseenter="this.style.background='#f5f5f0'" onmouseleave="this.style.background=''">' +
+      '<div>' +
+      '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + c.commercial_name + '</div>' +
+      '<div style="font-size:11px;color:#888;">' + (c.internal_code||'-') + (c.commercial_email ? ' · ' + c.commercial_email : '') + '</div>' +
+      '</div>' +
+      '<span style="font-size:11px;color:#185FA5;">Seleccionar</span></div>';
+  }).join('');
+}
+
+function npSeleccionarCliente(id) {
+  var cliente = npClientesCache.find(function(c){return c.id === id;});
+  if (!cliente) return;
+  npClienteSeleccionado = cliente;
+  var el = document.getElementById('np-cliente-seleccionado');
+  el.style.display = 'block';
+  document.getElementById('np-cli-sel-nombre').textContent = cliente.commercial_name + (cliente.client_code ? ' [' + cliente.client_code + ']' : '');
+  document.getElementById('np-cli-sel-email').textContent = (cliente.contact_name ? cliente.contact_name + ' · ' : '') + (cliente.commercial_email || '');
+  // Resaltar fila seleccionada
+  document.querySelectorAll('#np-lista-clientes > div').forEach(function(d){d.style.background='';});
+  event.currentTarget.style.background = '#EAF3DE';
+}
+
+function npMostrarPaso(paso) {
+  [1,2,3,4].forEach(function(p) {
+    var panel = document.getElementById('np-paso-' + p);
+    if (panel) panel.style.display = p === paso ? 'block' : 'none';
+    var step = document.getElementById('np-step-' + p);
+    if (step) {
+      var dot = step.querySelector('div:first-child');
+      var label = step.querySelector('div:last-child');
+      if (p < paso) {
+        // completado
+        if (dot) { dot.style.background = '#3B6D11'; dot.textContent = '✓'; }
+        if (label) label.style.color = '#3B6D11';
+      } else if (p === paso) {
+        // activo
+        if (dot) { dot.style.background = '#185FA5'; dot.textContent = p; }
+        if (label) label.style.color = '#185FA5';
+      } else {
+        // pendiente
+        if (dot) { dot.style.background = '#e5e5e0'; dot.textContent = p; }
+        if (label) label.style.color = '#aaa';
+      }
+    }
+  });
+  npPasoActual = paso;
+}
+
+function npAnterior(pasoActual) {
+  npMostrarPaso(pasoActual - 1);
+}
+
+function npSiguiente(pasoActual) {
+  if (pasoActual === 1) {
+    // Validar cliente
+    if (npClienteTipo === 'existente' && !npClienteSeleccionado) {
+      alert('Selecciona un cliente de la lista.'); return;
+    }
+    if (npClienteTipo === 'nuevo') {
+      var nombre = document.getElementById('np-new-nombre').value.trim();
+      var acronimo = document.getElementById('np-new-acronimo').value.trim();
+      var contacto = document.getElementById('np-new-contacto').value.trim();
+      var email = document.getElementById('np-new-email').value.trim();
+      if (!nombre || !acronimo || !contacto || !email) {
+        alert('Rellena los campos obligatorios del nuevo cliente.'); return;
+      }
+      if (acronimo.length !== 3) {
+        alert('El acrónimo debe tener exactamente 3 letras.'); return;
+      }
+    }
+  }
+  if (pasoActual === 2) {
+    var nombre = document.getElementById('np-proj-nombre').value.trim();
+    var fecha = document.getElementById('np-proj-fecha').value;
+    if (!nombre || !fecha) {
+      alert('El nombre del proyecto y la fecha son obligatorios.'); return;
+    }
+  }
+  if (pasoActual === 3) {
+    // Los archivos son opcionales, siempre puede continuar
+  }
+  if (pasoActual === 4) return;
+  
+  if (pasoActual === 3) {
+    npGenerarResumen();
+  }
+  npMostrarPaso(pasoActual + 1);
+}
+
+// ---- MANEJO DE ARCHIVOS ----
+function npDragOver(e) {
+  e.preventDefault();
+  var dz = document.getElementById('np-dropzone');
+  if (dz) { dz.style.borderColor = '#185FA5'; dz.style.background = '#f0f7ff'; }
+}
+function npDragLeave(e) {
+  var dz = document.getElementById('np-dropzone');
+  if (dz) { dz.style.borderColor = '#ccc'; dz.style.background = ''; }
+}
+function npHandleDrop(e) {
+  e.preventDefault();
+  npDragLeave(e);
+  if (e.dataTransfer.files.length) npAgregarArchivos(e.dataTransfer.files);
+}
+function npAgregarArchivos(files) {
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    // Evitar duplicados por nombre
+    var yaExiste = npArchivos.some(function(a){return a.file.name === file.name;});
+    if (yaExiste) continue;
+    if (file.size > 50 * 1024 * 1024) {
+      alert(file.name + ' supera el límite de 50MB.'); continue;
+    }
+    var tipo = npDetectarTipo(file);
+    npArchivos.push({file: file, nombre: file.name, tipo: tipo, esMediciones: false, subido: false});
+  }
+  npRenderArchivos();
+  // Reset input para permitir seleccionar el mismo archivo de nuevo
+  document.getElementById('np-file-input').value = '';
+}
+
+function npDetectarTipo(file) {
+  var nombre = file.name.toLowerCase();
+  if (nombre.endsWith('.xlsx') || nombre.endsWith('.xls')) return 'excel';
+  if (nombre.endsWith('.pdf')) return 'pdf';
+  if (nombre.endsWith('.doc') || nombre.endsWith('.docx')) return 'word';
+  if (nombre.match(/\.(jpg|jpeg|png|gif|webp)$/)) return 'imagen';
+  return 'otro';
+}
+
+function npIconoTipo(tipo) {
+  var iconos = {excel:'📊', pdf:'📄', word:'📝', imagen:'🖼️', otro:'📎'};
+  return iconos[tipo] || '📎';
+}
+
+function npFormatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function npRenderArchivos() {
+  var el = document.getElementById('np-archivos-lista');
+  if (!el) return;
+  if (!npArchivos.length) {
+    el.innerHTML = '<div style="text-align:center;padding:1rem;font-size:12px;color:#aaa;">No hay archivos añadidos</div>';
+    return;
+  }
+  el.innerHTML = npArchivos.map(function(a, idx) {
+    var esMed = a.esMediciones;
+    var bg = esMed ? '#EAF3DE' : 'white';
+    var border = esMed ? '#C0DD97' : '#e5e5e0';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:' + bg + ';border:1px solid ' + border + ';border-radius:8px;">' +
+      '<span style="font-size:20px;flex-shrink:0;">' + npIconoTipo(a.tipo) + '</span>' +
+      '<div style="flex:1;min-width:0;">' +
+      '<div style="font-size:12px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + a.nombre + '</div>' +
+      '<div style="font-size:11px;color:#888;">' + npFormatSize(a.file.size) + (esMed ? ' · <span style="color:#3B6D11;font-weight:600;">ARCHIVO DE MEDICIONES</span>' : '') + '</div>' +
+      '</div>' +
+      '<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0;">' +
+      '<input type="checkbox" ' + (esMed?'checked':'') + ' onchange="npToggleMediciones(' + idx + ',this.checked)" style="width:14px;height:14px;"> Mediciones' +
+      '</label>' +
+      '<button onclick="npEliminarArchivo(' + idx + ')" style="background:none;border:none;cursor:pointer;font-size:16px;color:#aaa;flex-shrink:0;" title="Eliminar">✕</button>' +
+      '</div>';
+  }).join('');
+}
+
+function npToggleMediciones(idx, checked) {
+  // Solo un archivo puede ser el de mediciones
+  if (checked) {
+    npArchivos.forEach(function(a, i){ a.esMediciones = (i === idx); });
+  } else {
+    npArchivos[idx].esMediciones = false;
+  }
+  npRenderArchivos();
+}
+
+function npEliminarArchivo(idx) {
+  npArchivos.splice(idx, 1);
+  npRenderArchivos();
+}
+
+// ---- RESUMEN PASO 4 ----
+function npGenerarResumen() {
+  var el = document.getElementById('np-resumen');
+  if (!el) return;
+  
+  var nombreCli = '';
+  var emailCli = '';
+  if (npClienteTipo === 'existente' && npClienteSeleccionado) {
+    nombreCli = npClienteSeleccionado.commercial_name;
+    emailCli = npClienteSeleccionado.commercial_email || '';
+  } else {
+    nombreCli = document.getElementById('np-new-nombre').value + ' [NUEVO]';
+    emailCli = document.getElementById('np-new-email').value;
+  }
+  
+  var nombreProj = document.getElementById('np-proj-nombre').value;
+  var fechaProj = document.getElementById('np-proj-fecha').value;
+  var textoProj = document.getElementById('np-proj-texto').value;
+  
+  var mediciones = npArchivos.find(function(a){return a.esMediciones;});
+  
+  var campos = [
+    {label:'Cliente', val:nombreCli},
+    {label:'Email', val:emailCli},
+    {label:'Nombre del proyecto', val:nombreProj},
+    {label:'Fecha petición', val:fechaProj ? new Date(fechaProj).toLocaleDateString('es-ES') : '-'},
+    {label:'Texto petición', val:textoProj ? textoProj.substring(0,100) + (textoProj.length > 100 ? '...' : '') : 'Sin texto'},
+    {label:'Archivos adjuntos', val:npArchivos.length + ' archivo' + (npArchivos.length !== 1 ? 's' : '')},
+    {label:'Archivo de mediciones', val:mediciones ? mediciones.nombre : 'No marcado (el técnico lo identificará en análisis)'}
+  ];
+  
+  el.innerHTML = campos.map(function(c) {
+    return '<div style="display:flex;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
+      '<div style="width:200px;font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;flex-shrink:0;">' + c.label + '</div>' +
+      '<div style="font-size:13px;color:#1a1a1a;">' + (c.val||'-') + '</div></div>';
+  }).join('');
+}
+
+// ---- GUARDAR PROYECTO ----
+async function npGuardar() {
+  var btn = document.getElementById('np-btn-guardar');
+  var loading = document.getElementById('np-guardando');
+  btn.disabled = true;
+  loading.style.display = 'block';
+  
+  try {
+    var clienteId = null;
+    var clienteAcronimo = '';
+    
+    // 1. Crear o usar cliente
+    if (npClienteTipo === 'nuevo') {
+      var acronimo = document.getElementById('np-new-acronimo').value.trim().toUpperCase();
+      var newCli = {
+        commercial_name: document.getElementById('np-new-nombre').value.trim(),
+        client_code: acronimo,
+        contact_name: document.getElementById('np-new-contacto').value.trim(),
+        commercial_email: document.getElementById('np-new-email').value.trim(),
+        phone: document.getElementById('np-new-telefono').value.trim() || null,
+        client_type: document.getElementById('np-new-tipo').value.trim() || null,
+        client_confirmed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      // Generar internal_code
+      var lastCli = await db.from('clients').select('internal_code').order('id',{ascending:false}).limit(1);
+      var nCli = 0;
+      if (lastCli.data && lastCli.data.length && lastCli.data[0].internal_code) {
+        var mCli = lastCli.data[0].internal_code.match(/\d+/);
+        if (mCli) nCli = parseInt(mCli[0]);
+      }
+      newCli.internal_code = 'CLI-' + String(nCli+1).padStart(3,'0');
+      var cliRes = await db.from('clients').insert(newCli).select().single();
+      clienteId = cliRes.data.id;
+      clienteAcronimo = acronimo;
+    } else {
+      clienteId = npClienteSeleccionado.id;
+      clienteAcronimo = npClienteSeleccionado.client_code || npClienteSeleccionado.internal_code || 'XXX';
+    }
+    
+    // 2. Generar código de expediente BYG-ACR-YYYY-NNN
+    var anyo = new Date().getFullYear();
+    var lastProj = await db.from('projects').select('project_code').order('id',{ascending:false}).limit(1);
+    var nProj = 1;
+    if (lastProj.data && lastProj.data.length && lastProj.data[0].project_code) {
+      var mProj = lastProj.data[0].project_code.match(/\d+$/);
+      if (mProj) nProj = parseInt(mProj[0]) + 1;
+    }
+    var projCode = 'BYG-' + clienteAcronimo.substring(0,3) + '-' + anyo + '-' + String(nProj).padStart(3,'0');
+    
+    // 3. Obtener status "solicitado"
+    var stRes = await db.from('project_statuses').select('id').eq('code','solicitado').single();
+    var statusId = stRes.data ? stRes.data.id : null;
+    
+    // 4. Crear proyecto
+    var nombreProj = document.getElementById('np-proj-nombre').value.trim();
+    var fechaProj = document.getElementById('np-proj-fecha').value;
+    var textoProj = document.getElementById('np-proj-texto').value.trim();
+    var notasProj = document.getElementById('np-proj-notas').value.trim();
+    
+    var newProj = {
+      name: nombreProj,
+      code: projCode,
+      project_code: projCode,
+      client_id: clienteId,
+      contact_email: npClienteTipo === 'nuevo' ? document.getElementById('np-new-email').value.trim() : (npClienteSeleccionado.commercial_email||''),
+      received_at: fechaProj ? new Date(fechaProj).toISOString() : new Date().toISOString(),
+      project_status_id: statusId,
+      confidence: 1.0,
+      notes: textoProj || null,
+      internal_notes: notasProj || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    var projRes = await db.from('projects').insert(newProj).select().single();
+    var proyectoId = projRes.data.id;
+    
+    // 5. Subir archivos adjuntos
+    for (var i = 0; i < npArchivos.length; i++) {
+      var arch = npArchivos[i];
+      var filePath = 'proyecto-' + proyectoId + '/' + Date.now() + '-' + arch.file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      
+      // Subir a Supabase Storage
+      var uploadRes = await db.storage.from('project-attachments').upload(filePath, arch.file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+      
+      if (uploadRes.error) {
+        console.error('Error subiendo ' + arch.nombre + ':', uploadRes.error);
+        continue;
+      }
+      
+      // Registrar en tabla project_attachments
+      await db.from('project_attachments').insert({
+        project_id: proyectoId,
+        file_name: arch.nombre,
+        file_path: filePath,
+        file_size: arch.file.size,
+        file_type: arch.tipo,
+        mime_type: arch.file.type,
+        is_measurements: arch.esMediciones,
+        uploaded_by: currentUser ? currentUser.email : 'manual',
+        uploaded_at: new Date().toISOString(),
+        storage_provider: 'supabase'
+      });
+    }
+    
+    alert('Proyecto registrado correctamente.\n\nCódigo asignado: ' + projCode + '\n\nEl proyecto está disponible en "Solicitudes recibidas" para evaluación.');
+    npReset();
+    showPanel('dashboard');
+    loadDashboard();
+    
+  } catch(e) {
+    console.error('Error guardando proyecto:', e);
+    alert('Error al registrar el proyecto: ' + (e.message||JSON.stringify(e)));
+    btn.disabled = false;
+    loading.style.display = 'none';
+  }
+}
+
+</script>
+
+
+<script>
+// ============================================================
+// ADJUNTOS EN FASE ANÁLISIS
+// ============================================================
+async function anMarcarMediciones(adjuntoId, projectId) {
+  try {
+    // Desmarcar todos
+    await db.from('project_attachments').update({is_measurements: false}).eq('project_id', projectId);
+    // Marcar el seleccionado
+    await db.from('project_attachments').update({is_measurements: true}).eq('id', adjuntoId);
+    // Recargar
+    cargarDocumentosAnálisis(projectId, null);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function anDescargarArchivo(filePath, fileName) {
+  try {
+    var res = await db.storage.from('project-attachments').createSignedUrl(filePath, 300); // 5 min
+    if (res.data && res.data.signedUrl) {
+      window.open(res.data.signedUrl, '_blank');
+    } else {
+      alert('No se pudo generar el enlace de descarga.');
+    }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function anAgregarArchivos(files, projectId) {
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    if (file.size > 50 * 1024 * 1024) { alert(file.name + ' supera 50MB.'); continue; }
+    var tipo = npDetectarTipo(file);
+    var filePath = 'proyecto-' + projectId + '/' + Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    
+    var uploadRes = await db.storage.from('project-attachments').upload(filePath, file, {cacheControl:'3600', upsert:false});
+    if (uploadRes.error) { console.error(uploadRes.error); continue; }
+    
+    await db.from('project_attachments').insert({
+      project_id: projectId,
+      file_name: file.name,
+      file_path: filePath,
+      file_size: file.size,
+      file_type: tipo,
+      mime_type: file.type,
+      is_measurements: false,
+      uploaded_by: currentUser ? currentUser.email : 'manual',
+      uploaded_at: new Date().toISOString(),
+      storage_provider: 'supabase'
+    });
+  }
+  document.getElementById('an-file-input').value = '';
+  cargarDocumentosAnálisis(projectId, null);
+}
+
+function anAnalizarMediciones(projectId, adjuntoId) {
+  alert('Módulo de análisis de mediciones con IA:\n\nEn la próxima sesión integraremos aquí el parser de SheetJS que separará automáticamente las partidas por gremio.\n\nEl técnico podrá revisar y corregir la separación antes de confirmar.');
+}
+
+// También añadir visualización de adjuntos en Oferta en Curso
+async function cargarAdjuntosProyecto(projectId, contenedorId) {
+  var el = document.getElementById(contenedorId);
+  if (!el) return;
+  try {
+    var res = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
+    var adjuntos = res.data || [];
+    if (!adjuntos.length) {
+      el.innerHTML = '<div style="font-size:11px;color:#aaa;">Sin archivos adjuntos</div>';
+      return;
+    }
+    var iconos = {excel:'📊', pdf:'📄', word:'📝', imagen:'🖼️', otro:'📎'};
+    el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;">' +
+      adjuntos.map(function(a) {
+        var icono = iconos[a.file_type] || '📎';
+        var esMed = a.is_measurements;
+        return '<div onclick="anDescargarArchivo('' + a.file_path + '','' + a.file_name + '')" ' +
+          'style="display:flex;align-items:center;gap:5px;padding:5px 10px;background:' + (esMed?'#EAF3DE':'#f5f5f0') + ';border:1px solid ' + (esMed?'#C0DD97':'#ddd') + ';border-radius:6px;cursor:pointer;font-size:11px;" ' +
+          'title="' + a.file_name + '">' +
+          icono + ' ' + (a.file_name.length > 25 ? a.file_name.substring(0,22)+'...' : a.file_name) +
+          (esMed ? ' <span style="color:#3B6D11;font-size:9px;font-weight:600;">MED</span>' : '') +
+          '</div>';
+      }).join('') + '</div>';
+  } catch(e) { console.error(e); }
+}
+</script>
+
+</body></html>');
   win.document.close();
   win.print();
 }
@@ -3793,11 +4585,22 @@ function volverDesdeAdjudicado() {
 var currentUser = null;
 
 var deptByEmail = {
-  'tecnico@bygsoluciones.es':   'tecnico',
-  'direccion@bygsoluciones.es': 'direccion',
-  'comercial@bygsoluciones.es': 'comercial',
-  'prl@bygsoluciones.es':       'prl',
-  'admin@bygsoluciones.es':     'admin'
+  'tecnico@bygsoluciones.es':             'tecnico',
+  'direccion@bygsoluciones.es':           'direccion',
+  'comercial@bygsoluciones.es':           'comercial',
+  'prl@bygsoluciones.es':                 'prl',
+  'admin@bygsoluciones.es':               'admin',
+  // Jefes de Obra
+  'marcelino.garzon@bygsoluciones.es':    'jefe_obra',
+  'emilio.miranda@bygsoluciones.es':      'jefe_obra',
+  'antonio.sanchez@bygsoluciones.es':     'jefe_obra',
+  'ariadna.zerpa@bygsoluciones.es':       'jefe_obra',
+  'cristina.lazaro@bygsoluciones.es':     'jefe_obra',
+  'miriam.tinajero@bygsoluciones.es':     'jefe_obra',
+  'rebeca.anton@bygsoluciones.es':        'jefe_obra',
+  'antonio.villalon@bygsoluciones.es':    'jefe_obra',
+  'efren.colina@bygsoluciones.es':        'jefe_obra',
+  'yaromir.gonzalez@bygsoluciones.es':    'jefe_obra'
 };
 
 async function checkSession() {
@@ -4039,6 +4842,13 @@ async function abrirEjecucion(id, nameEnc) {
     cargarGastos(id);
     cargarCertificaciones(id);
 
+    // Mostrar botón registrar gasto solo para depts autorizados
+    var btnGasto = document.getElementById('btn-registrar-gasto');
+    if (btnGasto) {
+      var deptsGasto = ['tecnico','jefe_obra','admin','direccion'];
+      btnGasto.style.display = deptsGasto.indexOf(currentDept) > -1 ? 'inline-block' : 'none';
+    }
+
   } catch(e) { console.error('Error abriendo ejecución:',e); }
 }
 
@@ -4138,7 +4948,7 @@ async function cargarGastos(projectId) {
       '<div style="background:#EAF3DE;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Aprobado</div><div style="font-size:18px;font-weight:600;color:#3B6D11;">' + totalAprobado.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
       '<div style="background:#FCEBEB;border-radius:8px;padding:10px 16px;flex:1;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:3px;">Pendiente aprobación</div><div style="font-size:18px;font-weight:600;color:#A32D2D;">' + (total-totalAprobado).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</div></div>' +
       '</div>' +
-      '<table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>IA</th></tr></thead><tbody>' +
+      '<table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>IA</th><th>Doc.</th></tr></thead><tbody>' +
       res.data.map(function(g) {
         return '<tr>' +
           '<td>' + new Date(g.expense_date).toLocaleDateString('es-ES') + '</td>' +
@@ -4146,8 +4956,10 @@ async function cargarGastos(projectId) {
           '<td style="font-size:11px;">' + (g.supplier_name||'-') + '</td>' +
           '<td style="font-size:11px;">' + (g.concept||'-') + '</td>' +
           '<td style="text-align:right;font-weight:500;">' + parseFloat(g.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
-          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : '<button class="btn btn-sm btn-success" style="padding:3px 8px;font-size:11px;" onclick="aprobarGasto(' + g.id + ',' + projectId + ')">Aprobar</button>') + '</td>' +
+          '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : (currentDept === 'jefe_obra' || currentDept === 'tecnico' ? '<button class="btn btn-sm btn-success" style="padding:3px 8px;font-size:11px;" onclick="aprobarGasto(' + g.id + ',' + projectId + ')">Aprobar</button>' : '<span class="badge b-review">Pendiente</span>')) + '</td>' +
           '<td>' + (g.ai_extracted ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:2px 6px;border-radius:4px;">IA</span>' : '-') + '</td>' +
+          '<td>' + (g.document_url && ['jefe_obra','admin','direccion'].indexOf(currentDept) > -1 ?
+            '<button onclick="verDocumentoGasto(&quot;' + g.document_url + '&quot;,&quot;' + (g.document_name||'documento') + '&quot;)" style="background:none;border:none;cursor:pointer;font-size:16px;" title="Ver documento original">📄</button>' : '') + '</td>' +
           '</tr>';
       }).join('') + '</tbody></table>';
   } catch(e) { console.error(e); el.innerHTML='<div class="empty">Error cargando gastos</div>'; }
@@ -4299,10 +5111,26 @@ async function confirmarGasto() {
     concept: document.getElementById('gasto-concepto').value || null,
     expense_date: document.getElementById('gasto-fecha').value || new Date().toISOString().split('T')[0],
     ai_extracted: true,
-    approved: false
+    approved: false,
+    uploaded_by: currentUser ? currentUser.email : null
   };
 
   try {
+    // Subir documento a Supabase Storage si existe
+    var fileInput = document.getElementById('gasto-file-input');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      var file = fileInput.files[0];
+      var fileName = ejProyecto.id + '_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      var uploadRes = await db.storage.from('gastos-documentos').upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+      if (!uploadRes.error) {
+        data.document_url = fileName;
+        data.document_name = file.name;
+      }
+    }
+
     await db.from('project_expenses').insert(data);
     document.getElementById('gasto-modal').style.display = 'none';
     cargarGastos(ejProyecto.id);
@@ -4317,8 +5145,13 @@ function cancelarGasto() {
 
 function volverDesdeEjecución() {
   ejProyecto = null;
-  if (currentFase) showProyectosFase(currentFase);
-  else showPanel('dashboard');
+  if (currentDept === 'jefe_obra') {
+    loadDashboardJefeObra();
+  } else if (currentFase) {
+    showProyectosFase(currentFase);
+  } else {
+    showPanel('dashboard');
+  }
 }
 
 // ---- PLANNING DE OBRA ----
@@ -4884,7 +5717,30 @@ function generarTimelinePlanning(hitos) {
 
 async function aprobarGasto(gastoId, projectId) {
   try {
-    await db.from('project_expenses').update({approved: true}).eq('id', gastoId);
+    await db.from('project_expenses').update({
+      approved: true,
+      approved_by: currentUser ? currentUser.email : null,
+      approved_at: new Date().toISOString()
+    }).eq('id', gastoId);
+
+    // Insertar notificación para Admin y Dirección
+    var gastoData = await db.from('project_expenses').select('amount,concept,supplier_name,expense_date').eq('id',gastoId).single();
+    if (gastoData.data) {
+      var g = gastoData.data;
+      var texto = 'Gasto aprobado por Jefe de Obra: ' +
+        parseFloat(g.amount).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR' +
+        (g.supplier_name ? ' — ' + g.supplier_name : '') +
+        (g.concept ? ' (' + g.concept + ')' : '');
+      await db.from('project_planning_comments').insert({
+        project_id: projectId,
+        author_email: currentUser ? currentUser.email : 'sistema',
+        author_name: 'Jefe de Obra',
+        author_role: 'tecnico',
+        comment: texto,
+        is_read: false
+      });
+    }
+
     cargarGastos(projectId);
     cargarEconomico(projectId);
   } catch(e) { alert('Error al aprobar: ' + e.message); }
@@ -4990,6 +5846,7 @@ function renderFichaEmpleado(e, editable) {
       {label:'Nombre *', key:'nombre', val:e.nombre, required:true},
       {label:'Apellidos *', key:'apellidos', val:e.apellidos, required:true},
       {label:'DNI / NIE', key:'dni_nie', val:e.dni_nie},
+      {label:'Nº Seguridad Social *', key:'numero_ss', val:e.numero_ss, required:true},
       {label:'Fecha de nacimiento', key:'fecha_nacimiento', val:e.fecha_nacimiento, type:'date'}
     ]},
     { titulo: 'Contacto', campos: [
@@ -5070,7 +5927,7 @@ function renderFichaEmpleado(e, editable) {
 }
 
 async function guardarEmpleado() {
-  var campos = ['nombre','apellidos','dni_nie','fecha_nacimiento','email_corporativo','email_personal',
+  var campos = ['nombre','apellidos','dni_nie','numero_ss','fecha_nacimiento','email_corporativo','email_personal',
     'telefono_movil','telefono_fijo','telefono_emergencia','contacto_emergencia',
     'departamento','cargo','fecha_alta','tipo_contrato','jornada','estado','salario_bruto_anual',
     'rol_app','email_login','formacion_prl_fecha','formacion_prl_vencimiento',
@@ -5089,8 +5946,8 @@ async function guardarEmpleado() {
   });
 
   // Validar obligatorios
-  if (!data.nombre || !data.apellidos || !data.departamento || !data.cargo) {
-    alert('Los campos Nombre, Apellidos, Departamento y Cargo son obligatorios.');
+  if (!data.nombre || !data.apellidos || !data.departamento || !data.cargo || !data.numero_ss) {
+    alert('Los campos Nombre, Apellidos, Departamento, Cargo y Nº Seguridad Social son obligatorios.');
     return;
   }
 
@@ -5164,7 +6021,151 @@ async function loadAlertasPRL() {
   } catch(e) { console.error(e); el.innerHTML = '<div class="empty">Error cargando alertas PRL</div>'; }
 }
 
+// ---- DASHBOARD JEFE DE OBRA ----
+async function loadDashboardJefeObra() {
+  // Mostrar panel jefe de obra — ocultar sidebar para interfaz simplificada
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-jefe-obra').classList.add('active');
+  // Ocultar sidebar y hamburger, ajustar main
+  var sidebar = document.querySelector('.sidebar');
+  var main = document.querySelector('.main');
+  var hamburger = document.getElementById('hamburger-btn');
+  if (sidebar) sidebar.style.display = 'none';
+  if (main) main.style.marginLeft = '0';
+  if (hamburger) hamburger.style.display = 'none';
+
+  var email = currentUser ? currentUser.email : '';
+  var nombre = email.split('@')[0].replace('.',' ');
+  document.getElementById('jo-title').textContent = 'Mis proyectos';
+  var joEmail = document.getElementById('jo-email');
+  if (joEmail) joEmail.textContent = email;
+  // Buscar nombre completo del empleado
+  try {
+    var empNombre = await db.from('employees').select('nombre,apellidos').eq('email_login', email).single();
+    var joNombre = document.getElementById('jo-nombre');
+    if (joNombre && empNombre.data) {
+      joNombre.textContent = empNombre.data.nombre + ' ' + empNombre.data.apellidos;
+    }
+  } catch(en) {}
+
+  var el = document.getElementById('jo-proyectos-content');
+  el.innerHTML = '<div class="loading">Cargando proyectos...</div>';
+
+  try {
+    // Buscar el empleado por email para obtener su id
+    var empRes = await db.from('employees').select('id,nombre,apellidos').eq('email_login', email).single();
+
+    // Buscar en project_managers por email o nombre
+    var pmRes = await db.from('project_managers').select('id,full_name').ilike('email', email);
+    var pmIds = pmRes.data ? pmRes.data.map(function(p){return p.id;}) : [];
+
+    // Si no hay coincidencia exacta buscar por nombre
+    if (!pmIds.length && empRes.data) {
+      var nombreCompleto = empRes.data.nombre + ' ' + empRes.data.apellidos;
+      var pmRes2 = await db.from('project_managers').select('id,full_name').ilike('full_name', '%' + empRes.data.apellidos + '%');
+      if (pmRes2.data && pmRes2.data.length) pmIds = pmRes2.data.map(function(p){return p.id;});
+    }
+
+    // Buscar proyectos asignados (activos e histórico)
+    var proyectos = [];
+    if (pmIds.length) {
+      var projRes = await db.from('projects')
+        .select('id,name,code,project_code,project_manager_id,project_statuses(code,name),project_managers(full_name)')
+        .in('project_manager_id', pmIds)
+        .order('created_at', {ascending:false});
+      proyectos = projRes.data || [];
+    }
+
+    // También buscar en historial de asignaciones
+    var histRes = await db.from('project_manager_assignments')
+      .select('project_id,is_current,project_managers(full_name)')
+      .in('project_manager_id', pmIds);
+
+    var histIds = histRes.data ? histRes.data.map(function(h){return h.project_id;}) : [];
+    var idsYaEnListado = proyectos.map(function(p){return p.id;});
+    var histPendientes = histIds.filter(function(id){return !idsYaEnListado.includes(id);});
+
+    if (histPendientes.length) {
+      var histProj = await db.from('projects')
+        .select('id,name,code,project_code,project_manager_id,project_statuses(code,name)')
+        .in('id', histPendientes);
+      if (histProj.data) proyectos = proyectos.concat(histProj.data);
+    }
+
+    if (!proyectos.length) {
+      el.innerHTML = '<div class="card"><div class="empty">No tienes proyectos asignados actualmente.</div></div>';
+      return;
+    }
+
+    // Separar activos (en_ejecucion) e histórico
+    var activos = proyectos.filter(function(p){ return p.project_statuses && p.project_statuses.code === 'en_ejecucion'; });
+    var historico = proyectos.filter(function(p){ return !p.project_statuses || p.project_statuses.code !== 'en_ejecucion'; });
+
+    var html = '';
+
+    // Alerta si hay proyectos activos
+    var banner = document.getElementById('jo-alerta-banner');
+    if (activos.length) {
+      banner.style.display = 'block';
+      banner.innerHTML = '<div style="background:#E1F5EE;border:1px solid #A7DEC9;border-radius:8px;padding:10px 16px;margin-bottom:1rem;font-size:13px;font-weight:500;color:#0F6E56;">' +
+        '● ' + activos.length + ' proyecto' + (activos.length>1?'s':'') + ' en ejecución actualmente</div>';
+    } else {
+      banner.style.display = 'none';
+    }
+
+    function renderProyecto(p, esActivo) {
+      var stCode = p.project_statuses ? p.project_statuses.code : '';
+      var stName = p.project_statuses ? p.project_statuses.name : 'Desconocido';
+      var badgeColor = esActivo ? '#0F6E56' : '#888';
+      var badgeBg = esActivo ? '#E1F5EE' : '#f5f5f0';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e5e5e0;border-radius:8px;margin-bottom:8px;background:white;cursor:pointer;" onclick="abrirProyectoJefeObra(' + p.id + ',&quot;' + stCode + '&quot;)">' +
+        '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + (p.name||p.code||'#'+p.id) + '</div>' +
+        '<div style="font-size:11px;color:#888;margin-top:2px;">' + (p.project_code||p.code||'') + '</div>' +
+        '</div>' +
+        '<span style="font-size:11px;padding:3px 10px;border-radius:99px;background:' + badgeBg + ';color:' + badgeColor + ';font-weight:500;">' + stName + '</span>' +
+        '<span style="color:#185FA5;font-size:12px;">Ver →</span>' +
+        '</div>';
+    }
+
+    if (activos.length) {
+      html += '<div style="font-size:13px;font-weight:600;margin-bottom:0.75rem;color:#0F6E56;">En ejecución</div>';
+      html += activos.map(function(p){return renderProyecto(p, true);}).join('');
+    }
+
+    if (historico.length) {
+      html += '<div style="font-size:13px;font-weight:600;margin:1rem 0 0.75rem;color:#888;">Histórico</div>';
+      html += historico.map(function(p){return renderProyecto(p, false);}).join('');
+    }
+
+    el.innerHTML = html;
+
+  } catch(e) {
+    console.error('Error jefe obra dashboard:', e);
+    el.innerHTML = '<div class="empty">Error cargando proyectos</div>';
+  }
+}
+
+function abrirProyectoJefeObra(id, stCode) {
+  if (stCode === 'en_ejecucion') {
+    abrirEjecucion(id, '');
+  } else {
+    // Para histórico mostrar vista de solo lectura
+    abrirEjecucion(id, '');
+  }
+}
+
+async function verDocumentoGasto(fileName, displayName) {
+  try {
+    var res = await db.storage.from('gastos-documentos').createSignedUrl(fileName, 300); // 5 min
+    if (res.data && res.data.signedUrl) {
+      window.open(res.data.signedUrl, '_blank');
+    } else {
+      alert('No se pudo obtener el documento.');
+    }
+  } catch(e) { alert('Error al abrir documento: ' + e.message); }
+}
+
 </script>
 </body>
 </html>
-
