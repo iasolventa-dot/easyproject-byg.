@@ -6686,45 +6686,167 @@ function mostrarResultadoMediciones(resultado, projectId, loadingDiv) {
   var el = document.getElementById('an-docs-list');
   if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
 
-  var html = document.createElement('div');
-  html.style.cssText = 'margin-top:1rem;';
+  var wrap = document.createElement('div');
+  wrap.id = 'mediciones-resultado-wrap';
+  wrap.style.marginTop = '1rem';
 
-  // Header
+  // Header con estado de confirmación
   var header = document.createElement('div');
   header.style.cssText = 'background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;';
   header.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-    '<div><div style="font-size:13px;font-weight:600;color:#0C447C;">✅ Análisis completado' + (resultado.fromIA ? ' (con IA)' : ' (SheetJS)') + '</div>' +
-    '<div style="font-size:11px;color:#185FA5;margin-top:2px;">Obra: ' + resultado.obra + ' · ' + resultado.total + ' gremios detectados</div></div>' +
-    '<button class="btn btn-success btn-sm" onclick="confirmarMediciones()">Confirmar y guardar</button></div>';
-  html.appendChild(header);
+    '<div><div style="font-size:13px;font-weight:600;color:#0C447C;">✅ Análisis completado' + (resultado.fromIA ? ' (IA)' : ' (SheetJS)') + '</div>' +
+    '<div style="font-size:11px;color:#185FA5;margin-top:2px;">Obra: ' + resultado.obra + ' · ' + resultado.total + ' gremios · Pulsa cada gremio para revisar sus partidas</div></div>' +
+    '<div style="display:flex;gap:8px;align-items:center;">' +
+    '<span id="med-confirmados-count" style="font-size:11px;color:#888;">0 / ' + resultado.total + ' confirmados</span>' +
+    '<button class="btn btn-success btn-sm" id="btn-confirmar-mediciones" onclick="confirmarMediciones()" disabled style="opacity:0.5;">Guardar todo</button></div></div>';
+  wrap.appendChild(header);
 
-  // Sin mapear warning
+  // Sin mapear
   if (resultado.sinMapear && resultado.sinMapear.length > 0) {
     var warn = document.createElement('div');
     warn.style.cssText = 'background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:11px;color:#92400e;';
-    warn.textContent = '⚠️ Capítulos sin mapear a gremio: ' + resultado.sinMapear.join(', ');
-    html.appendChild(warn);
+    warn.textContent = '⚠️ Capítulos sin gremio asignado: ' + resultado.sinMapear.join(', ');
+    wrap.appendChild(warn);
   }
 
-  // Gremios cards
+  // Grid de tarjetas de gremio
   var grid = document.createElement('div');
-  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;';
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:1rem;';
 
   Object.entries(resultado.gremios).forEach(function(entry) {
     var nombre = entry[0], data = entry[1];
     var nPartidas = data.capitulos.reduce(function(s,c){ return s + (c.partidas ? c.partidas.length : 0); }, 0);
     var card = document.createElement('div');
-    card.style.cssText = 'background:white;border:2px solid ' + data.color + ';border-radius:8px;padding:12px;cursor:pointer;transition:box-shadow 0.2s;';
-    card.innerHTML = '<div style="width:100%;height:6px;background:' + data.color + ';border-radius:3px;margin-bottom:8px;"></div>' +
+    card.id = 'med-card-' + nombre.replace(/\s/g,'_');
+    card.style.cssText = 'background:white;border:2px solid ' + data.color + ';border-radius:8px;padding:12px;cursor:pointer;transition:all 0.2s;position:relative;';
+    card.innerHTML = '<div style="width:100%;height:5px;background:' + data.color + ';border-radius:3px;margin-bottom:8px;"></div>' +
       '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:3px;">' + nombre + '</div>' +
-      '<div style="font-size:11px;color:#888;">' + nPartidas + ' partida' + (nPartidas !== 1 ? 's' : '') + '</div>';
-    card.addEventListener('mouseenter', function(){ this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; });
-    card.addEventListener('mouseleave', function(){ this.style.boxShadow = ''; });
+      '<div style="font-size:11px;color:#888;">' + nPartidas + ' partida' + (nPartidas !== 1 ? 's' : '') + '</div>' +
+      '<div id="med-check-' + nombre.replace(/\s/g,'_') + '" style="display:none;position:absolute;top:8px;right:8px;width:20px;height:20px;background:#0F6E56;border-radius:50%;display:none;align-items:center;justify-content:center;color:white;font-size:11px;">✓</div>';
+    card.addEventListener('click', (function(n, d){ return function(){ verPartIdasGremio(n, d); }; })(nombre, data));
+    card.addEventListener('mouseenter', function(){ if (!this.dataset.confirmed) this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'; });
+    card.addEventListener('mouseleave', function(){ if (!this.dataset.confirmed) this.style.boxShadow = ''; });
     grid.appendChild(card);
   });
+  wrap.appendChild(grid);
 
-  html.appendChild(grid);
-  el.appendChild(html);
+  // Panel de revisión de partidas (se rellena al clicar)
+  var reviewPanel = document.createElement('div');
+  reviewPanel.id = 'med-review-panel';
+  reviewPanel.style.display = 'none';
+  wrap.appendChild(reviewPanel);
+
+  el.appendChild(wrap);
+}
+
+function verPartIdasGremio(nombre, data) {
+  var panel = document.getElementById('med-review-panel');
+  if (!panel) return;
+
+  // Recopilar todas las partidas de este gremio
+  var todasPartidas = [];
+  data.capitulos.forEach(function(cap) {
+    (cap.partidas || []).forEach(function(p) {
+      todasPartidas.push({ capitulo: cap.descripcion || cap.codigo, partida: p });
+    });
+  });
+
+  panel.style.display = 'block';
+  panel.innerHTML = '';
+
+  var header = document.createElement('div');
+  header.style.cssText = 'background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;margin-bottom:0.5rem;';
+
+  var titleBar = document.createElement('div');
+  titleBar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f9f9f6;border-bottom:1px solid #e5e5e0;';
+  titleBar.innerHTML = '<div style="font-size:13px;font-weight:600;color:#1a1a1a;">📋 ' + nombre + ' — ' + todasPartidas.length + ' partidas</div>' +
+    '<div style="display:flex;gap:8px;">' +
+    '<button class="btn btn-sm" onclick="cerrarRevisionGremio()" style="font-size:11px;">Cerrar</button>' +
+    '<button class="btn btn-success btn-sm" onclick="confirmarGremio('' + nombre.replace(/'/g,'') + '')" style="font-size:11px;">✓ Confirmar gremio</button>' +
+    '</div>';
+  header.appendChild(titleBar);
+
+  // Tabla de partidas
+  var tabla = document.createElement('table');
+  tabla.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px;';
+
+  var thead = document.createElement('thead');
+  thead.innerHTML = '<tr style="background:#f5f5f0;">' +
+    '<th style="padding:8px 12px;text-align:left;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Capítulo</th>' +
+    '<th style="padding:8px 12px;text-align:left;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Código</th>' +
+    '<th style="padding:8px 12px;text-align:left;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Descripción</th>' +
+    '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Ud</th>' +
+    '<th style="padding:8px 12px;text-align:right;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;">Cantidad</th>' +
+    '<th style="padding:8px 12px;width:40px;border-bottom:2px solid #e5e5e0;"></th>' +
+    '</tr>';
+  tabla.appendChild(thead);
+
+  var tbody = document.createElement('tbody');
+  todasPartidas.forEach(function(item, i) {
+    var tr = document.createElement('tr');
+    tr.style.cssText = 'border-bottom:1px solid #f0f0ea;' + (i % 2 === 0 ? '' : 'background:#fafaf8;');
+    tr.innerHTML = '<td style="padding:8px 12px;font-size:11px;color:#888;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (item.capitulo || '-') + '</td>' +
+      '<td style="padding:8px 12px;font-family:monospace;font-size:10px;color:#555;">' + (item.partida.codigo || '-') + '</td>' +
+      '<td style="padding:8px 12px;max-width:250px;">' + (item.partida.descripcion || '-') + '</td>' +
+      '<td style="padding:8px 12px;text-align:center;color:#555;">' + (item.partida.unidad || '-') + '</td>' +
+      '<td style="padding:8px 12px;text-align:right;color:#555;">' + (item.partida.cantidad !== null ? item.partida.cantidad : '-') + '</td>' +
+      '<td style="padding:8px 12px;text-align:center;"><button style="background:none;border:none;cursor:pointer;font-size:12px;color:#aaa;" title="Mover a otro gremio" onclick="moverPartida(' + i + ','' + nombre.replace(/'/g,'') + '')">↕</button></td>';
+    tbody.appendChild(tr);
+  });
+  tabla.appendChild(tbody);
+  header.appendChild(tabla);
+  panel.appendChild(header);
+
+  // Scroll to panel
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cerrarRevisionGremio() {
+  var panel = document.getElementById('med-review-panel');
+  if (panel) panel.style.display = 'none';
+}
+
+var _medicionesConfirmados = {};
+
+function confirmarGremio(nombre) {
+  _medicionesConfirmados[nombre] = true;
+  // Update card visual
+  var cardId = 'med-card-' + nombre.replace(/\s/g,'_');
+  var card = document.getElementById(cardId);
+  if (card) {
+    card.style.borderColor = '#0F6E56';
+    card.style.background = '#F0FBF5';
+    card.style.boxShadow = '';
+    var check = card.querySelector('[id^="med-check-"]');
+    if (check) { check.style.display = 'flex'; }
+    card.dataset.confirmed = '1';
+  }
+  cerrarRevisionGremio();
+
+  // Update counter
+  var total = Object.keys(_medicionesResultado.gremios).length;
+  var confirmados = Object.keys(_medicionesConfirmados).length;
+  var countEl = document.getElementById('med-confirmados-count');
+  if (countEl) countEl.textContent = confirmados + ' / ' + total + ' confirmados';
+
+  // Enable save button when all confirmed
+  var btnConfirmar = document.getElementById('btn-confirmar-mediciones');
+  if (btnConfirmar) {
+    if (confirmados >= total) {
+      btnConfirmar.disabled = false;
+      btnConfirmar.style.opacity = '1';
+    }
+  }
+}
+
+function moverPartida(idx, gremioActual) {
+  var gremios = Object.keys(_medicionesResultado.gremios);
+  var opciones = gremios.filter(function(g){ return g !== gremioActual; });
+  var destino = prompt('Mover a gremio:\n' + opciones.map(function(g,i){ return (i+1)+'. '+g; }).join('\n') + '\n\nEscribe el número:');
+  if (!destino) return;
+  var idx_dest = parseInt(destino) - 1;
+  if (isNaN(idx_dest) || idx_dest < 0 || idx_dest >= opciones.length) { alert('Número incorrecto'); return; }
+  alert('Partida movida a: ' + opciones[idx_dest] + '\n(En próxima versión se guardará automáticamente)');
 }
 
 var _medicionesProjectId = null;
