@@ -1581,13 +1581,7 @@ async function cargarMetricasDept(dept) {
       var notifResult = await cargarNotificacionesNuevosProyectos('tecnico');
       if (notifResult && notifResult.notifs.length && banner) {
         var msgNotif = notifResult.notifs[0].error_message;
-        banner.style.display = 'block';
-        banner.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosFase('solicitado')">' +
-          '<div style="display:flex;align-items:center;gap:12px;">' +
-          '<div style="width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">+</div>' +
-          '<div><div style="font-size:13px;font-weight:600;color:#27500A;">' + notifResult.notifs.length + ' nuevo(s) proyecto(s) registrado(s)</div>' +
-          '<div style="font-size:11px;color:#3B6D11;">' + msgNotif + '</div></div></div>' +
-          '<button onclick="event.stopPropagation();marcarNotificacionesLeidas([' + notifResult.ids.join(',') + ']).then(function(){loadDashboard();})" style="background:none;border:none;font-size:16px;cursor:pointer;color:#888;" title="Marcar como leído">✓</button></div>';
+        npMostrarBannerNotif(banner, notifResult.notifs.length, msgNotif, notifResult.ids);
         return;
       }
       var stCodes = ['en_analisis','oferta_en_curso','pending_tech_review'];
@@ -1617,13 +1611,7 @@ async function cargarMetricasDept(dept) {
     try {
       var notifDir = await cargarNotificacionesNuevosProyectos('direccion');
       if (notifDir && notifDir.notifs.length && banner) {
-        banner.style.display = 'block';
-        banner.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosFase('solicitado')">' +
-          '<div style="display:flex;align-items:center;gap:12px;">' +
-          '<div style="width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">+</div>' +
-          '<div><div style="font-size:13px;font-weight:600;color:#27500A;">' + notifDir.notifs.length + ' nuevo(s) proyecto(s) registrado(s)</div>' +
-          '<div style="font-size:11px;color:#3B6D11;">' + notifDir.notifs[0].error_message + '</div></div></div>' +
-          '<button onclick="event.stopPropagation();marcarNotificacionesLeidas([' + notifDir.ids.join(',') + ']).then(function(){loadDashboard();})" style="background:none;border:none;font-size:16px;cursor:pointer;color:#888;">✓</button></div>';
+        npMostrarBannerNotif(banner, notifDir.notifs.length, notifDir.notifs[0].error_message, notifDir.ids);
         return;
       }
       var adjRes = await db.from('project_awards').select('awarded_amount').eq('award_type','adjudicado');
@@ -1665,13 +1653,7 @@ async function cargarMetricasDept(dept) {
     try {
       var notifCom = await cargarNotificacionesNuevosProyectos('comercial');
       if (notifCom && notifCom.notifs.length && banner) {
-        banner.style.display = 'block';
-        banner.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showProyectosFase('solicitado')">' +
-          '<div style="display:flex;align-items:center;gap:12px;">' +
-          '<div style="width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">+</div>' +
-          '<div><div style="font-size:13px;font-weight:600;color:#27500A;">' + notifCom.notifs.length + ' nuevo(s) proyecto(s) registrado(s)</div>' +
-          '<div style="font-size:11px;color:#3B6D11;">' + notifCom.notifs[0].error_message + '</div></div></div>' +
-          '<button onclick="event.stopPropagation();marcarNotificacionesLeidas([' + notifCom.ids.join(',') + ']).then(function(){loadDashboard();})" style="background:none;border:none;font-size:16px;cursor:pointer;color:#888;">✓</button></div>';
+        npMostrarBannerNotif(banner, notifCom.notifs.length, notifCom.notifs[0].error_message, notifCom.ids);
         return;
       }
       var stOE = await db.from('project_statuses').select('id').eq('code','oferta_enviada').single();
@@ -4906,6 +4888,35 @@ async function guardarCliente() {
 }
 
 // ---- ALERTAS PLANNING PARA DIRECCION ----
+function npMostrarBannerNotif(banner, count, msg, ids) {
+  banner.style.display = 'block';
+  var div = document.createElement('div');
+  div.style.cssText = 'background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;';
+  div.onclick = function(){ showProyectosFase('solicitado'); };
+  var left = document.createElement('div');
+  left.style.cssText = 'display:flex;align-items:center;gap:12px;';
+  var icon = document.createElement('div');
+  icon.style.cssText = 'width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;';
+  icon.textContent = '+';
+  var text = document.createElement('div');
+  text.innerHTML = '<div style="font-size:13px;font-weight:600;color:#27500A;">' + count + ' nuevo(s) proyecto(s) registrado(s)</div>' +
+    '<div style="font-size:11px;color:#3B6D11;">' + msg + '</div>';
+  left.appendChild(icon);
+  left.appendChild(text);
+  var btn = document.createElement('button');
+  btn.textContent = '✓';
+  btn.title = 'Marcar como leído';
+  btn.style.cssText = 'background:none;border:none;font-size:16px;cursor:pointer;color:#888;';
+  btn.onclick = function(e) {
+    e.stopPropagation();
+    marcarNotificacionesLeidas(ids).then(function(){ loadDashboard(); });
+  };
+  div.appendChild(left);
+  div.appendChild(btn);
+  banner.innerHTML = '';
+  banner.appendChild(div);
+}
+
 async function cargarNotificacionesNuevosProyectos(dept) {
   try {
     var res = await db.from('automation_errors')
