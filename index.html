@@ -2354,15 +2354,19 @@ function npRenderClientes(data) {
     el.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#aaa;">No se encontraron clientes</div>';
     return;
   }
-  el.innerHTML = data.map(function(c) {
-    return '<div onclick="npSeleccionarCliente(' + c.id + ')" style="padding:10px 14px;border-bottom:1px solid #f0f0ea;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" ' +
-      'onmouseenter="this.style.background='#f5f5f0'" onmouseleave="this.style.background=''">' +
-      '<div>' +
+  el.innerHTML = '';
+  data.forEach(function(c) {
+    var div = document.createElement('div');
+    div.style.cssText = 'padding:10px 14px;border-bottom:1px solid #f0f0ea;cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
+    div.addEventListener('mouseenter', function(){ this.style.background='#f5f5f0'; });
+    div.addEventListener('mouseleave', function(){ this.style.background=''; });
+    div.innerHTML = '<div>' +
       '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + c.commercial_name + '</div>' +
       '<div style="font-size:11px;color:#888;">' + (c.internal_code||'-') + (c.commercial_email ? ' · ' + c.commercial_email : '') + '</div>' +
-      '</div>' +
-      '<span style="font-size:11px;color:#185FA5;">Seleccionar</span></div>';
-  }).join('');
+      '</div><span style="font-size:11px;color:#185FA5;">Seleccionar</span>';
+    div.onclick = (function(id){ return function(){ npSeleccionarCliente(id); }; })(c.id);
+    el.appendChild(div);
+  });
 }
 
 function npSeleccionarCliente(id) {
