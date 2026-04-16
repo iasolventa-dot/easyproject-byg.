@@ -2862,7 +2862,11 @@ async function cargarDocumentosAnálisis(projectId, categoria) {
         var info=document.createElement('div'); info.style.cssText='flex:1;min-width:0;';
         info.innerHTML='<div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+a.file_name+'</div><div style="font-size:11px;color:#888;">'+sz+(esMed?' <strong style="color:#3B6D11;">MEDICIONES</strong>':'')+'</div>';
         row.appendChild(ic); row.appendChild(info);
-        if(!esMed){var bm=document.createElement('button');bm.textContent='Marcar mediciones';bm.style.cssText='background:#f0f7ff;border:1px solid #B5D4F4;color:#185FA5;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;flex-shrink:0;';bm.onclick=(function(id,pid){return function(){anMarcarMediciones(id,pid);};})(a.id,projectId);row.appendChild(bm);}
+        var bm=document.createElement('button');
+        bm.textContent=esMed?'Desmarcar':'Marcar mediciones';
+        bm.style.cssText='background:'+(esMed?'#EAF3DE':'#f0f7ff')+';border:1px solid '+(esMed?'#C0DD97':'#B5D4F4')+';color:'+(esMed?'#3B6D11':'#185FA5')+';padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;flex-shrink:0;';
+        bm.onclick=(function(id,pid,marked){return function(){marked?anDesmarcarMediciones(id,pid):anMarcarMediciones(id,pid);};})(a.id,projectId,esMed);
+        row.appendChild(bm);
         var bd=document.createElement('button');bd.textContent='Ver';bd.style.cssText='background:white;border:1px solid #ddd;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;flex-shrink:0;';bd.onclick=(function(p,n){return function(){anDescargarArchivo(p,n);};})(a.file_path,a.file_name);row.appendChild(bd);
         lista.appendChild(row);
       });
@@ -2872,9 +2876,27 @@ async function cargarDocumentosAnálisis(projectId, categoria) {
     var inp=document.createElement('input');inp.type='file';inp.multiple=true;inp.id='an-file-input';inp.style.display='none';inp.onchange=function(){anAgregarArchivos(this.files,projectId);};
     var badd=document.createElement('button');badd.className='btn btn-sm';badd.style.borderStyle='dashed';badd.textContent='+ Anadir archivos';badd.onclick=function(){document.getElementById('an-file-input').click();};
     addDiv.appendChild(inp);addDiv.appendChild(badd);el.appendChild(addDiv);
-    var archMed=adj.find(function(a){return a.is_measurements;});
-    if(archMed){var mb=document.createElement('div');mb.style.cssText='margin-top:1rem;background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem;';mb.innerHTML='<div style="font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Archivo de mediciones: '+archMed.file_name+'</div><div style="font-size:11px;color:#185FA5;margin-bottom:10px;">Analiza este archivo para separar partidas por gremio.</div>';var ba=document.createElement('button');ba.className='btn btn-primary btn-sm';ba.textContent='Analizar mediciones con IA';ba.onclick=(function(pid,aid){return function(){anAnalizarMediciones(pid,aid);};})(projectId,archMed.id);mb.appendChild(ba);el.appendChild(mb);}
-    else if(adj.length){var wb=document.createElement('div');wb.style.cssText='margin-top:1rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:11px;color:#92400e;';wb.textContent='Ningun archivo marcado como mediciones. Marcalo para analizar con IA.';el.appendChild(wb);}
+    var archsMed=adj.filter(function(a){return a.is_measurements;});
+    if(archsMed.length){
+      var mb=document.createElement('div');
+      mb.style.cssText='margin-top:1rem;background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem;';
+      var titulo=archsMed.length===1?'Archivo de mediciones':'Archivos de mediciones ('+archsMed.length+')';
+      var nombres=archsMed.map(function(a){return a.file_name;}).join(', ');
+      mb.innerHTML='<div style="font-size:12px;font-weight:600;color:#0C447C;margin-bottom:4px;">'+titulo+'</div>'+
+        '<div style="font-size:11px;color:#185FA5;margin-bottom:10px;">'+nombres+'</div>'+
+        '<div style="font-size:11px;color:#185FA5;margin-bottom:10px;">Analiza estos archivos para separar partidas por gremio.</div>';
+      var ba=document.createElement('button');
+      ba.className='btn btn-primary btn-sm';
+      ba.textContent='Analizar mediciones con IA';
+      ba.onclick=(function(pid,aids){return function(){anAnalizarMediciones(pid,aids);};})(projectId,archsMed.map(function(a){return a.id;}));
+      mb.appendChild(ba);
+      el.appendChild(mb);
+    } else if(adj.length){
+      var wb=document.createElement('div');
+      wb.style.cssText='margin-top:1rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:11px;color:#92400e;';
+      wb.textContent='Ningun archivo marcado como mediciones. Puedes marcar uno o varios.';
+      el.appendChild(wb);
+    }
   } catch(e){console.error(e);el.innerHTML='<div class="empty">Error cargando documentos</div>';}
   document.getElementById('an-docs-reviewed').checked=!!(análisisData&&análisisData.docs_reviewed);
 }
@@ -5735,8 +5757,7 @@ function npRenderArchivos() {
 }
 
 function npToggleMediciones(idx, checked) {
-  if (checked) npArchivos.forEach(function(a,i){ a.esMediciones=(i===idx); });
-  else npArchivos[idx].esMediciones=false;
+  npArchivos[idx].esMediciones = checked;
   npRenderArchivos();
 }
 
@@ -5761,7 +5782,10 @@ function npGenerarResumen() {
     {label:'Nombre proyecto',val:document.getElementById('np-proj-nombre').value},
     {label:'Fecha petición',val:document.getElementById('np-proj-fecha').value?new Date(document.getElementById('np-proj-fecha').value).toLocaleDateString('es-ES'):'-'},
     {label:'Archivos adjuntos',val:npArchivos.length+' archivo'+(npArchivos.length!==1?'s':'')},
-    {label:'Archivo de mediciones',val:med?med.nombre:'No marcado (se identificará en análisis)'}
+    {label:'Archivos de mediciones', val:(function(){
+      var meds=npArchivos.filter(function(a){return a.esMediciones;});
+      return meds.length?meds.map(function(a){return a.nombre;}).join(', '):'No marcado (se identificara en analisis)';
+    })()}
   ];
   el.innerHTML=campos.map(function(c){
     return '<div style="display:flex;padding:9px 0;border-bottom:1px solid #f5f5f0;">'+
@@ -5855,8 +5879,15 @@ async function npGuardar() {
 // ADJUNTOS EN ANÁLISIS
 async function anMarcarMediciones(adjuntoId, projectId) {
   try {
-    await db.from('project_attachments').update({is_measurements:false}).eq('project_id',projectId);
+    // Marcar este archivo como mediciones (sin desmarcar los otros)
     await db.from('project_attachments').update({is_measurements:true}).eq('id',adjuntoId);
+    cargarDocumentosAnálisis(projectId, null);
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function anDesmarcarMediciones(adjuntoId, projectId) {
+  try {
+    await db.from('project_attachments').update({is_measurements:false}).eq('id',adjuntoId);
     cargarDocumentosAnálisis(projectId, null);
   } catch(e) { alert('Error: '+e.message); }
 }
@@ -5885,8 +5916,9 @@ async function anAgregarArchivos(files, projectId) {
   cargarDocumentosAnálisis(projectId,null);
 }
 
-function anAnalizarMediciones(projectId, adjuntoId) {
-  alert('Módulo de análisis con IA: próximamente se integrará el parser SheetJS para separar partidas por gremio.');
+function anAnalizarMediciones(projectId, adjuntoIds) {
+  var ids = Array.isArray(adjuntoIds) ? adjuntoIds : [adjuntoIds];
+  alert('Modulo de analisis con IA: proximamente se integrara el parser SheetJS.\n\n' + ids.length + ' archivo(s) de mediciones seleccionado(s) para analizar.');
 }
 
 async function cargarAdjuntosProyecto(projectId, contenedorId) {
