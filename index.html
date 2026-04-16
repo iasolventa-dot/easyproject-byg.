@@ -416,6 +416,11 @@
   <div class="nav-item sub" id="nav-rrhh" onclick="showPanel('rrhh')" style="display:none;">Personal</div>
   <div class="nav-item sub" id="nav-rrhh-prl" onclick="showPanel('rrhh-prl')" style="display:none;">Alertas PRL</div>
 
+  <div class="nav-section" id="nav-section-informes" style="display:none;">Informes</div>
+  <div class="nav-item sub" id="nav-informes-proyectos" onclick="showPanel('informes-proyectos')" style="display:none;">Histórico proyectos</div>
+  <div class="nav-item sub" id="nav-informes-gastos" onclick="showPanel('informes-gastos')" style="display:none;">Gastos</div>
+  <div class="nav-item sub" id="nav-informes-desviaciones" onclick="showPanel('informes-desviaciones')" style="display:none;">Desviaciones de obra</div>
+
   <div class="user-pill">
     <strong id="user-name">Dept. Técnico</strong>
     <span id="user-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8cf8e9efe2e5efe3cceef5ebffe3e0f9efe5e3e2e9ffa2e9ff">[email&#160;protected]</a></span>
@@ -1467,6 +1472,73 @@
   </div>
 </div>
 
+
+<!-- PANEL INFORMES: HISTÓRICO PROYECTOS -->
+<div id="panel-informes-proyectos" class="panel">
+  <div class="topbar">
+    <h1>Histórico de Proyectos</h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="imprimirInforme('informes-proyectos-content')">🖨️ Imprimir / PDF</button>
+      <button class="btn-refresh" onclick="cargarInformeProyectos()">Actualizar</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
+    <input type="text" id="inf-proy-buscar" placeholder="Buscar por nombre, cliente, código..." oninput="filtrarInformeProyectos()" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+    <select id="inf-proy-estado" onchange="filtrarInformeProyectos()" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+      <option value="">Todos los estados</option>
+      <option value="solicitado">Solicitado</option>
+      <option value="en_analisis">En análisis</option>
+      <option value="oferta_en_curso">Oferta en curso</option>
+      <option value="oferta_enviada">Oferta enviada</option>
+      <option value="adjudicado">Adjudicado</option>
+      <option value="en_ejecucion">En ejecución</option>
+      <option value="cancelled">Cancelado</option>
+    </select>
+    <input type="date" id="inf-proy-desde" onchange="filtrarInformeProyectos()" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" title="Desde">
+    <input type="date" id="inf-proy-hasta" onchange="filtrarInformeProyectos()" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" title="Hasta">
+  </div>
+  <div id="inf-proy-count" style="font-size:12px;color:#888;margin-bottom:0.75rem;"></div>
+  <div id="informes-proyectos-content"><div class="loading">Cargando...</div></div>
+</div>
+
+<!-- PANEL INFORMES: GASTOS -->
+<div id="panel-informes-gastos" class="panel">
+  <div class="topbar">
+    <h1>Informe de Gastos</h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="imprimirInforme('informes-gastos-content')">🖨️ Imprimir / PDF</button>
+      <button class="btn-refresh" onclick="cargarInformeGastos()">Actualizar</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
+    <input type="text" id="inf-gas-buscar" placeholder="Buscar por proyecto, proveedor, concepto..." oninput="filtrarInformeGastos()" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+    <select id="inf-gas-aprobado" onchange="filtrarInformeGastos()" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+      <option value="">Todos</option>
+      <option value="1">Aprobados</option>
+      <option value="0">Pendientes</option>
+    </select>
+    <input type="date" id="inf-gas-desde" onchange="filtrarInformeGastos()" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" title="Desde">
+    <input type="date" id="inf-gas-hasta" onchange="filtrarInformeGastos()" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" title="Hasta">
+  </div>
+  <div id="inf-gas-total" style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:0.75rem;"></div>
+  <div id="informes-gastos-content"><div class="loading">Cargando...</div></div>
+</div>
+
+<!-- PANEL INFORMES: DESVIACIONES -->
+<div id="panel-informes-desviaciones" class="panel">
+  <div class="topbar">
+    <h1>Desviaciones de Obra</h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="imprimirInforme('informes-desviaciones-content')">🖨️ Imprimir / PDF</button>
+      <button class="btn-refresh" onclick="cargarInformeDesviaciones()">Actualizar</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:1rem;">
+    <input type="text" id="inf-desv-buscar" placeholder="Buscar por proyecto o jefe de obra..." oninput="filtrarInformeDesviaciones()" style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+  </div>
+  <div id="informes-desviaciones-content"><div class="loading">Cargando...</div></div>
+</div>
+
 </div><!-- /main -->
 
 <!-- FOOTER COPYRIGHT -->
@@ -1581,6 +1653,20 @@ function setDept(dept, btn) {
   if (btnNP) {
     btnNP.style.display = ['tecnico','direccion','comercial'].indexOf(dept) > -1 ? 'inline-block' : 'none';
   }
+
+  // Visibilidad sección Informes
+  var secInformes = document.getElementById('nav-section-informes');
+  var navInfProy = document.getElementById('nav-informes-proyectos');
+  var navInfGas = document.getElementById('nav-informes-gastos');
+  var navInfDesv = document.getElementById('nav-informes-desviaciones');
+  var showInformes = ['tecnico','direccion','comercial'].indexOf(dept) > -1;
+  if (secInformes) secInformes.style.display = showInformes ? 'block' : 'none';
+  if (navInfProy) navInfProy.style.display = showInformes ? 'block' : 'none';
+  // Gastos solo técnico y dirección
+  if (navInfGas) navInfGas.style.display = ['tecnico','direccion'].indexOf(dept) > -1 ? 'block' : 'none';
+  // Desviaciones solo técnico y dirección
+  if (navInfDesv) navInfDesv.style.display = ['tecnico','direccion'].indexOf(dept) > -1 ? 'block' : 'none';
+
   loadDashboard();
 }
 
@@ -4211,6 +4297,18 @@ function iniciarApp() {
   if (btnNP2) {
     btnNP2.style.display = ['tecnico','direccion','comercial'].indexOf(dept) > -1 ? 'inline-block' : 'none';
   }
+
+  // Visibilidad sección Informes
+  var secInformes2 = document.getElementById('nav-section-informes');
+  var navInfProy2 = document.getElementById('nav-informes-proyectos');
+  var navInfGas2 = document.getElementById('nav-informes-gastos');
+  var navInfDesv2 = document.getElementById('nav-informes-desviaciones');
+  var showInformes2 = ['tecnico','direccion','comercial'].indexOf(dept) > -1;
+  if (secInformes2) secInformes2.style.display = showInformes2 ? 'block' : 'none';
+  if (navInfProy2) navInfProy2.style.display = showInformes2 ? 'block' : 'none';
+  if (navInfGas2) navInfGas2.style.display = ['tecnico','direccion'].indexOf(dept) > -1 ? 'block' : 'none';
+  if (navInfDesv2) navInfDesv2.style.display = ['tecnico','direccion'].indexOf(dept) > -1 ? 'block' : 'none';
+
   loadDashboard();
 }
 
@@ -6374,6 +6472,380 @@ async function cargarAdjuntosProyecto(projectId, contenedorId) {
     });
     el.appendChild(wrapper);
   } catch(e){console.error(e);}
+}
+
+
+// ============================================================
+// MÓDULO INFORMES
+// ============================================================
+
+var _infProyectosData = [];
+var _infGastosData = [];
+var _infDesvData = [];
+
+// ── UTILIDADES ──────────────────────────────────────────────
+
+function imprimirInforme(contenedorId) {
+  var el = document.getElementById(contenedorId);
+  if (!el) return;
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><title>Informe EasyProject - ByG Soluciones</title>' +
+    '<style>body{font-family:Arial,sans-serif;font-size:12px;padding:2rem;color:#1a1a1a;}' +
+    'h1{color:#1B3A6B;font-size:16px;margin-bottom:0.5rem;}' +
+    'table{width:100%;border-collapse:collapse;margin-top:1rem;}' +
+    'th{background:#f5f5f0;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;color:#666;border-bottom:2px solid #ddd;}' +
+    'td{padding:8px 10px;border-bottom:1px solid #eee;font-size:11px;}' +
+    'tr:nth-child(even){background:#fafafa;}' +
+    '.badge{padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;}' +
+    '@media print{button{display:none!important;}}' +
+    '</' + 'style></head><body>');
+  win.document.write('<h1>EasyProject by Solventa IA — ByG Soluciones S.L.</h1>');
+  win.document.write('<p style="font-size:10px;color:#888;margin-bottom:1rem;">Impreso el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES') + '</p>');
+  win.document.write(el.innerHTML);
+  win.document.write('</' + 'body></' + 'html>');
+  win.document.close();
+  win.print();
+}
+
+// ── HISTÓRICO PROYECTOS ──────────────────────────────────────
+
+async function cargarInformeProyectos() {
+  var el = document.getElementById('informes-proyectos-content');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Cargando proyectos...</div>';
+  try {
+    var res = await db.from('projects')
+      .select('id,code,project_code,name,channel,received_at,created_at,contact_email,confidence,project_statuses(code,name),clients(commercial_name,client_code)')
+      .order('created_at', {ascending: false});
+    _infProyectosData = res.data || [];
+    filtrarInformeProyectos();
+  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
+}
+
+function filtrarInformeProyectos() {
+  var buscar = (document.getElementById('inf-proy-buscar') ? document.getElementById('inf-proy-buscar').value.toLowerCase() : '');
+  var estado = document.getElementById('inf-proy-estado') ? document.getElementById('inf-proy-estado').value : '';
+  var desde = document.getElementById('inf-proy-desde') ? document.getElementById('inf-proy-desde').value : '';
+  var hasta = document.getElementById('inf-proy-hasta') ? document.getElementById('inf-proy-hasta').value : '';
+
+  var filtered = _infProyectosData.filter(function(p) {
+    var nombre = (p.name || p.code || '').toLowerCase();
+    var cliente = (p.clients ? p.clients.commercial_name || '' : '').toLowerCase();
+    var codigo = (p.project_code || p.code || '').toLowerCase();
+    if (buscar && !nombre.includes(buscar) && !cliente.includes(buscar) && !codigo.includes(buscar)) return false;
+    if (estado && p.project_statuses && p.project_statuses.code !== estado) return false;
+    if (desde && p.received_at && p.received_at < desde) return false;
+    if (hasta && p.received_at && p.received_at > hasta + 'T23:59:59') return false;
+    return true;
+  });
+
+  var count = document.getElementById('inf-proy-count');
+  if (count) count.textContent = filtered.length + ' proyecto' + (filtered.length !== 1 ? 's' : '') + ' encontrado' + (filtered.length !== 1 ? 's' : '');
+
+  renderInformeProyectos(filtered);
+}
+
+function renderInformeProyectos(data) {
+  var el = document.getElementById('informes-proyectos-content');
+  if (!el) return;
+  if (!data.length) { el.innerHTML = '<div class="empty">No hay proyectos con los filtros aplicados</div>'; return; }
+
+  var estadoColors = {
+    solicitado: '#E3F0FF', en_analisis: '#FFF8E1', oferta_en_curso: '#FFF3E0',
+    oferta_enviada: '#E8F5E9', adjudicado: '#E8F5E9', en_ejecucion: '#E0F2F1', cancelled: '#FFEBEE'
+  };
+  var estadoLabels = {
+    solicitado: 'Solicitado', en_analisis: 'En análisis', oferta_en_curso: 'Oferta en curso',
+    oferta_enviada: 'Oferta enviada', adjudicado: 'Adjudicado', en_ejecucion: 'En ejecución', cancelled: 'Cancelado'
+  };
+
+  var html = '<table><thead><tr>' +
+    '<th>Código</th><th>Proyecto</th><th>Cliente</th><th>Canal</th>' +
+    '<th>Fecha solicitud</th><th>Estado</th><th>Confianza IA</th><th>Acciones</th>' +
+    '</tr></thead><tbody>';
+
+  data.forEach(function(p) {
+    var estado = p.project_statuses ? p.project_statuses.code : '';
+    var estadoLabel = estadoLabels[estado] || estado;
+    var estadoColor = estadoColors[estado] || '#f5f5f0';
+    var fecha = p.received_at ? new Date(p.received_at).toLocaleDateString('es-ES') : (p.created_at ? new Date(p.created_at).toLocaleDateString('es-ES') : '-');
+    var cliente = p.clients ? (p.clients.commercial_name || '-') : '-';
+    var confianza = p.confidence ? Math.round(p.confidence * 100) + '%' : '-';
+    var canal = p.channel === 'manual' ? '✍️ Manual' : '📧 Email';
+
+    html += '<tr>' +
+      '<td style="font-family:monospace;font-size:11px;color:#555;">' + (p.project_code || p.code || '-') + '</td>' +
+      '<td style="font-weight:500;max-width:200px;">' + (p.name || '-') + '</td>' +
+      '<td>' + cliente + '</td>' +
+      '<td style="font-size:11px;">' + canal + '</td>' +
+      '<td>' + fecha + '</td>' +
+      '<td><span style="padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600;background:' + estadoColor + ';">' + estadoLabel + '</span></td>' +
+      '<td style="text-align:center;">' + confianza + '</td>' +
+      '<td><button class="btn btn-sm" style="font-size:11px;" onclick="verDetalleProyectoInforme(' + p.id + ')">Ver detalle</button></td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+async function verDetalleProyectoInforme(projectId) {
+  try {
+    // Load project with all related data
+    var [projRes, evalRes, gastosRes] = await Promise.all([
+      db.from('projects').select('*,project_statuses(name),clients(commercial_name,commercial_email,contact_name)').eq('id', projectId).single(),
+      db.from('project_evaluations').select('*').eq('project_id', projectId),
+      db.from('project_expenses').select('*').eq('project_id', projectId).order('expense_date', {ascending: false})
+    ]);
+
+    var p = projRes.data;
+    var evals = evalRes.data || [];
+    var gastos = gastosRes.data || [];
+
+    var win = window.open('', '_blank');
+    var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    var html = '<html><head><title>Detalle Proyecto - ' + (p.name||p.code) + '</title>' +
+      '<style>body{font-family:Arial,sans-serif;font-size:12px;padding:2rem;color:#1a1a1a;max-width:900px;margin:0 auto;}' +
+      'h1{color:#1B3A6B;font-size:18px;}h2{color:#185FA5;font-size:14px;margin:1.5rem 0 0.5rem;border-bottom:2px solid #e5e5e0;padding-bottom:4px;}' +
+      '.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}' +
+      '.field{margin-bottom:8px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.05em;display:block;}' +
+      '.value{font-size:13px;font-weight:500;}' +
+      'table{width:100%;border-collapse:collapse;margin-top:0.5rem;}' +
+      'th{background:#f5f5f0;padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;color:#666;border-bottom:2px solid #ddd;}' +
+      'td{padding:7px 10px;border-bottom:1px solid #eee;font-size:11px;}' +
+      '.aprobado{color:#0F6E56;font-weight:600;}.rechazado{color:#C0392B;font-weight:600;}' +
+      '@media print{button{display:none!important;}}' +
+      '</style></head><body>';
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
+    html += '<div><h1>' + (p.name || p.code || 'Proyecto') + '</h1>';
+    html += '<p style="color:#888;font-size:11px;">' + (p.project_code || p.code || '') + ' · Generado el ' + new Date().toLocaleDateString('es-ES') + '</p></div>';
+    html += '<button onclick="window.print()" style="background:#185FA5;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;">🖨️ Imprimir / PDF</button>';
+    html += '</div>';
+
+    // Datos generales
+    html += '<h2>Datos generales</h2><div class="grid">';
+    html += '<div class="field"><span class="label">Cliente</span><span class="value">' + (p.clients ? p.clients.commercial_name : '-') + '</span></div>';
+    html += '<div class="field"><span class="label">Contacto</span><span class="value">' + (p.clients ? (p.clients.contact_name || '-') : '-') + '</span></div>';
+    html += '<div class="field"><span class="label">Email contacto</span><span class="value">' + (p.contact_email || '-') + '</span></div>';
+    html += '<div class="field"><span class="label">Estado actual</span><span class="value">' + (p.project_statuses ? p.project_statuses.name : '-') + '</span></div>';
+    html += '<div class="field"><span class="label">Fecha solicitud</span><span class="value">' + (p.received_at ? new Date(p.received_at).toLocaleDateString('es-ES') : '-') + '</span></div>';
+    html += '<div class="field"><span class="label">Canal entrada</span><span class="value">' + (p.channel === 'manual' ? 'Alta manual' : 'Email automático') + '</span></div>';
+    html += '<div class="field"><span class="label">Descripción / Petición</span><span class="value" style="font-weight:normal;">' + (p.description || p.subject || '-') + '</span></div>';
+    html += '</div>';
+
+    // Evaluaciones
+    if (evals.length > 0) {
+      html += '<h2>Evaluaciones tripartitas</h2>';
+      html += '<table><thead><tr><th>Departamento</th><th>Decisión</th><th>Observaciones</th><th>Fecha</th></tr></thead><tbody>';
+      var deptNames = {tecnico: 'Dept. Técnico', comercial: 'Dept. Comercial', direccion: 'Dirección'};
+      evals.forEach(function(e) {
+        html += '<tr>' +
+          '<td>' + (deptNames[e.department] || e.department) + '</td>' +
+          '<td class="' + (e.decision === 'approved' ? 'aprobado' : 'rechazado') + '">' + (e.decision === 'approved' ? '✓ Aprobado' : '✗ Rechazado') + '</td>' +
+          '<td>' + (e.rejection_reason || '-') + '</td>' +
+          '<td>' + (e.evaluated_at ? new Date(e.evaluated_at).toLocaleDateString('es-ES') : '-') + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    // Gastos
+    if (gastos.length > 0) {
+      var totalGastos = gastos.reduce(function(s,g){ return s + (parseFloat(g.amount)||0); }, 0);
+      html += '<h2>Gastos registrados — Total: ' + totalGastos.toLocaleString('es-ES', {minimumFractionDigits:2}) + ' EUR</h2>';
+      html += '<table><thead><tr><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th>Importe</th><th>Fecha</th><th>Estado</th><th>Documento</th></tr></thead><tbody>';
+      gastos.forEach(function(g) {
+        html += '<tr>' +
+          '<td>' + (g.expense_type || '-') + '</td>' +
+          '<td>' + (g.supplier_name || '-') + '</td>' +
+          '<td>' + (g.description || '-') + '</td>' +
+          '<td style="font-weight:600;">' + (parseFloat(g.amount)||0).toLocaleString('es-ES', {minimumFractionDigits:2}) + ' €</td>' +
+          '<td>' + (g.expense_date ? new Date(g.expense_date).toLocaleDateString('es-ES') : '-') + '</td>' +
+          '<td>' + (g.approved ? '<span style="color:#0F6E56;font-weight:600;">Aprobado</span>' : '<span style="color:#E67E22;">Pendiente</span>') + '</td>' +
+          '<td>' + (g.file_name ? '<a href="#" onclick="verDocGasto(\''+g.file_name+'\')" style="color:#185FA5;font-size:11px;">Ver doc.</a>' : '-') + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    html += '</body></html>';
+    win.document.write(html);
+    win.document.close();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── GASTOS ───────────────────────────────────────────────────
+
+async function cargarInformeGastos() {
+  var el = document.getElementById('informes-gastos-content');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Cargando gastos...</div>';
+  try {
+    var res = await db.from('project_expenses')
+      .select('*,projects(name,project_code,code)')
+      .order('expense_date', {ascending: false})
+      .limit(500);
+    _infGastosData = res.data || [];
+    filtrarInformeGastos();
+  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
+}
+
+function filtrarInformeGastos() {
+  var buscar = (document.getElementById('inf-gas-buscar') ? document.getElementById('inf-gas-buscar').value.toLowerCase() : '');
+  var aprobado = document.getElementById('inf-gas-aprobado') ? document.getElementById('inf-gas-aprobado').value : '';
+  var desde = document.getElementById('inf-gas-desde') ? document.getElementById('inf-gas-desde').value : '';
+  var hasta = document.getElementById('inf-gas-hasta') ? document.getElementById('inf-gas-hasta').value : '';
+
+  var filtered = _infGastosData.filter(function(g) {
+    var proy = g.projects ? (g.projects.name || g.projects.project_code || '').toLowerCase() : '';
+    var prov = (g.supplier_name || '').toLowerCase();
+    var conc = (g.description || '').toLowerCase();
+    if (buscar && !proy.includes(buscar) && !prov.includes(buscar) && !conc.includes(buscar)) return false;
+    if (aprobado === '1' && !g.approved) return false;
+    if (aprobado === '0' && g.approved) return false;
+    if (desde && g.expense_date && g.expense_date < desde) return false;
+    if (hasta && g.expense_date && g.expense_date > hasta) return false;
+    return true;
+  });
+
+  var total = filtered.reduce(function(s,g){ return s + (parseFloat(g.amount)||0); }, 0);
+  var totalEl = document.getElementById('inf-gas-total');
+  if (totalEl) totalEl.innerHTML = filtered.length + ' gasto' + (filtered.length !== 1 ? 's' : '') +
+    ' · Total: <span style="color:#185FA5;">' + total.toLocaleString('es-ES', {minimumFractionDigits:2}) + ' EUR</span>' +
+    ' · Aprobados: <span style="color:#0F6E56;">' + filtered.filter(function(g){return g.approved;}).reduce(function(s,g){return s+(parseFloat(g.amount)||0);},0).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</span>';
+
+  renderInformeGastos(filtered);
+}
+
+function renderInformeGastos(data) {
+  var el = document.getElementById('informes-gastos-content');
+  if (!el) return;
+  if (!data.length) { el.innerHTML = '<div class="empty">No hay gastos con los filtros aplicados</div>'; return; }
+
+  var html = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;">' +
+    '<table><thead><tr>' +
+    '<th>Proyecto</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th>' +
+    '<th>Importe</th><th>Fecha</th><th>Registrado por</th><th>Estado</th><th>Documento</th>' +
+    '</tr></thead><tbody>';
+
+  data.forEach(function(g) {
+    var proy = g.projects ? (g.projects.name || g.projects.project_code || g.projects.code || '-') : '-';
+    html += '<tr>' +
+      '<td style="font-size:11px;max-width:150px;">' + proy + '</td>' +
+      '<td style="font-size:11px;">' + (g.expense_type || '-') + '</td>' +
+      '<td>' + (g.supplier_name || '-') + '</td>' +
+      '<td style="max-width:180px;">' + (g.description || '-') + '</td>' +
+      '<td style="font-weight:600;text-align:right;">' + (parseFloat(g.amount)||0).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' €</td>' +
+      '<td>' + (g.expense_date ? new Date(g.expense_date).toLocaleDateString('es-ES') : '-') + '</td>' +
+      '<td style="font-size:11px;">' + (g.registered_by || '-') + '</td>' +
+      '<td>' + (g.approved ? '<span style="color:#0F6E56;font-weight:600;font-size:11px;">✓ Aprobado</span>' : '<span style="color:#E67E22;font-size:11px;">Pendiente</span>') + '</td>' +
+      '<td>' + (g.file_name ? '<button class="btn btn-sm" style="font-size:10px;" onclick="verDocumentoGastoInforme(\''+g.file_name+'\',\''+g.file_name+'\')">📄 Ver</button>' : '-') + '</td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+async function verDocumentoGastoInforme(fileName, displayName) {
+  try {
+    var res = await db.storage.from('gastos-documentos').createSignedUrl(fileName, 300);
+    if (res.data && res.data.signedUrl) window.open(res.data.signedUrl, '_blank');
+    else alert('No se pudo generar el enlace.');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── DESVIACIONES ─────────────────────────────────────────────
+
+async function cargarInformeDesviaciones() {
+  var el = document.getElementById('informes-desviaciones-content');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Cargando datos...</div>';
+  try {
+    // Get projects in execution or completed
+    var projRes = await db.from('projects')
+      .select('id,name,project_code,code,clients(commercial_name),project_managers(full_name)')
+      .in('project_status_id', (await db.from('project_statuses').select('id').in('code',['en_ejecucion','adjudicado'])).data.map(function(s){return s.id;}));
+
+    var proyectos = projRes.data || [];
+    _infDesvData = proyectos;
+    filtrarInformeDesviaciones();
+  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
+}
+
+function filtrarInformeDesviaciones() {
+  var buscar = (document.getElementById('inf-desv-buscar') ? document.getElementById('inf-desv-buscar').value.toLowerCase() : '');
+  var filtered = _infDesvData.filter(function(p) {
+    var nombre = (p.name || p.code || '').toLowerCase();
+    var jefe = (p.project_managers ? p.project_managers.full_name || '' : '').toLowerCase();
+    if (buscar && !nombre.includes(buscar) && !jefe.includes(buscar)) return false;
+    return true;
+  });
+  renderInformeDesviaciones(filtered);
+}
+
+async function renderInformeDesviaciones(proyectos) {
+  var el = document.getElementById('informes-desviaciones-content');
+  if (!el) return;
+  if (!proyectos.length) { el.innerHTML = '<div class="empty">No hay proyectos en ejecución</div>'; return; }
+
+  el.innerHTML = '<div class="loading">Cargando hitos...</div>';
+
+  // For each project load milestones
+  var rows = [];
+  for (var i = 0; i < proyectos.length; i++) {
+    var p = proyectos[i];
+    var hitosRes = await db.from('project_milestones').select('*').eq('project_id', p.id).order('planned_date');
+    var hitos = hitosRes.data || [];
+    var completados = hitos.filter(function(h){ return h.completed && h.actual_date; });
+    var retrasados = hitos.filter(function(h){ return !h.completed && h.planned_date && new Date(h.planned_date) < new Date(); });
+    var desvMedia = 0;
+    if (completados.length > 0) {
+      completados.forEach(function(h) {
+        desvMedia += Math.round((new Date(h.actual_date) - new Date(h.planned_date)) / (1000*60*60*24));
+      });
+      desvMedia = Math.round(desvMedia / completados.length);
+    }
+    rows.push({ p: p, hitos: hitos, completados: completados, retrasados: retrasados, desvMedia: desvMedia });
+  }
+
+  var html = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;">' +
+    '<table><thead><tr>' +
+    '<th>Proyecto</th><th>Cliente</th><th>Jefe de Obra</th>' +
+    '<th style="text-align:center;">Hitos total</th><th style="text-align:center;">Completados</th>' +
+    '<th style="text-align:center;">Retrasados</th><th style="text-align:center;">Desv. media</th>' +
+    '<th>Estado general</th>' +
+    '</tr></thead><tbody>';
+
+  rows.forEach(function(r) {
+    var semaforo = r.retrasados.length === 0 ? '🟢' : (r.retrasados.length <= 2 ? '🟡' : '🔴');
+    var desvColor = r.desvMedia > 7 ? '#C0392B' : r.desvMedia > 0 ? '#E67E22' : '#0F6E56';
+    html += '<tr>' +
+      '<td style="font-weight:500;">' + (r.p.name || r.p.project_code || r.p.code || '-') + '</td>' +
+      '<td style="font-size:11px;">' + (r.p.clients ? r.p.clients.commercial_name : '-') + '</td>' +
+      '<td style="font-size:11px;">' + (r.p.project_managers ? r.p.project_managers.full_name : '-') + '</td>' +
+      '<td style="text-align:center;">' + r.hitos.length + '</td>' +
+      '<td style="text-align:center;color:#0F6E56;font-weight:600;">' + r.completados.length + '</td>' +
+      '<td style="text-align:center;color:#C0392B;font-weight:600;">' + r.retrasados.length + '</td>' +
+      '<td style="text-align:center;font-weight:600;color:' + desvColor + ';">' + (r.desvMedia !== 0 ? (r.desvMedia > 0 ? '+' : '') + r.desvMedia + ' días' : '—') + '</td>' +
+      '<td style="font-size:16px;">' + semaforo + '</td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+// ── SHOW PANEL HOOK ──────────────────────────────────────────
+// Override showPanel to load data when entering informes panels
+var _originalShowPanel = showPanel;
+function showPanel(panelId) {
+  _originalShowPanel(panelId);
+  if (panelId === 'informes-proyectos') cargarInformeProyectos();
+  else if (panelId === 'informes-gastos') cargarInformeGastos();
+  else if (panelId === 'informes-desviaciones') cargarInformeDesviaciones();
 }
 
 </script>
