@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EasyProject · BYG Soluciones</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; transition: background 0.3s; }
@@ -1542,7 +1543,10 @@
     <input type="date" id="inf-proy-desde" onchange="filtrarInformeProyectos()" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" title="Desde">
     <input type="date" id="inf-proy-hasta" onchange="filtrarInformeProyectos()" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" title="Hasta">
   </div>
-  <div id="inf-proy-count" style="font-size:12px;color:#888;margin-bottom:0.75rem;"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+    <div id="inf-proy-count" style="font-size:12px;color:#888;"></div>
+    <button class="btn btn-sm" onclick="limpiarFiltrosProyectos()" style="font-size:11px;">✕ Limpiar filtros</button>
+  </div>
   <div id="informes-proyectos-content"><div class="loading">Cargando...</div></div>
 </div>
 
@@ -6492,10 +6496,288 @@ async function anAgregarArchivos(files, projectId) {
   cargarDocumentosAnálisis(projectId,null);
 }
 
-function anAnalizarMediciones(projectId, adjuntoIds) {
+// ============================================================
+// PARSER DE MEDICIONES — SheetJS en navegador
+// ============================================================
+
+var MAPEO_GREMIOS = {
+  'C01': { gremio: 'Demoliciones',        color: '#FFE0B2' },
+  'C02': { gremio: 'Albañilería',          color: '#BBDEFB' },
+  'C03': { gremio: 'Pladur',              color: '#C8E6C9' },
+  'C04': { gremio: 'Climatización',       color: '#E1BEE7' },
+  'C05': { gremio: 'Climatización',       color: '#E1BEE7' },
+  'C06': { gremio: 'Electricidad',        color: '#FFF9C4' },
+  'C07': { gremio: 'Contraincendios',     color: '#FFCDD2' },
+  'C08': { gremio: 'Fontanería',          color: '#B3E5FC' },
+  'C09': { gremio: 'Varios',              color: '#F5F5F5' },
+  'C10': { gremio: 'Gestión de Residuos', color: '#DCEDC8' },
+  'C11': { gremio: 'Seguridad y Salud',   color: '#CFD8DC' },
+};
+
+var _medicionesResultado = null; // Guarda resultado para confirmar
+
+async function anAnalizarMediciones(projectId, adjuntoIds) {
   var ids = Array.isArray(adjuntoIds) ? adjuntoIds : [adjuntoIds];
-  alert('Modulo de analisis con IA: proximamente se integrara el parser SheetJS.\n\n' + ids.length + ' archivo(s) de mediciones seleccionado(s) para analizar.');
+  if (!ids.length) { alert('No hay archivos de mediciones seleccionados'); return; }
+
+  // Mostrar loading
+  var el = document.getElementById('an-docs-list');
+  var loadingDiv = document.createElement('div');
+  loadingDiv.id = 'mediciones-loading';
+  loadingDiv.style.cssText = 'background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem;margin-top:1rem;text-align:center;';
+  loadingDiv.innerHTML = '<div style="font-size:13px;color:#185FA5;font-weight:500;">⏳ Analizando archivo de mediciones...</div>' +
+    '<div style="font-size:11px;color:#888;margin-top:4px;">Esto puede tardar unos segundos</div>';
+  el.appendChild(loadingDiv);
+
+  try {
+    // Procesar cada archivo de mediciones
+    var todosCapitulos = [];
+    var obraNombre = '';
+
+    for (var i = 0; i < ids.length; i++) {
+      var adjId = ids[i];
+      // Get file path from DB
+      var adjRes = await db.from('project_attachments').select('*').eq('id', adjId).single();
+      var adj = adjRes.data;
+      if (!adj) continue;
+
+      // Check if it's a PDF - send to OpenAI
+      if (adj.file_type === 'pdf' || adj.mime_type === 'application/pdf') {
+        loadingDiv.innerHTML = '<div style="font-size:13px;color:#185FA5;font-weight:500;">📄 PDF detectado — analizando con IA...</div>';
+        var resultIA = await analizarMedicionesConIA(adj, projectId);
+        if (resultIA) {
+          mostrarResultadoMediciones(resultIA, projectId, loadingDiv);
+          return;
+        }
+        continue;
+      }
+
+      // Get signed URL and download file
+      var urlRes = await db.storage.from('project-attachments').createSignedUrl(adj.file_path, 60);
+      if (!urlRes.data || !urlRes.data.signedUrl) { alert('No se pudo acceder al archivo'); continue; }
+
+      loadingDiv.innerHTML = '<div style="font-size:13px;color:#185FA5;font-weight:500;">📊 Leyendo Excel con SheetJS...</div>';
+
+      var response = await fetch(urlRes.data.signedUrl);
+      var arrayBuffer = await response.arrayBuffer();
+      var data = new Uint8Array(arrayBuffer);
+
+      // Parse with SheetJS
+      var workbook = XLSX.read(data, { type: 'array', cellFormula: false });
+      var ws = workbook.Sheets[workbook.SheetNames[0]];
+      var filas = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+
+      // Extract obra name from B1
+      if (!obraNombre && filas[0] && filas[0][1]) obraNombre = String(filas[0][1]);
+
+      // Detect structure
+      var estructura = detectarEstructura(filas);
+
+      if (estructura === 'libre') {
+        loadingDiv.innerHTML = '<div style="font-size:13px;color:#E67E22;font-weight:500;">⚠️ Estructura libre detectada — enviando a IA para clasificación...</div>';
+        var resultIA2 = await analizarMedicionesConIA(adj, projectId);
+        if (resultIA2) {
+          mostrarResultadoMediciones(resultIA2, projectId, loadingDiv);
+          return;
+        }
+        continue;
+      }
+
+      var capitulos = parsearEstructurado(filas);
+      todosCapitulos = todosCapitulos.concat(capitulos);
+    }
+
+    if (!todosCapitulos.length) {
+      loadingDiv.innerHTML = '<div style="font-size:13px;color:#C0392B;">No se detectaron capítulos en el archivo.</div>';
+      return;
+    }
+
+    // Group by gremio
+    var resultado = agruparPorGremio(todosCapitulos, obraNombre || 'Obra');
+    mostrarResultadoMediciones(resultado, projectId, loadingDiv);
+
+  } catch(e) {
+    console.error(e);
+    if (loadingDiv) loadingDiv.innerHTML = '<div style="font-size:13px;color:#C0392B;">Error al analizar: ' + e.message + '</div>';
+  }
 }
+
+function detectarEstructura(filas) {
+  var primeras = filas.slice(0, 10);
+  var tieneTipo = primeras.some(function(r){ return r[1] === 'Capítulo' || r[1] === 'Partida'; });
+  var tieneCodigo = primeras.some(function(r){ return r[0] && typeof r[0] === 'string' && /^C\d+$/.test(r[0].trim()); });
+  if (tieneTipo && tieneCodigo) return 'estructurado';
+  if (tieneCodigo) return 'semi_estructurado';
+  return 'libre';
+}
+
+function parsearEstructurado(filas) {
+  var capitulos = [];
+  var capActual = null;
+  var partidaActual = null;
+
+  filas.forEach(function(row) {
+    var codigo = row[0], tipo = row[1], ud = row[2], desc = row[3];
+    if (tipo === 'Capítulo' && codigo && typeof codigo === 'string' && /^C\d+$/.test(codigo.trim())) {
+      capActual = { codigo: codigo.trim(), descripcion: desc || '', partidas: [] };
+      capitulos.push(capActual);
+      partidaActual = null;
+    } else if (tipo === 'Partida' && capActual) {
+      var cantidad = typeof row[10] === 'number' ? row[10] : null;
+      var precio = typeof row[11] === 'number' ? row[11] : 0;
+      partidaActual = { codigo: codigo ? String(codigo) : '', unidad: ud || '', descripcion: desc || '', cantidad: cantidad, precio: precio };
+      capActual.partidas.push(partidaActual);
+    }
+  });
+  return capitulos;
+}
+
+function agruparPorGremio(capitulos, obraNombre) {
+  var gremios = {};
+  var sinMapear = [];
+  capitulos.forEach(function(cap) {
+    var info = MAPEO_GREMIOS[cap.codigo];
+    if (info) {
+      if (!gremios[info.gremio]) gremios[info.gremio] = { color: info.color, capitulos: [], codigo: cap.codigo };
+      gremios[info.gremio].capitulos.push(cap);
+    } else {
+      sinMapear.push(cap.codigo);
+    }
+  });
+  return { gremios: gremios, sinMapear: sinMapear, obra: obraNombre, total: Object.keys(gremios).length };
+}
+
+async function analizarMedicionesConIA(adj, projectId) {
+  // Get file as base64 and send to n8n/OpenAI
+  try {
+    var urlRes = await db.storage.from('project-attachments').createSignedUrl(adj.file_path, 60);
+    if (!urlRes.data) return null;
+    var response = await fetch(urlRes.data.signedUrl);
+    var arrayBuffer = await response.arrayBuffer();
+    var base64 = btoa(String.fromCharCode.apply(null, new Uint8Array(arrayBuffer)));
+
+    var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/gastos-ia';
+    var prompt = 'Analiza este documento de mediciones de obra. Identifica los capítulos y partidas agrupados por gremio de trabajo (demoliciones, albañilería, electricidad, fontanería, climatización, pladur, contraincendios, etc.). Devuelve SOLO un JSON con esta estructura: {"gremios": [{"gremio": "nombre", "partidas": [{"descripcion": "...", "unidad": "m2", "cantidad": 10}]}], "obra": "nombre de la obra"}';
+
+    var res = await fetch(n8nUrl, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ base64: base64, mediaType: adj.mime_type || 'application/pdf', isPdf: true, prompt: prompt })
+    });
+    var data = await res.json();
+    var rawBody = data.body || data;
+    var resultado = rawBody.resultado || rawBody;
+    if (resultado && resultado.gremios) {
+      // Convert to our format
+      var gremios = {};
+      resultado.gremios.forEach(function(g) {
+        gremios[g.gremio] = { color: '#f5f5f0', capitulos: [{ codigo: '', descripcion: g.gremio, partidas: g.partidas || [] }] };
+      });
+      return { gremios: gremios, sinMapear: [], obra: resultado.obra || 'Obra', total: resultado.gremios.length, fromIA: true };
+    }
+    return null;
+  } catch(e) { console.error('IA error:', e); return null; }
+}
+
+function mostrarResultadoMediciones(resultado, projectId, loadingDiv) {
+  _medicionesResultado = resultado;
+  _medicionesProjectId = projectId;
+
+  var el = document.getElementById('an-docs-list');
+  if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+
+  var html = document.createElement('div');
+  html.style.cssText = 'margin-top:1rem;';
+
+  // Header
+  var header = document.createElement('div');
+  header.style.cssText = 'background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;';
+  header.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+    '<div><div style="font-size:13px;font-weight:600;color:#0C447C;">✅ Análisis completado' + (resultado.fromIA ? ' (con IA)' : ' (SheetJS)') + '</div>' +
+    '<div style="font-size:11px;color:#185FA5;margin-top:2px;">Obra: ' + resultado.obra + ' · ' + resultado.total + ' gremios detectados</div></div>' +
+    '<button class="btn btn-success btn-sm" onclick="confirmarMediciones()">Confirmar y guardar</button></div>';
+  html.appendChild(header);
+
+  // Sin mapear warning
+  if (resultado.sinMapear && resultado.sinMapear.length > 0) {
+    var warn = document.createElement('div');
+    warn.style.cssText = 'background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:11px;color:#92400e;';
+    warn.textContent = '⚠️ Capítulos sin mapear a gremio: ' + resultado.sinMapear.join(', ');
+    html.appendChild(warn);
+  }
+
+  // Gremios cards
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;';
+
+  Object.entries(resultado.gremios).forEach(function(entry) {
+    var nombre = entry[0], data = entry[1];
+    var nPartidas = data.capitulos.reduce(function(s,c){ return s + (c.partidas ? c.partidas.length : 0); }, 0);
+    var card = document.createElement('div');
+    card.style.cssText = 'background:white;border:2px solid ' + data.color + ';border-radius:8px;padding:12px;cursor:pointer;transition:box-shadow 0.2s;';
+    card.innerHTML = '<div style="width:100%;height:6px;background:' + data.color + ';border-radius:3px;margin-bottom:8px;"></div>' +
+      '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:3px;">' + nombre + '</div>' +
+      '<div style="font-size:11px;color:#888;">' + nPartidas + ' partida' + (nPartidas !== 1 ? 's' : '') + '</div>';
+    card.addEventListener('mouseenter', function(){ this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; });
+    card.addEventListener('mouseleave', function(){ this.style.boxShadow = ''; });
+    grid.appendChild(card);
+  });
+
+  html.appendChild(grid);
+  el.appendChild(html);
+}
+
+var _medicionesProjectId = null;
+
+async function confirmarMediciones() {
+  if (!_medicionesResultado || !_medicionesProjectId) return;
+  try {
+    // Delete existing specialties for this project
+    await db.from('project_specialties').delete().eq('project_id', _medicionesProjectId);
+
+    // Insert one per gremio
+    var gremiosArr = Object.keys(_medicionesResultado.gremios);
+    for (var i = 0; i < gremiosArr.length; i++) {
+      var gremioNombre = gremiosArr[i];
+      var gremioData = _medicionesResultado.gremios[gremioNombre];
+      var nPartidas = gremioData.capitulos.reduce(function(s,c){ return s + (c.partidas ? c.partidas.length : 0); }, 0);
+
+        // Use specialty_code = gremio name, detected_by_ai = false for SheetJS
+      await db.from('project_specialties').insert({
+        project_id: _medicionesProjectId,
+        specialty_code: gremioNombre,
+        detected_by_ai: _medicionesResultado.fromIA ? true : false,
+        confidence: _medicionesResultado.fromIA ? 0.85 : 1.0,
+        created_at: new Date().toISOString()
+      });
+    }
+
+    alert('✅ ' + gremiosArr.length + ' gremios guardados correctamente.\n\nEl proyecto puede avanzar a selección de proveedores.');
+    _medicionesResultado = null;
+    _medicionesProjectId = null;
+
+  } catch(e) {
+    // If project_specialties doesn't have all columns, try simpler insert
+    try {
+      var gremiosArr2 = Object.keys(_medicionesResultado.gremios);
+      for (var j = 0; j < gremiosArr2.length; j++) {
+        var gNombre = gremiosArr2[j];
+        await db.from('project_specialties').insert({
+          project_id: _medicionesProjectId,
+          specialty_code: gNombre,
+          detected_by_ai: _medicionesResultado.fromIA ? true : false,
+          confidence: 1.0,
+          created_at: new Date().toISOString()
+        });
+      }
+      alert('✅ Gremios guardados correctamente.');
+      _medicionesResultado = null;
+    } catch(e2) {
+      alert('Error al guardar: ' + e2.message);
+    }
+  }
+}
+
 
 async function cargarAdjuntosProyecto(projectId, contenedorId) {
   var el=document.getElementById(contenedorId);
@@ -6568,6 +6850,17 @@ async function cargarInformeProyectos() {
     _infProyectosData = res.data || [];
     filtrarInformeProyectos();
   } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
+}
+
+function limpiarFiltrosProyectos() {
+  var campos = ['inf-proy-buscar', 'inf-proy-desde', 'inf-proy-hasta'];
+  campos.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var estado = document.getElementById('inf-proy-estado');
+  if (estado) estado.value = '';
+  filtrarInformeProyectos();
 }
 
 function filtrarInformeProyectos() {
