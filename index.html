@@ -1,76 +1,4 @@
-async function cargarDocumentosAnálisis(projectId, categoria) {
-  var el = document.getElementById('an-docs-list');
-  el.innerHTML = '<div class="loading">Cargando documentos...</div>';
-  
-  try {
-    // Cargar adjuntos reales de Supabase
-    var attRes = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
-    var adjuntos = attRes.data || [];
-    
-    var tieneArchivos = adjuntos.length > 0;
-    var archMediciones = adjuntos.find(function(a){return a.is_measurements;});
-    
-    var html = '';
-    
-    // Banner estado conexión SharePoint
-    html += '<div style="background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">' +
-      '<span style="font-size:14px;">!</span>' +
-      '<div style="font-size:11px;color:#854F0B;">Cuando se active la integración con Microsoft 365, los archivos se almacenarán automáticamente en SharePoint. Actualmente se almacenan en Supabase Storage.</div>' +
-      '</div>';
-    
-    if (!tieneArchivos) {
-      html += '<div class="empty">No hay archivos adjuntos en este proyecto.<br><span style="font-size:11px;">Puedes añadir archivos desde el botón de abajo.</span></div>';
-    } else {
-      // Mostrar archivos
-      html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;">';
-      adjuntos.forEach(function(a) {
-        var iconos = {excel:'📊', pdf:'📄', word:'📝', imagen:'🖼️', otro:'📎'};
-        var icono = iconos[a.file_type] || '📎';
-        var esMed = a.is_measurements;
-        var bg = esMed ? '#EAF3DE' : 'white';
-        var border = esMed ? '#C0DD97' : '#e5e5e0';
-        var size = a.file_size ? (a.file_size > 1024*1024 ? (a.file_size/(1024*1024)).toFixed(1)+' MB' : (a.file_size/1024).toFixed(0)+' KB') : '-';
-        
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+bg+';border:1px solid '+border+';border-radius:8px;">' +
-          '<span style="font-size:20px;flex-shrink:0;">'+icono+'</span>' +
-          '<div style="flex:1;min-width:0;">' +
-          '<div style="font-size:12px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.file_name+'</div>' +
-          '<div style="font-size:11px;color:#888;">'+size+(esMed ? ' · <span style="color:#3B6D11;font-weight:600;">ARCHIVO DE MEDICIONES</span>' : '')+'</div>' +
-          '</div>' +
-          (esMed ? '' : '<button onclick="anMarcarMediciones('+a.id+','+projectId+')" style="background:#f0f7ff;border:1px solid #B5D4F4;color:#185FA5;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;white-space:nowrap;">Marcar mediciones</button>') +
-          '<button onclick="anDescargarArchivo(''+a.file_path+'',''+a.file_name+'')" style="background:white;border:1px solid #ddd;padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;" title="Ver/Descargar">⬇️</button>' +
-          '</div>';
-      });
-      html += '</div>';
-    }
-    
-    // Botón añadir más archivos
-    html += '<div style="margin-top:0.5rem;">' +
-      '<input type="file" id="an-file-input" multiple style="display:none;" onchange="anAgregarArchivos(this.files,'+projectId+')">' +
-      '<button onclick="document.getElementById('an-file-input').click()" class="btn btn-sm" style="border-style:dashed;">+ Añadir archivos</button>' +
-      '</div>';
-    
-    // Sección análisis de mediciones
-    if (archMediciones) {
-      html += '<div style="margin-top:1rem;background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem;">' +
-        '<div style="font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Archivo de mediciones identificado: ' + archMediciones.file_name + '</div>' +
-        '<div style="font-size:11px;color:#185FA5;margin-bottom:10px;">El departamento técnico puede analizar este archivo para separar las partidas por gremio.</div>' +
-        '<button class="btn btn-primary btn-sm" onclick="anAnalizarMediciones('+projectId+','+archMediciones.id+')">Analizar mediciones con IA →</button>' +
-        '</div>';
-    } else if (tieneArchivos) {
-      html += '<div style="margin-top:1rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;">' +
-        '<div style="font-size:11px;color:#92400e;">Ningún archivo está marcado como "Archivo de mediciones". Márcalo para poder analizar las partidas con la IA.</div>' +
-        '</div>';
-    }
-    
-    el.innerHTML = html;
-    
-  } catch(e) {
-    console.error(e);
-    el.innerHTML = '<div class="empty">Error cargando documentos</div>';
-  }
-  
-  document.getElementById('an-docs-reviewed').checked = análisisData&&análisisData.docs_reviewed||false;<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -1427,181 +1355,64 @@ async function cargarDocumentosAnálisis(projectId, categoria) {
 
 <!-- PANEL NUEVO PROYECTO -->
 <div id="panel-nuevo-proyecto" class="panel">
-  <div class="topbar">
-    <h1>Nuevo proyecto</h1>
-    <button class="btn btn-back" onclick="cerrarNuevoProyecto()">Cancelar</button>
+  <div class="topbar"><h1>Nuevo proyecto</h1><button class="btn btn-back" onclick="cerrarNuevoProyecto()">Cancelar</button></div>
+  <div style="display:flex;margin-bottom:1.5rem;background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.5rem;align-items:center;gap:0;">
+    <div style="flex:1;text-align:center;"><div id="np-dot-1" style="width:28px;height:28px;border-radius:50%;background:#185FA5;color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">1</div><div id="np-lbl-1" style="font-size:11px;color:#185FA5;font-weight:500;">Cliente</div></div>
+    <div style="height:2px;background:#e5e5e0;flex:0.5;"></div>
+    <div style="flex:1;text-align:center;"><div id="np-dot-2" style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">2</div><div id="np-lbl-2" style="font-size:11px;color:#aaa;">Datos</div></div>
+    <div style="height:2px;background:#e5e5e0;flex:0.5;"></div>
+    <div style="flex:1;text-align:center;"><div id="np-dot-3" style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">3</div><div id="np-lbl-3" style="font-size:11px;color:#aaa;">Archivos</div></div>
+    <div style="height:2px;background:#e5e5e0;flex:0.5;"></div>
+    <div style="flex:1;text-align:center;"><div id="np-dot-4" style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">4</div><div id="np-lbl-4" style="font-size:11px;color:#aaa;">Confirmar</div></div>
   </div>
-
-  <!-- STEPS INDICATOR -->
-  <div style="display:flex;gap:0;margin-bottom:1.5rem;background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.5rem;">
-    <div class="np-step active" id="np-step-1" style="flex:1;text-align:center;">
-      <div style="width:28px;height:28px;border-radius:50%;background:#185FA5;color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">1</div>
-      <div style="font-size:11px;color:#185FA5;font-weight:500;">Cliente</div>
+  <div id="np-paso-1"><div class="card" style="max-width:700px;">
+    <div class="card-header"><div class="card-title">Paso 1 - Seleccion de cliente</div></div>
+    <div style="display:flex;gap:8px;margin-bottom:1.5rem;"><button id="np-btn-existente" class="btn btn-primary" onclick="npSetClienteTipo('existente')">Cliente registrado</button><button id="np-btn-nuevo" class="btn" onclick="npSetClienteTipo('nuevo')">Nuevo cliente</button></div>
+    <div id="np-cliente-existente">
+      <div class="form-field" style="margin-bottom:1rem;"><label>Buscar cliente</label><input type="text" id="np-buscar-cliente" placeholder="Nombre o acronimo..." style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;" oninput="npFiltrarClientes(this.value)"></div>
+      <div id="np-lista-clientes" style="border:1px solid #e5e5e0;border-radius:8px;max-height:220px;overflow-y:auto;"></div>
+      <div id="np-cliente-seleccionado" style="display:none;margin-top:1rem;background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 14px;"><div style="font-size:12px;font-weight:600;color:#27500A;" id="np-cli-sel-nombre"></div><div style="font-size:11px;color:#3B6D11;" id="np-cli-sel-email"></div></div>
     </div>
-    <div style="flex:1;display:flex;align-items:center;justify-content:center;"><div style="height:2px;background:#e5e5e0;width:100%;"></div></div>
-    <div class="np-step" id="np-step-2" style="flex:1;text-align:center;">
-      <div style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">2</div>
-      <div style="font-size:11px;color:#aaa;">Datos proyecto</div>
+    <div id="np-cliente-nuevo" style="display:none;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-field"><label>Nombre comercial *</label><input type="text" id="np-new-nombre" placeholder="Nombre empresa" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Acronimo (3 letras) *</label><input type="text" id="np-new-acronimo" placeholder="Ej: GSS" maxlength="3" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="form-field"><label>Persona de contacto *</label><input type="text" id="np-new-contacto" placeholder="Nombre y apellidos" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Email de contacto *</label><input type="email" id="np-new-email" placeholder="email@empresa.com" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Telefono</label><input type="text" id="np-new-telefono" placeholder="+34 ..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Tipo de cliente</label><input type="text" id="np-new-tipo" placeholder="Retail, CC..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+    </div><div style="font-size:11px;color:#888;margin-top:8px;">Este cliente se creara como lead.</div></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1.5rem;"><button class="btn btn-primary" onclick="npSiguiente(1)">Siguiente</button></div>
+  </div></div>
+  <div id="np-paso-2" style="display:none;"><div class="card" style="max-width:700px;">
+    <div class="card-header"><div class="card-title">Paso 2 - Datos del proyecto</div></div>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="form-field"><label>Nombre del proyecto *</label><input type="text" id="np-proj-nombre" placeholder="Ej: Reforma local 12B CC Viladecans" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Fecha de recepcion *</label><input type="date" id="np-proj-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div class="form-field"><label>Texto de la peticion</label><textarea id="np-proj-texto" placeholder="Pega aqui el texto del email del cliente..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:140px;resize:vertical;font-family:inherit;line-height:1.6;"></textarea></div>
+      <div class="form-field"><label>Observaciones internas</label><textarea id="np-proj-notas" placeholder="Notas internas..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:80px;resize:vertical;font-family:inherit;"></textarea></div>
     </div>
-    <div style="flex:1;display:flex;align-items:center;justify-content:center;"><div style="height:2px;background:#e5e5e0;width:100%;"></div></div>
-    <div class="np-step" id="np-step-3" style="flex:1;text-align:center;">
-      <div style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">3</div>
-      <div style="font-size:11px;color:#aaa;">Archivos adjuntos</div>
+    <div style="display:flex;justify-content:space-between;margin-top:1.5rem;"><button class="btn" onclick="npAnterior(2)">Anterior</button><button class="btn btn-primary" onclick="npSiguiente(2)">Siguiente</button></div>
+  </div></div>
+  <div id="np-paso-3" style="display:none;"><div class="card" style="max-width:700px;">
+    <div class="card-header"><div class="card-title">Paso 3 - Archivos adjuntos</div><span style="font-size:11px;color:#888;">Arrastra o selecciona todos los archivos</span></div>
+    <div id="np-dropzone" ondrop="npHandleDrop(event)" ondragover="npDragOver(event)" ondragleave="npDragLeave(event)" onclick="document.getElementById('np-file-input').click()" style="border:2px dashed #ccc;border-radius:10px;padding:2rem;text-align:center;cursor:pointer;margin-bottom:1rem;">
+      <div style="font-size:2.5rem;margin-bottom:8px;">&#128206;</div>
+      <div style="font-size:13px;font-weight:500;color:#444;margin-bottom:4px;">Arrastra los archivos aqui</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:1rem;">o haz clic para seleccionar desde tu ordenador</div>
+      <div style="display:inline-block;background:#185FA5;color:white;padding:7px 18px;border-radius:7px;font-size:12px;">Seleccionar archivos</div>
     </div>
-    <div style="flex:1;display:flex;align-items:center;justify-content:center;"><div style="height:2px;background:#e5e5e0;width:100%;"></div></div>
-    <div class="np-step" id="np-step-4" style="flex:1;text-align:center;">
-      <div style="width:28px;height:28px;border-radius:50%;background:#e5e5e0;color:#aaa;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">4</div>
-      <div style="font-size:11px;color:#aaa;">Confirmar</div>
-    </div>
-  </div>
-
-  <!-- PASO 1: CLIENTE -->
-  <div id="np-paso-1">
-    <div class="card" style="max-width:700px;">
-      <div class="card-header"><div class="card-title">Paso 1 — Selección de cliente</div></div>
-      <div style="display:flex;gap:8px;margin-bottom:1.5rem;">
-        <button id="np-btn-existente" class="btn btn-primary" onclick="npSetClienteTipo('existente')">Cliente registrado</button>
-        <button id="np-btn-nuevo" class="btn" onclick="npSetClienteTipo('nuevo')">Nuevo cliente</button>
-      </div>
-
-      <!-- Cliente existente -->
-      <div id="np-cliente-existente">
-        <div class="form-field" style="margin-bottom:1rem;">
-          <label>Buscar cliente</label>
-          <input type="text" id="np-buscar-cliente" placeholder="Nombre o acrónimo del cliente..." 
-            style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;"
-            oninput="npFiltrarClientes(this.value)">
-        </div>
-        <div id="np-lista-clientes" style="border:1px solid #e5e5e0;border-radius:8px;max-height:220px;overflow-y:auto;"></div>
-        <div id="np-cliente-seleccionado" style="display:none;margin-top:1rem;background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 14px;">
-          <div style="font-size:12px;font-weight:600;color:#27500A;" id="np-cli-sel-nombre"></div>
-          <div style="font-size:11px;color:#3B6D11;" id="np-cli-sel-email"></div>
-        </div>
-      </div>
-
-      <!-- Nuevo cliente -->
-      <div id="np-cliente-nuevo" style="display:none;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-          <div class="form-field">
-            <label>Nombre comercial *</label>
-            <input type="text" id="np-new-nombre" placeholder="Nombre de la empresa" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-          </div>
-          <div class="form-field">
-            <label>Acrónimo (3 letras) *</label>
-            <input type="text" id="np-new-acronimo" placeholder="Ej: GSS" maxlength="3" 
-              style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;text-transform:uppercase;"
-              oninput="this.value=this.value.toUpperCase()">
-          </div>
-          <div class="form-field">
-            <label>Persona de contacto *</label>
-            <input type="text" id="np-new-contacto" placeholder="Nombre y apellidos" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-          </div>
-          <div class="form-field">
-            <label>Email de contacto *</label>
-            <input type="email" id="np-new-email" placeholder="email@empresa.com" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-          </div>
-          <div class="form-field">
-            <label>Teléfono</label>
-            <input type="text" id="np-new-telefono" placeholder="+34 ..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-          </div>
-          <div class="form-field">
-            <label>Tipo de cliente</label>
-            <input type="text" id="np-new-tipo" placeholder="Retail, Centro comercial..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-          </div>
-        </div>
-        <div style="font-size:11px;color:#888;margin-top:8px;">* Este cliente se creará como lead. Cuando se adjudique el proyecto se completarán sus datos fiscales.</div>
-      </div>
-
-      <div style="display:flex;justify-content:flex-end;margin-top:1.5rem;">
-        <button class="btn btn-primary" onclick="npSiguiente(1)">Siguiente →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PASO 2: DATOS DEL PROYECTO -->
-  <div id="np-paso-2" style="display:none;">
-    <div class="card" style="max-width:700px;">
-      <div class="card-header"><div class="card-title">Paso 2 — Datos del proyecto</div></div>
-      <div style="display:flex;flex-direction:column;gap:1rem;">
-        <div class="form-field">
-          <label>Nombre del proyecto *</label>
-          <input type="text" id="np-proj-nombre" placeholder="Ej: Reforma local 12B CC Viladecans" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-        </div>
-        <div class="form-field">
-          <label>Fecha de recepción de la petición *</label>
-          <input type="date" id="np-proj-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
-        </div>
-        <div class="form-field">
-          <label>Texto de la petición del cliente</label>
-          <textarea id="np-proj-texto" placeholder="Pega aquí el texto del email o descripción de la petición del cliente..." 
-            style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:140px;resize:vertical;font-family:inherit;line-height:1.6;"></textarea>
-        </div>
-        <div class="form-field">
-          <label>Observaciones internas</label>
-          <textarea id="np-proj-notas" placeholder="Notas internas del equipo técnico..." 
-            style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-height:80px;resize:vertical;font-family:inherit;"></textarea>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
-        <button class="btn" onclick="npAnterior(2)">← Anterior</button>
-        <button class="btn btn-primary" onclick="npSiguiente(2)">Siguiente →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PASO 3: ARCHIVOS ADJUNTOS -->
-  <div id="np-paso-3" style="display:none;">
-    <div class="card" style="max-width:700px;">
-      <div class="card-header">
-        <div class="card-title">Paso 3 — Archivos adjuntos</div>
-        <span style="font-size:11px;color:#888;">Arrastra o selecciona todos los archivos del cliente</span>
-      </div>
-
-      <!-- ZONA DE ARRASTRE -->
-      <div id="np-dropzone"
-        ondrop="npHandleDrop(event)" 
-        ondragover="npDragOver(event)"
-        ondragleave="npDragLeave(event)"
-        onclick="document.getElementById('np-file-input').click()"
-        style="border:2px dashed #ccc;border-radius:10px;padding:2rem;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:1rem;">
-        <div style="font-size:2.5rem;margin-bottom:8px;">📎</div>
-        <div style="font-size:13px;font-weight:500;color:#444;margin-bottom:4px;">Arrastra los archivos aquí</div>
-        <div style="font-size:11px;color:#aaa;margin-bottom:1rem;">o haz clic para seleccionar desde tu ordenador</div>
-        <div style="display:inline-block;background:#185FA5;color:white;padding:7px 18px;border-radius:7px;font-size:12px;font-weight:500;">Seleccionar archivos</div>
-        <div style="font-size:10px;color:#ccc;margin-top:8px;">PDF, Excel, Word, imágenes · Sin límite de archivos · Máx. 50MB por archivo</div>
-      </div>
-      <input type="file" id="np-file-input" multiple style="display:none;" onchange="npAgregarArchivos(this.files)">
-
-      <!-- LISTA DE ARCHIVOS -->
-      <div id="np-archivos-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
-
-      <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
-        <button class="btn" onclick="npAnterior(3)">← Anterior</button>
-        <button class="btn btn-primary" onclick="npSiguiente(3)">Siguiente →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PASO 4: CONFIRMAR -->
-  <div id="np-paso-4" style="display:none;">
-    <div class="card" style="max-width:700px;">
-      <div class="card-header"><div class="card-title">Paso 4 — Confirmar y registrar</div></div>
-      <div id="np-resumen" style="display:flex;flex-direction:column;gap:0;"></div>
-      <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:12px 16px;margin-top:1rem;">
-        <div style="font-size:12px;font-weight:600;color:#27500A;margin-bottom:3px;">El proyecto quedará registrado en estado "Solicitado"</div>
-        <div style="font-size:11px;color:#3B6D11;">Se asignará automáticamente un código de expediente y estará disponible para evaluación por los tres departamentos.</div>
-      </div>
-      <div id="np-guardando" style="display:none;text-align:center;padding:1rem;">
-        <div style="font-size:13px;color:#185FA5;">Guardando proyecto y subiendo archivos...</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
-        <button class="btn" onclick="npAnterior(4)">← Anterior</button>
-        <button class="btn btn-success" id="np-btn-guardar" onclick="npGuardar()">Registrar proyecto</button>
-      </div>
-    </div>
-  </div>
+    <input type="file" id="np-file-input" multiple style="display:none;" onchange="npAgregarArchivos(this.files)">
+    <div id="np-archivos-lista"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:1.5rem;"><button class="btn" onclick="npAnterior(3)">Anterior</button><button class="btn btn-primary" onclick="npSiguiente(3)">Siguiente</button></div>
+  </div></div>
+  <div id="np-paso-4" style="display:none;"><div class="card" style="max-width:700px;">
+    <div class="card-header"><div class="card-title">Paso 4 - Confirmar y registrar</div></div>
+    <div id="np-resumen"></div>
+    <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:12px 16px;margin-top:1rem;"><div style="font-size:12px;font-weight:600;color:#27500A;">El proyecto quedara en estado Solicitado</div><div style="font-size:11px;color:#3B6D11;">Se asignara un codigo de expediente automaticamente.</div></div>
+    <div id="np-guardando" style="display:none;text-align:center;padding:1rem;font-size:13px;color:#185FA5;">Guardando proyecto...</div>
+    <div style="display:flex;justify-content:space-between;margin-top:1.5rem;"><button class="btn" onclick="npAnterior(4)">Anterior</button><button class="btn btn-success" id="np-btn-guardar" onclick="npGuardar()">Registrar proyecto</button></div>
+  </div></div>
 </div>
-
 
 </div><!-- /main -->
 
@@ -2269,28 +2080,18 @@ function imprimirListadoClientes() {
     '<h2>BYG Soluciones - Listado de Clientes</h2>' +
     '<p>EasyProject by Solventa IA · Impreso el '+new Date().toLocaleDateString('es-ES')+' a las '+new Date().toLocaleTimeString('es-ES')+'</p>' +
     '<table><thead><tr><th>Cód. interno</th><th>Nombre comercial</th><th>Email contacto</th><th>Teléfono</th></tr></thead>' +
-    '<tbody>'+rows+'</tbody></table>' +
-    '</body></html>');
-  win.document.close();
-  win.print();
-}
-
-// ============================================================
-// MÓDULO NUEVO PROYECTO
-// ============================================================
+    '<tbody>'+rows+'</tbody></table><script>
+// MÓDULO NUEVO PROYECTO + ADJUNTOS
 var npClienteTipo = 'existente';
 var npClienteSeleccionado = null;
-var npArchivos = []; // {file, nombre, tipo, esMediciones}
-var npPasoActual = 1;
+var npArchivos = [];
+var npClientesCache = [];
 
 function abrirNuevoProyecto() {
   npReset();
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.getElementById('panel-nuevo-proyecto').classList.add('active');
-  // Poner fecha de hoy por defecto
-  var hoy = new Date().toISOString().split('T')[0];
-  document.getElementById('np-proj-fecha').value = hoy;
-  // Cargar clientes
+  document.getElementById('np-proj-fecha').value = new Date().toISOString().split('T')[0];
   npCargarClientes();
 }
 
@@ -2303,10 +2104,8 @@ function npReset() {
   npClienteTipo = 'existente';
   npClienteSeleccionado = null;
   npArchivos = [];
-  npPasoActual = 1;
   npMostrarPaso(1);
   npSetClienteTipo('existente');
-  // Limpiar campos
   ['np-proj-nombre','np-proj-texto','np-proj-notas','np-new-nombre','np-new-acronimo',
    'np-new-contacto','np-new-email','np-new-telefono','np-new-tipo','np-buscar-cliente'].forEach(function(id){
     var el = document.getElementById(id);
@@ -2316,6 +2115,10 @@ function npReset() {
   if (cliSel) cliSel.style.display = 'none';
   var lista = document.getElementById('np-archivos-lista');
   if (lista) lista.innerHTML = '';
+  var guardando = document.getElementById('np-guardando');
+  if (guardando) guardando.style.display = 'none';
+  var btnGuardar = document.getElementById('np-btn-guardar');
+  if (btnGuardar) btnGuardar.disabled = false;
 }
 
 function npSetClienteTipo(tipo) {
@@ -2327,10 +2130,9 @@ function npSetClienteTipo(tipo) {
   document.getElementById('np-cliente-nuevo').style.display = tipo === 'nuevo' ? 'block' : 'none';
 }
 
-var npClientesCache = [];
 async function npCargarClientes() {
   try {
-    var res = await db.from('clients').select('id,internal_code,client_code,commercial_name,contact_name,commercial_email,phone').order('commercial_name');
+    var res = await db.from('clients').select('id,internal_code,client_code,commercial_name,contact_name,commercial_email').order('commercial_name');
     npClientesCache = res.data || [];
     npRenderClientes(npClientesCache);
   } catch(e) { console.error(e); }
@@ -2339,459 +2141,290 @@ async function npCargarClientes() {
 function npFiltrarClientes(q) {
   if (!q.trim()) { npRenderClientes(npClientesCache); return; }
   var lower = q.toLowerCase();
-  var filtered = npClientesCache.filter(function(c) {
+  npRenderClientes(npClientesCache.filter(function(c) {
     return (c.commercial_name||'').toLowerCase().includes(lower) ||
-      (c.client_code||'').toLowerCase().includes(lower) ||
-      (c.internal_code||'').toLowerCase().includes(lower);
-  });
-  npRenderClientes(filtered);
+      (c.client_code||'').toLowerCase().includes(lower);
+  }));
 }
 
 function npRenderClientes(data) {
   var el = document.getElementById('np-lista-clientes');
   if (!el) return;
+  el.innerHTML = '';
   if (!data.length) {
     el.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#aaa;">No se encontraron clientes</div>';
     return;
   }
-  el.innerHTML = '';
   data.forEach(function(c) {
     var div = document.createElement('div');
     div.style.cssText = 'padding:10px 14px;border-bottom:1px solid #f0f0ea;cursor:pointer;display:flex;align-items:center;justify-content:space-between;';
     div.addEventListener('mouseenter', function(){ this.style.background='#f5f5f0'; });
     div.addEventListener('mouseleave', function(){ this.style.background=''; });
-    div.innerHTML = '<div>' +
-      '<div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + c.commercial_name + '</div>' +
-      '<div style="font-size:11px;color:#888;">' + (c.internal_code||'-') + (c.commercial_email ? ' · ' + c.commercial_email : '') + '</div>' +
-      '</div><span style="font-size:11px;color:#185FA5;">Seleccionar</span>';
-    div.onclick = (function(id){ return function(){ npSeleccionarCliente(id); }; })(c.id);
+    div.innerHTML = '<div><div style="font-size:13px;font-weight:500;color:#1a1a1a;">' + c.commercial_name + '</div>' +
+      '<div style="font-size:11px;color:#888;">' + (c.internal_code||'-') + (c.commercial_email?' · '+c.commercial_email:'') + '</div></div>' +
+      '<span style="font-size:11px;color:#185FA5;">Seleccionar</span>';
+    div.onclick = (function(cli){ return function(){ npSeleccionarCliente(cli); }; })(c);
     el.appendChild(div);
   });
 }
 
-function npSeleccionarCliente(id) {
-  var cliente = npClientesCache.find(function(c){return c.id === id;});
-  if (!cliente) return;
-  npClienteSeleccionado = cliente;
+function npSeleccionarCliente(c) {
+  npClienteSeleccionado = c;
   var el = document.getElementById('np-cliente-seleccionado');
   el.style.display = 'block';
-  document.getElementById('np-cli-sel-nombre').textContent = cliente.commercial_name + (cliente.client_code ? ' [' + cliente.client_code + ']' : '');
-  document.getElementById('np-cli-sel-email').textContent = (cliente.contact_name ? cliente.contact_name + ' · ' : '') + (cliente.commercial_email || '');
-  // Resaltar fila seleccionada
-  document.querySelectorAll('#np-lista-clientes > div').forEach(function(d){d.style.background='';});
-  event.currentTarget.style.background = '#EAF3DE';
+  document.getElementById('np-cli-sel-nombre').textContent = c.commercial_name + (c.client_code?' ['+c.client_code+']':'');
+  document.getElementById('np-cli-sel-email').textContent = (c.contact_name?c.contact_name+' · ':'') + (c.commercial_email||'');
 }
 
 function npMostrarPaso(paso) {
   [1,2,3,4].forEach(function(p) {
     var panel = document.getElementById('np-paso-' + p);
     if (panel) panel.style.display = p === paso ? 'block' : 'none';
-    var step = document.getElementById('np-step-' + p);
-    if (step) {
-      var dot = step.querySelector('div:first-child');
-      var label = step.querySelector('div:last-child');
-      if (p < paso) {
-        // completado
-        if (dot) { dot.style.background = '#3B6D11'; dot.textContent = '✓'; }
-        if (label) label.style.color = '#3B6D11';
-      } else if (p === paso) {
-        // activo
-        if (dot) { dot.style.background = '#185FA5'; dot.textContent = p; }
-        if (label) label.style.color = '#185FA5';
-      } else {
-        // pendiente
-        if (dot) { dot.style.background = '#e5e5e0'; dot.textContent = p; }
-        if (label) label.style.color = '#aaa';
-      }
+    var dot = document.getElementById('np-dot-' + p);
+    var lbl = document.getElementById('np-lbl-' + p);
+    if (p < paso) {
+      if (dot) { dot.style.background='#3B6D11'; dot.textContent='✓'; dot.style.color='white'; }
+      if (lbl) lbl.style.color='#3B6D11';
+    } else if (p === paso) {
+      if (dot) { dot.style.background='#185FA5'; dot.textContent=String(p); dot.style.color='white'; }
+      if (lbl) lbl.style.color='#185FA5';
+    } else {
+      if (dot) { dot.style.background='#e5e5e0'; dot.textContent=String(p); dot.style.color='#aaa'; }
+      if (lbl) lbl.style.color='#aaa';
     }
   });
-  npPasoActual = paso;
 }
 
-function npAnterior(pasoActual) {
-  npMostrarPaso(pasoActual - 1);
+function npAnterior(p) { npMostrarPaso(p-1); }
+
+function npSiguiente(p) {
+  if (p===1) {
+    if (npClienteTipo==='existente' && !npClienteSeleccionado) { alert('Selecciona un cliente.'); return; }
+    if (npClienteTipo==='nuevo') {
+      var n=document.getElementById('np-new-nombre').value.trim();
+      var a=document.getElementById('np-new-acronimo').value.trim();
+      var co=document.getElementById('np-new-contacto').value.trim();
+      var em=document.getElementById('np-new-email').value.trim();
+      if (!n||!a||!co||!em) { alert('Rellena los campos obligatorios.'); return; }
+      if (a.length!==3) { alert('El acrónimo debe tener exactamente 3 letras.'); return; }
+    }
+  }
+  if (p===2) {
+    if (!document.getElementById('np-proj-nombre').value.trim()) { alert('El nombre del proyecto es obligatorio.'); return; }
+    if (!document.getElementById('np-proj-fecha').value) { alert('La fecha es obligatoria.'); return; }
+  }
+  if (p===3) { npGenerarResumen(); }
+  npMostrarPaso(p+1);
 }
 
-function npSiguiente(pasoActual) {
-  if (pasoActual === 1) {
-    // Validar cliente
-    if (npClienteTipo === 'existente' && !npClienteSeleccionado) {
-      alert('Selecciona un cliente de la lista.'); return;
-    }
-    if (npClienteTipo === 'nuevo') {
-      var nombre = document.getElementById('np-new-nombre').value.trim();
-      var acronimo = document.getElementById('np-new-acronimo').value.trim();
-      var contacto = document.getElementById('np-new-contacto').value.trim();
-      var email = document.getElementById('np-new-email').value.trim();
-      if (!nombre || !acronimo || !contacto || !email) {
-        alert('Rellena los campos obligatorios del nuevo cliente.'); return;
-      }
-      if (acronimo.length !== 3) {
-        alert('El acrónimo debe tener exactamente 3 letras.'); return;
-      }
-    }
-  }
-  if (pasoActual === 2) {
-    var nombre = document.getElementById('np-proj-nombre').value.trim();
-    var fecha = document.getElementById('np-proj-fecha').value;
-    if (!nombre || !fecha) {
-      alert('El nombre del proyecto y la fecha son obligatorios.'); return;
-    }
-  }
-  if (pasoActual === 3) {
-    // Los archivos son opcionales, siempre puede continuar
-  }
-  if (pasoActual === 4) return;
-  
-  if (pasoActual === 3) {
-    npGenerarResumen();
-  }
-  npMostrarPaso(pasoActual + 1);
-}
-
-// ---- MANEJO DE ARCHIVOS ----
-function npDragOver(e) {
-  e.preventDefault();
-  var dz = document.getElementById('np-dropzone');
-  if (dz) { dz.style.borderColor = '#185FA5'; dz.style.background = '#f0f7ff'; }
-}
-function npDragLeave(e) {
-  var dz = document.getElementById('np-dropzone');
-  if (dz) { dz.style.borderColor = '#ccc'; dz.style.background = ''; }
-}
-function npHandleDrop(e) {
-  e.preventDefault();
-  npDragLeave(e);
-  if (e.dataTransfer.files.length) npAgregarArchivos(e.dataTransfer.files);
-}
-function npAgregarArchivos(files) {
-  for (var i = 0; i < files.length; i++) {
-    var file = files[i];
-    // Evitar duplicados por nombre
-    var yaExiste = npArchivos.some(function(a){return a.file.name === file.name;});
-    if (yaExiste) continue;
-    if (file.size > 50 * 1024 * 1024) {
-      alert(file.name + ' supera el límite de 50MB.'); continue;
-    }
-    var tipo = npDetectarTipo(file);
-    npArchivos.push({file: file, nombre: file.name, tipo: tipo, esMediciones: false, subido: false});
-  }
-  npRenderArchivos();
-  // Reset input para permitir seleccionar el mismo archivo de nuevo
-  document.getElementById('np-file-input').value = '';
-}
+function npDragOver(e) { e.preventDefault(); var dz=document.getElementById('np-dropzone'); if(dz){dz.style.borderColor='#185FA5';dz.style.background='#f0f7ff';} }
+function npDragLeave(e) { var dz=document.getElementById('np-dropzone'); if(dz){dz.style.borderColor='#ccc';dz.style.background='';} }
+function npHandleDrop(e) { e.preventDefault(); npDragLeave(e); if(e.dataTransfer.files.length) npAgregarArchivos(e.dataTransfer.files); }
 
 function npDetectarTipo(file) {
-  var nombre = file.name.toLowerCase();
-  if (nombre.endsWith('.xlsx') || nombre.endsWith('.xls')) return 'excel';
-  if (nombre.endsWith('.pdf')) return 'pdf';
-  if (nombre.endsWith('.doc') || nombre.endsWith('.docx')) return 'word';
-  if (nombre.match(/\.(jpg|jpeg|png|gif|webp)$/)) return 'imagen';
+  var n=file.name.toLowerCase();
+  if(n.endsWith('.xlsx')||n.endsWith('.xls')) return 'excel';
+  if(n.endsWith('.pdf')) return 'pdf';
+  if(n.endsWith('.doc')||n.endsWith('.docx')) return 'word';
+  if(n.match(/\.(jpg|jpeg|png|gif|webp)$/)) return 'imagen';
   return 'otro';
 }
 
-function npIconoTipo(tipo) {
-  var iconos = {excel:'📊', pdf:'📄', word:'📝', imagen:'🖼️', otro:'📎'};
-  return iconos[tipo] || '📎';
-}
-
-function npFormatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
-  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+function npAgregarArchivos(files) {
+  for (var i=0;i<files.length;i++) {
+    var file=files[i];
+    if (npArchivos.some(function(a){return a.file.name===file.name;})) continue;
+    if (file.size>50*1024*1024) { alert(file.name+' supera 50MB.'); continue; }
+    npArchivos.push({file:file, nombre:file.name, tipo:npDetectarTipo(file), esMediciones:false});
+  }
+  npRenderArchivos();
+  document.getElementById('np-file-input').value='';
 }
 
 function npRenderArchivos() {
-  var el = document.getElementById('np-archivos-lista');
+  var el=document.getElementById('np-archivos-lista');
   if (!el) return;
+  el.innerHTML='';
   if (!npArchivos.length) {
-    el.innerHTML = '<div style="text-align:center;padding:1rem;font-size:12px;color:#aaa;">No hay archivos añadidos</div>';
+    el.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:#aaa;">No hay archivos añadidos aún</div>';
     return;
   }
-  el.innerHTML = npArchivos.map(function(a, idx) {
-    var esMed = a.esMediciones;
-    var bg = esMed ? '#EAF3DE' : 'white';
-    var border = esMed ? '#C0DD97' : '#e5e5e0';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:' + bg + ';border:1px solid ' + border + ';border-radius:8px;">' +
-      '<span style="font-size:20px;flex-shrink:0;">' + npIconoTipo(a.tipo) + '</span>' +
-      '<div style="flex:1;min-width:0;">' +
-      '<div style="font-size:12px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + a.nombre + '</div>' +
-      '<div style="font-size:11px;color:#888;">' + npFormatSize(a.file.size) + (esMed ? ' · <span style="color:#3B6D11;font-weight:600;">ARCHIVO DE MEDICIONES</span>' : '') + '</div>' +
-      '</div>' +
-      '<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0;">' +
-      '<input type="checkbox" ' + (esMed?'checked':'') + ' onchange="npToggleMediciones(' + idx + ',this.checked)" style="width:14px;height:14px;"> Mediciones' +
-      '</label>' +
-      '<button onclick="npEliminarArchivo(' + idx + ')" style="background:none;border:none;cursor:pointer;font-size:16px;color:#aaa;flex-shrink:0;" title="Eliminar">✕</button>' +
-      '</div>';
-  }).join('');
+  var iconos={excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
+  npArchivos.forEach(function(a, idx) {
+    var esMed=a.esMediciones;
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+(esMed?'#EAF3DE':'white')+';border:1px solid '+(esMed?'#C0DD97':'#e5e5e0')+';border-radius:8px;margin-bottom:6px;';
+    var sz=a.file.size>1048576?(a.file.size/1048576).toFixed(1)+' MB':Math.round(a.file.size/1024)+' KB';
+    row.innerHTML='<span style="font-size:20px;flex-shrink:0;">'+(iconos[a.tipo]||'📎')+'</span>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.nombre+'</div>'+
+      '<div style="font-size:11px;color:#888;">'+sz+(esMed?' &nbsp;<strong style="color:#3B6D11;">MEDICIONES</strong>':'')+'</div></div>'+
+      '<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0;">'+
+      '<input type="checkbox" '+(esMed?'checked':'')+' style="width:14px;height:14px;"> Mediciones</label>'+
+      '<button style="background:none;border:none;cursor:pointer;font-size:16px;color:#aaa;flex-shrink:0;">✕</button>';
+    // Eventos
+    row.querySelector('input[type=checkbox]').onchange = (function(i){ return function(e){ npToggleMediciones(i,e.target.checked); }; })(idx);
+    row.querySelector('button').onclick = (function(i){ return function(){ npEliminarArchivo(i); }; })(idx);
+    el.appendChild(row);
+  });
 }
 
 function npToggleMediciones(idx, checked) {
-  // Solo un archivo puede ser el de mediciones
-  if (checked) {
-    npArchivos.forEach(function(a, i){ a.esMediciones = (i === idx); });
-  } else {
-    npArchivos[idx].esMediciones = false;
-  }
+  if (checked) npArchivos.forEach(function(a,i){ a.esMediciones=(i===idx); });
+  else npArchivos[idx].esMediciones=false;
   npRenderArchivos();
 }
 
 function npEliminarArchivo(idx) {
-  npArchivos.splice(idx, 1);
+  npArchivos.splice(idx,1);
   npRenderArchivos();
 }
 
-// ---- RESUMEN PASO 4 ----
 function npGenerarResumen() {
-  var el = document.getElementById('np-resumen');
+  var el=document.getElementById('np-resumen');
   if (!el) return;
-  
-  var nombreCli = '';
-  var emailCli = '';
-  if (npClienteTipo === 'existente' && npClienteSeleccionado) {
-    nombreCli = npClienteSeleccionado.commercial_name;
-    emailCli = npClienteSeleccionado.commercial_email || '';
+  var nomCli='', emCli='';
+  if (npClienteTipo==='existente'&&npClienteSeleccionado) {
+    nomCli=npClienteSeleccionado.commercial_name; emCli=npClienteSeleccionado.commercial_email||'';
   } else {
-    nombreCli = document.getElementById('np-new-nombre').value + ' [NUEVO]';
-    emailCli = document.getElementById('np-new-email').value;
+    nomCli=document.getElementById('np-new-nombre').value+' [NUEVO]';
+    emCli=document.getElementById('np-new-email').value;
   }
-  
-  var nombreProj = document.getElementById('np-proj-nombre').value;
-  var fechaProj = document.getElementById('np-proj-fecha').value;
-  var textoProj = document.getElementById('np-proj-texto').value;
-  
-  var mediciones = npArchivos.find(function(a){return a.esMediciones;});
-  
-  var campos = [
-    {label:'Cliente', val:nombreCli},
-    {label:'Email', val:emailCli},
-    {label:'Nombre del proyecto', val:nombreProj},
-    {label:'Fecha petición', val:fechaProj ? new Date(fechaProj).toLocaleDateString('es-ES') : '-'},
-    {label:'Texto petición', val:textoProj ? textoProj.substring(0,100) + (textoProj.length > 100 ? '...' : '') : 'Sin texto'},
-    {label:'Archivos adjuntos', val:npArchivos.length + ' archivo' + (npArchivos.length !== 1 ? 's' : '')},
-    {label:'Archivo de mediciones', val:mediciones ? mediciones.nombre : 'No marcado (el técnico lo identificará en análisis)'}
+  var med=npArchivos.find(function(a){return a.esMediciones;});
+  var campos=[
+    {label:'Cliente',val:nomCli},{label:'Email',val:emCli},
+    {label:'Nombre proyecto',val:document.getElementById('np-proj-nombre').value},
+    {label:'Fecha petición',val:document.getElementById('np-proj-fecha').value?new Date(document.getElementById('np-proj-fecha').value).toLocaleDateString('es-ES'):'-'},
+    {label:'Archivos adjuntos',val:npArchivos.length+' archivo'+(npArchivos.length!==1?'s':'')},
+    {label:'Archivo de mediciones',val:med?med.nombre:'No marcado (se identificará en análisis)'}
   ];
-  
-  el.innerHTML = campos.map(function(c) {
-    return '<div style="display:flex;padding:9px 0;border-bottom:1px solid #f5f5f0;">' +
-      '<div style="width:200px;font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;flex-shrink:0;">' + c.label + '</div>' +
-      '<div style="font-size:13px;color:#1a1a1a;">' + (c.val||'-') + '</div></div>';
+  el.innerHTML=campos.map(function(c){
+    return '<div style="display:flex;padding:9px 0;border-bottom:1px solid #f5f5f0;">'+
+      '<div style="width:180px;font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:0.03em;flex-shrink:0;">'+c.label+'</div>'+
+      '<div style="font-size:13px;color:#1a1a1a;">'+(c.val||'-')+'</div></div>';
   }).join('');
 }
 
-// ---- GUARDAR PROYECTO ----
 async function npGuardar() {
-  var btn = document.getElementById('np-btn-guardar');
-  var loading = document.getElementById('np-guardando');
-  btn.disabled = true;
-  loading.style.display = 'block';
-  
+  var btn=document.getElementById('np-btn-guardar');
+  var loading=document.getElementById('np-guardando');
+  btn.disabled=true; loading.style.display='block';
   try {
-    var clienteId = null;
-    var clienteAcronimo = '';
-    
-    // 1. Crear o usar cliente
-    if (npClienteTipo === 'nuevo') {
-      var acronimo = document.getElementById('np-new-acronimo').value.trim().toUpperCase();
-      var newCli = {
-        commercial_name: document.getElementById('np-new-nombre').value.trim(),
-        client_code: acronimo,
-        contact_name: document.getElementById('np-new-contacto').value.trim(),
-        commercial_email: document.getElementById('np-new-email').value.trim(),
-        phone: document.getElementById('np-new-telefono').value.trim() || null,
-        client_type: document.getElementById('np-new-tipo').value.trim() || null,
-        client_confirmed: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      // Generar internal_code
-      var lastCli = await db.from('clients').select('internal_code').order('id',{ascending:false}).limit(1);
-      var nCli = 0;
-      if (lastCli.data && lastCli.data.length && lastCli.data[0].internal_code) {
-        var mCli = lastCli.data[0].internal_code.match(/\d+/);
-        if (mCli) nCli = parseInt(mCli[0]);
-      }
-      newCli.internal_code = 'CLI-' + String(nCli+1).padStart(3,'0');
-      var cliRes = await db.from('clients').insert(newCli).select().single();
-      clienteId = cliRes.data.id;
-      clienteAcronimo = acronimo;
+    var clienteId=null, acronimo='';
+    if (npClienteTipo==='nuevo') {
+      acronimo=document.getElementById('np-new-acronimo').value.trim().toUpperCase();
+      var newCli={commercial_name:document.getElementById('np-new-nombre').value.trim(),
+        client_code:acronimo, contact_name:document.getElementById('np-new-contacto').value.trim(),
+        commercial_email:document.getElementById('np-new-email').value.trim(),
+        phone:document.getElementById('np-new-telefono').value.trim()||null,
+        client_type:document.getElementById('np-new-tipo').value.trim()||null,
+        client_confirmed:false, created_at:new Date().toISOString(), updated_at:new Date().toISOString()};
+      var lastCli=await db.from('clients').select('internal_code').order('id',{ascending:false}).limit(1);
+      var nCli=0;
+      if(lastCli.data&&lastCli.data.length&&lastCli.data[0].internal_code){var mC=lastCli.data[0].internal_code.match(/\d+/);if(mC)nCli=parseInt(mC[0]);}
+      newCli.internal_code='CLI-'+String(nCli+1).padStart(3,'0');
+      var cliRes=await db.from('clients').insert(newCli).select().single();
+      clienteId=cliRes.data.id;
     } else {
-      clienteId = npClienteSeleccionado.id;
-      clienteAcronimo = npClienteSeleccionado.client_code || npClienteSeleccionado.internal_code || 'XXX';
+      clienteId=npClienteSeleccionado.id;
+      acronimo=npClienteSeleccionado.client_code||npClienteSeleccionado.internal_code||'XXX';
     }
-    
-    // 2. Generar código de expediente BYG-ACR-YYYY-NNN
-    var anyo = new Date().getFullYear();
-    var lastProj = await db.from('projects').select('project_code').order('id',{ascending:false}).limit(1);
-    var nProj = 1;
-    if (lastProj.data && lastProj.data.length && lastProj.data[0].project_code) {
-      var mProj = lastProj.data[0].project_code.match(/\d+$/);
-      if (mProj) nProj = parseInt(mProj[0]) + 1;
+    var anyo=new Date().getFullYear();
+    var lastProj=await db.from('projects').select('project_code').order('id',{ascending:false}).limit(1);
+    var nProj=1;
+    if(lastProj.data&&lastProj.data.length&&lastProj.data[0].project_code){var mP=lastProj.data[0].project_code.match(/\d+$/);if(mP)nProj=parseInt(mP[0])+1;}
+    var projCode='BYG-'+acronimo.substring(0,3)+'-'+anyo+'-'+String(nProj).padStart(3,'0');
+    var stRes=await db.from('project_statuses').select('id').eq('code','solicitado').single();
+    var statusId=stRes.data?stRes.data.id:null;
+    var newProj={name:document.getElementById('np-proj-nombre').value.trim(), code:projCode, project_code:projCode,
+      client_id:clienteId, contact_email:npClienteTipo==='nuevo'?document.getElementById('np-new-email').value.trim():(npClienteSeleccionado.commercial_email||''),
+      received_at:document.getElementById('np-proj-fecha').value?new Date(document.getElementById('np-proj-fecha').value).toISOString():new Date().toISOString(),
+      project_status_id:statusId, confidence:1.0, notes:document.getElementById('np-proj-texto').value.trim()||null,
+      created_at:new Date().toISOString(), updated_at:new Date().toISOString()};
+    var projRes=await db.from('projects').insert(newProj).select().single();
+    var proyectoId=projRes.data.id;
+    for (var i=0;i<npArchivos.length;i++) {
+      var arch=npArchivos[i];
+      var filePath='proyecto-'+proyectoId+'/'+Date.now()+'-'+arch.file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      var upRes=await db.storage.from('project-attachments').upload(filePath,arch.file,{cacheControl:'3600',upsert:false});
+      if(upRes.error){console.error('Error subiendo '+arch.nombre+':',upRes.error);continue;}
+      await db.from('project_attachments').insert({project_id:proyectoId,file_name:arch.nombre,file_path:filePath,
+        file_size:arch.file.size,file_type:arch.tipo,mime_type:arch.file.type,is_measurements:arch.esMediciones,
+        uploaded_by:currentUser?currentUser.email:'manual',uploaded_at:new Date().toISOString(),storage_provider:'supabase'});
     }
-    var projCode = 'BYG-' + clienteAcronimo.substring(0,3) + '-' + anyo + '-' + String(nProj).padStart(3,'0');
-    
-    // 3. Obtener status "solicitado"
-    var stRes = await db.from('project_statuses').select('id').eq('code','solicitado').single();
-    var statusId = stRes.data ? stRes.data.id : null;
-    
-    // 4. Crear proyecto
-    var nombreProj = document.getElementById('np-proj-nombre').value.trim();
-    var fechaProj = document.getElementById('np-proj-fecha').value;
-    var textoProj = document.getElementById('np-proj-texto').value.trim();
-    var notasProj = document.getElementById('np-proj-notas').value.trim();
-    
-    var newProj = {
-      name: nombreProj,
-      code: projCode,
-      project_code: projCode,
-      client_id: clienteId,
-      contact_email: npClienteTipo === 'nuevo' ? document.getElementById('np-new-email').value.trim() : (npClienteSeleccionado.commercial_email||''),
-      received_at: fechaProj ? new Date(fechaProj).toISOString() : new Date().toISOString(),
-      project_status_id: statusId,
-      confidence: 1.0,
-      notes: textoProj || null,
-      internal_notes: notasProj || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    var projRes = await db.from('projects').insert(newProj).select().single();
-    var proyectoId = projRes.data.id;
-    
-    // 5. Subir archivos adjuntos
-    for (var i = 0; i < npArchivos.length; i++) {
-      var arch = npArchivos[i];
-      var filePath = 'proyecto-' + proyectoId + '/' + Date.now() + '-' + arch.file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-      
-      // Subir a Supabase Storage
-      var uploadRes = await db.storage.from('project-attachments').upload(filePath, arch.file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-      
-      if (uploadRes.error) {
-        console.error('Error subiendo ' + arch.nombre + ':', uploadRes.error);
-        continue;
-      }
-      
-      // Registrar en tabla project_attachments
-      await db.from('project_attachments').insert({
-        project_id: proyectoId,
-        file_name: arch.nombre,
-        file_path: filePath,
-        file_size: arch.file.size,
-        file_type: arch.tipo,
-        mime_type: arch.file.type,
-        is_measurements: arch.esMediciones,
-        uploaded_by: currentUser ? currentUser.email : 'manual',
-        uploaded_at: new Date().toISOString(),
-        storage_provider: 'supabase'
-      });
-    }
-    
-    alert('Proyecto registrado correctamente.\n\nCódigo asignado: ' + projCode + '\n\nEl proyecto está disponible en "Solicitudes recibidas" para evaluación.');
-    npReset();
-    showPanel('dashboard');
-    loadDashboard();
-    
+    alert('Proyecto registrado: '+projCode);
+    npReset(); showPanel('dashboard'); loadDashboard();
   } catch(e) {
-    console.error('Error guardando proyecto:', e);
-    alert('Error al registrar el proyecto: ' + (e.message||JSON.stringify(e)));
-    btn.disabled = false;
-    loading.style.display = 'none';
+    console.error(e); alert('Error: '+(e.message||JSON.stringify(e)));
+    btn.disabled=false; loading.style.display='none';
   }
 }
 
-</script>
-
-
-<script>
-// ============================================================
-// ADJUNTOS EN FASE ANÁLISIS
-// ============================================================
+// ADJUNTOS EN ANÁLISIS
 async function anMarcarMediciones(adjuntoId, projectId) {
   try {
-    // Desmarcar todos
-    await db.from('project_attachments').update({is_measurements: false}).eq('project_id', projectId);
-    // Marcar el seleccionado
-    await db.from('project_attachments').update({is_measurements: true}).eq('id', adjuntoId);
-    // Recargar
+    await db.from('project_attachments').update({is_measurements:false}).eq('project_id',projectId);
+    await db.from('project_attachments').update({is_measurements:true}).eq('id',adjuntoId);
     cargarDocumentosAnálisis(projectId, null);
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 async function anDescargarArchivo(filePath, fileName) {
   try {
-    var res = await db.storage.from('project-attachments').createSignedUrl(filePath, 300); // 5 min
-    if (res.data && res.data.signedUrl) {
-      window.open(res.data.signedUrl, '_blank');
-    } else {
-      alert('No se pudo generar el enlace de descarga.');
-    }
-  } catch(e) { alert('Error: ' + e.message); }
+    var res=await db.storage.from('project-attachments').createSignedUrl(filePath,300);
+    if(res.data&&res.data.signedUrl) window.open(res.data.signedUrl,'_blank');
+    else alert('No se pudo generar el enlace.');
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 async function anAgregarArchivos(files, projectId) {
-  for (var i = 0; i < files.length; i++) {
-    var file = files[i];
-    if (file.size > 50 * 1024 * 1024) { alert(file.name + ' supera 50MB.'); continue; }
-    var tipo = npDetectarTipo(file);
-    var filePath = 'proyecto-' + projectId + '/' + Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-    
-    var uploadRes = await db.storage.from('project-attachments').upload(filePath, file, {cacheControl:'3600', upsert:false});
-    if (uploadRes.error) { console.error(uploadRes.error); continue; }
-    
-    await db.from('project_attachments').insert({
-      project_id: projectId,
-      file_name: file.name,
-      file_path: filePath,
-      file_size: file.size,
-      file_type: tipo,
-      mime_type: file.type,
-      is_measurements: false,
-      uploaded_by: currentUser ? currentUser.email : 'manual',
-      uploaded_at: new Date().toISOString(),
-      storage_provider: 'supabase'
-    });
+  for(var i=0;i<files.length;i++){
+    var file=files[i];
+    if(file.size>50*1024*1024){alert(file.name+' supera 50MB.');continue;}
+    var tipo=npDetectarTipo(file);
+    var filePath='proyecto-'+projectId+'/'+Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var upRes=await db.storage.from('project-attachments').upload(filePath,file,{cacheControl:'3600',upsert:false});
+    if(upRes.error){console.error(upRes.error);continue;}
+    await db.from('project_attachments').insert({project_id:projectId,file_name:file.name,file_path:filePath,
+      file_size:file.size,file_type:tipo,mime_type:file.type,is_measurements:false,
+      uploaded_by:currentUser?currentUser.email:'manual',uploaded_at:new Date().toISOString(),storage_provider:'supabase'});
   }
-  document.getElementById('an-file-input').value = '';
-  cargarDocumentosAnálisis(projectId, null);
+  document.getElementById('an-file-input').value='';
+  cargarDocumentosAnálisis(projectId,null);
 }
 
 function anAnalizarMediciones(projectId, adjuntoId) {
-  alert('Módulo de análisis de mediciones con IA:\n\nEn la próxima sesión integraremos aquí el parser de SheetJS que separará automáticamente las partidas por gremio.\n\nEl técnico podrá revisar y corregir la separación antes de confirmar.');
+  alert('Módulo de análisis con IA: próximamente se integrará el parser SheetJS para separar partidas por gremio.');
 }
 
-// También añadir visualización de adjuntos en Oferta en Curso
 async function cargarAdjuntosProyecto(projectId, contenedorId) {
-  var el = document.getElementById(contenedorId);
-  if (!el) return;
+  var el=document.getElementById(contenedorId);
+  if(!el) return;
   try {
-    var res = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
-    var adjuntos = res.data || [];
-    if (!adjuntos.length) {
-      el.innerHTML = '<div style="font-size:11px;color:#aaa;">Sin archivos adjuntos</div>';
-      return;
-    }
-    var iconos = {excel:'📊', pdf:'📄', word:'📝', imagen:'🖼️', otro:'📎'};
-    var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
-    adjuntos.forEach(function(a) {
-      var icono = iconos[a.file_type] || '📎';
-      var esMed = a.is_measurements;
-      var div = document.createElement('div');
-      div.style.cssText = 'display:flex;align-items:center;gap:5px;padding:5px 10px;background:' +
-        (esMed ? '#EAF3DE' : '#f5f5f0') + ';border:1px solid ' +
-        (esMed ? '#C0DD97' : '#ddd') + ';border-radius:6px;cursor:pointer;font-size:11px;';
-      div.title = a.file_name;
-      var nombre = a.file_name.length > 25 ? a.file_name.substring(0,22)+'...' : a.file_name;
-      div.innerHTML = icono + ' ' + nombre + (esMed ? ' <span style="color:#3B6D11;font-size:9px;font-weight:600;">MED</span>' : '');
-      div.onclick = (function(path, name){ return function(){ anDescargarArchivo(path, name); }; })(a.file_path, a.file_name);
+    var res=await db.from('project_attachments').select('*').eq('project_id',projectId).order('uploaded_at');
+    var adjuntos=res.data||[];
+    el.innerHTML='';
+    if(!adjuntos.length){el.innerHTML='<div style="font-size:11px;color:#aaa;">Sin archivos adjuntos</div>';return;}
+    var iconos={excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
+    var wrapper=document.createElement('div');
+    wrapper.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
+    adjuntos.forEach(function(a){
+      var esMed=a.is_measurements;
+      var div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 10px;background:'+(esMed?'#EAF3DE':'#f5f5f0')+';border:1px solid '+(esMed?'#C0DD97':'#ddd')+';border-radius:6px;cursor:pointer;font-size:11px;';
+      div.title=a.file_name;
+      var nombre=a.file_name.length>25?a.file_name.substring(0,22)+'...':a.file_name;
+      div.innerHTML=(iconos[a.file_type]||'📎')+' '+nombre+(esMed?' <strong style="color:#3B6D11;font-size:9px;">MED</strong>':'');
+      div.onclick=(function(p,n){return function(){anDescargarArchivo(p,n);};})(a.file_path,a.file_name);
       wrapper.appendChild(div);
     });
-    el.innerHTML = '';
     el.appendChild(wrapper);
-  } catch(e) { console.error(e); }
+  } catch(e){console.error(e);}
+}
+
+</script>
+</body></html>');
+  win.document.close();
+  win.print();
 }
 
 function imprimirFichaCliente() {
@@ -3520,51 +3153,87 @@ async function abrirAnalisis(id, nameEnc) {
   } catch(e) { console.error('Error abriendo análisis:',e); }
 }
 
-function cargarDocumentosAnálisis(projectId, categoria) {
+async function cargarDocumentosAnálisis(projectId, categoria) {
   var el = document.getElementById('an-docs-list');
-  var cat = categoria || 'GREMIO';
-
-  el.innerHTML =
-    '<div style="background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;">' +
-    '<div style="display:flex;align-items:flex-start;gap:10px;">' +
-    '<div style="font-size:20px;flex-shrink:0;"></div>' +
-    '<div>' +
-    '<div style="font-size:13px;font-weight:600;color:#0C447C;margin-bottom:4px;">Documentación adjunta al proyecto</div>' +
-    '<div style="font-size:12px;color:#185FA5;line-height:1.6;">' +
-    'El ecosistema ha recibido y procesado los archivos adjuntos del email del cliente. ' +
-    'La IA ha analizado el Excel de mediciones completo y ha generado un archivo separado por gremio ' +
-    'listo para enviar a cada subcontratista junto con la petición de oferta.' +
-    '</div>' +
-    '</div></div></div>' +
-
-    '<div style="background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;">' +
-    '<div style="display:flex;align-items:flex-start;gap:10px;">' +
-    '<div style="font-size:20px;flex-shrink:0;">!</div>' +
-    '<div>' +
-    '<div style="font-size:13px;font-weight:600;color:#633806;margin-bottom:4px;">Conexión SharePoint pendiente</div>' +
-    '<div style="font-size:12px;color:#854F0B;line-height:1.6;">' +
-    'Los archivos están almacenados en SharePoint de ByG Soluciones. ' +
-    'En cuanto se conecten las credenciales de Microsoft 365, aparecerán aquí los siguientes documentos:' +
-    '</div>' +
-    '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">' +
-    '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #FAC775;">' +
-    '<span style="background:#EAF3DE;color:#3B6D11;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;">EXCEL</span>' +
-    '<span style="font-size:12px;color:#1a1a1a;flex:1;">Mediciones_completas_cliente.xlsx</span>' +
-    '<span style="font-size:11px;color:#aaa;">Archivo original recibido del cliente</span></div>' +
-    '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #FAC775;">' +
-    '<span style="background:#EAF3DE;color:#3B6D11;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;">EXCEL</span>' +
-    '<span style="font-size:12px;color:#1a1a1a;flex:1;">Peticion_oferta_'+cat+'.xlsx</span>' +
-    '<span style="font-size:11px;color:#aaa;">Generado por IA - partidas del gremio '+cat+'</span></div>' +
-    '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">' +
-    '<span style="background:#FCEBEB;color:#A32D2D;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;">PDF</span>' +
-    '<span style="font-size:12px;color:#1a1a1a;flex:1;">Planos y memoria descriptiva</span>' +
-    '<span style="font-size:11px;color:#aaa;">Adjuntos adicionales del cliente</span></div>' +
-    '</div>' +
-    '</div></div></div>' +
-
-    '<div style="font-size:11px;color:#aaa;font-style:italic;text-align:center;">' +
-    'La estructura está preparada. Los archivos aparecerán automáticamente cuando se active la integración con Microsoft 365.' +
-    '</div>';
+  el.innerHTML = '<div class="loading">Cargando documentos...</div>';
+  try {
+    var attRes = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
+    var adjuntos = attRes.data || [];
+    var tieneArchivos = adjuntos.length > 0;
+    var archMediciones = adjuntos.find(function(a){return a.is_measurements;});
+    el.innerHTML = '';
+    var banner = document.createElement('div');
+    banner.style.cssText = 'background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;';
+    banner.innerHTML = '<span style="font-size:14px;flex-shrink:0;">!</span><div style="font-size:11px;color:#854F0B;">Cuando se active Microsoft 365 los archivos se almacenaran en SharePoint. Actualmente en Supabase Storage.</div>';
+    el.appendChild(banner);
+    if (!tieneArchivos) {
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = 'No hay archivos adjuntos.<br><span style="font-size:11px;">Puedes anadir archivos desde el boton de abajo.</span>';
+      el.appendChild(empty);
+    } else {
+      var lista = document.createElement('div');
+      lista.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;';
+      adjuntos.forEach(function(a) {
+        var iconos = {excel:'📊',pdf:'📄',word:'📝',imagen:'🖼️',otro:'📎'};
+        var esMed = a.is_measurements;
+        var size = a.file_size ? (a.file_size>1048576?(a.file_size/1048576).toFixed(1)+' MB':Math.round(a.file_size/1024)+' KB') : '';
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+(esMed?'#EAF3DE':'white')+';border:1px solid '+(esMed?'#C0DD97':'#e5e5e0')+';border-radius:8px;';
+        var icEl = document.createElement('span');
+        icEl.style.cssText = 'font-size:20px;flex-shrink:0;';
+        icEl.textContent = iconos[a.file_type] || '📎';
+        var info = document.createElement('div');
+        info.style.cssText = 'flex:1;min-width:0;';
+        info.innerHTML = '<div style="font-size:12px;font-weight:500;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+a.file_name+'</div>'+
+          '<div style="font-size:11px;color:#888;">'+size+(esMed?' <strong style="color:#3B6D11;">MEDICIONES</strong>':'')+'</div>';
+        row.appendChild(icEl);
+        row.appendChild(info);
+        if (!esMed) {
+          var btnM = document.createElement('button');
+          btnM.textContent = 'Marcar mediciones';
+          btnM.style.cssText = 'background:#f0f7ff;border:1px solid #B5D4F4;color:#185FA5;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;';
+          btnM.onclick = (function(id,pid){return function(){anMarcarMediciones(id,pid);};})(a.id,projectId);
+          row.appendChild(btnM);
+        }
+        var btnDl = document.createElement('button');
+        btnDl.innerHTML = '&#11015;&#65039;';
+        btnDl.title = 'Ver/Descargar';
+        btnDl.style.cssText = 'background:white;border:1px solid #ddd;padding:5px 10px;border-radius:5px;font-size:14px;cursor:pointer;flex-shrink:0;';
+        btnDl.onclick = (function(p,n){return function(){anDescargarArchivo(p,n);};})(a.file_path,a.file_name);
+        row.appendChild(btnDl);
+        lista.appendChild(row);
+      });
+      el.appendChild(lista);
+    }
+    var addArea = document.createElement('div');
+    addArea.style.marginTop = '0.5rem';
+    var inp = document.createElement('input');
+    inp.type='file'; inp.multiple=true; inp.id='an-file-input'; inp.style.display='none';
+    inp.onchange = function(){ anAgregarArchivos(this.files, projectId); };
+    var btnAdd = document.createElement('button');
+    btnAdd.className='btn btn-sm'; btnAdd.style.borderStyle='dashed'; btnAdd.textContent='+ Anadir archivos';
+    btnAdd.onclick = function(){ document.getElementById('an-file-input').click(); };
+    addArea.appendChild(inp); addArea.appendChild(btnAdd);
+    el.appendChild(addArea);
+    if (archMediciones) {
+      var medB = document.createElement('div');
+      medB.style.cssText = 'margin-top:1rem;background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:1rem;';
+      var btnAn = document.createElement('button');
+      btnAn.className='btn btn-primary btn-sm'; btnAn.textContent='Analizar mediciones con IA';
+      btnAn.onclick = (function(pid,aid){return function(){anAnalizarMediciones(pid,aid);};})(projectId,archMediciones.id);
+      medB.innerHTML = '<div style="font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Archivo de mediciones: '+archMediciones.file_name+'</div>'+
+        '<div style="font-size:11px;color:#185FA5;margin-bottom:10px;">Analiza este archivo para separar partidas por gremio.</div>';
+      medB.appendChild(btnAn);
+      el.appendChild(medB);
+    } else if (tieneArchivos) {
+      var warnB = document.createElement('div');
+      warnB.style.cssText = 'margin-top:1rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;';
+      warnB.innerHTML = '<div style="font-size:11px;color:#92400e;">Ningun archivo marcado como mediciones. Marcalo para analizar con IA.</div>';
+      el.appendChild(warnB);
+    }
+  } catch(e) { console.error(e); el.innerHTML = '<div class="empty">Error cargando documentos</div>'; }
+  document.getElementById('an-docs-reviewed').checked = análisisData&&análisisData.docs_reviewed||false;
 }
 
 var _gremioMap = {};
