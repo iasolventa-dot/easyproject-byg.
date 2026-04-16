@@ -6739,7 +6739,9 @@ function mostrarResultadoMediciones(resultado, projectId, loadingDiv) {
   el.appendChild(wrap);
 }
 
+var _medicionesGremioActual = '';
 function verPartIdasGremio(nombre, data) {
+  _medicionesGremioActual = nombre;
   var panel = document.getElementById('med-review-panel');
   if (!panel) return;
 
@@ -6762,7 +6764,7 @@ function verPartIdasGremio(nombre, data) {
   titleBar.innerHTML = '<div style="font-size:13px;font-weight:600;color:#1a1a1a;">📋 ' + nombre + ' — ' + todasPartidas.length + ' partidas</div>' +
     '<div style="display:flex;gap:8px;">' +
     '<button class="btn btn-sm" onclick="cerrarRevisionGremio()" style="font-size:11px;">Cerrar</button>' +
-    '<button class="btn btn-success btn-sm" onclick="confirmarGremio('' + nombre.replace(/'/g,'') + '')" style="font-size:11px;">✓ Confirmar gremio</button>' +
+    '<button class="btn btn-success btn-sm" id="btn-conf-gremio" style="font-size:11px;" onclick="confirmarGremio(_medicionesGremioActual)">✓ Confirmar gremio</button>' +
     '</div>';
   header.appendChild(titleBar);
 
