@@ -783,10 +783,10 @@
 
   <!-- TABS -->
   <div class="proj-tabs" style="margin-bottom:1.5rem;">
-    <div class="proj-tab active" onclick="showEjTab('planning',this)">Planning <span id="planning-badge" style="display:none;background:#185FA5;color:white;font-size:9px;padding:1px 5px;border-radius:99px;margin-left:4px;">NUEVO</span></div>
-    <div class="proj-tab" onclick="showEjTab('hitos',this)">Hitos de obra</div>
-    <div class="proj-tab" onclick="showEjTab('economico',this)">Estado económico</div>
-    <div class="proj-tab" onclick="showEjTab('gastos',this)">Gastos</div>
+    <div class="proj-tab active" id="ej-tab-btn-planning" onclick="showEjTab('planning',this)">Planning <span id="planning-badge" style="display:none;background:#185FA5;color:white;font-size:9px;padding:1px 5px;border-radius:99px;margin-left:4px;">NUEVO</span></div>
+    <div class="proj-tab" id="ej-tab-btn-hitos" onclick="showEjTab('hitos',this)">Hitos de obra</div>
+    <div class="proj-tab" id="ej-tab-btn-economico" onclick="showEjTab('economico',this)">Estado económico</div>
+    <div class="proj-tab" id="ej-tab-btn-gastos" onclick="showEjTab('gastos',this)">Gastos</div>
     <div class="proj-tab" onclick="showEjTab('certificaciónes',this)">Certificaciónes</div>
   </div>
 
@@ -826,10 +826,14 @@
             <option value="entrega">Entrega parcial</option>
           </select>
         </div>
-        <div style="display:flex;gap:6px;">
+        <div style="display:flex;gap:6px;align-items:flex-end;">
           <button class="btn btn-primary btn-sm" onclick="guardarHitoEjecucion()">Guardar</button>
           <button class="btn btn-sm" onclick="document.getElementById('ej-form-hito-exec').style.display='none'">Cancelar</button>
         </div>
+      </div>
+      <div id="hito-exec-motivo-wrapper" style="margin-top:8px;">
+        <label style="font-size:11px;color:#C0392B;display:block;margin-bottom:3px;font-weight:600;">* Motivo del nuevo hito (obligatorio si eres Jefe de Obra)</label>
+        <textarea id="hito-exec-motivo" placeholder="Explica la causa por la que surge este nuevo hito durante la ejecución..." style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:55px;resize:vertical;font-family:inherit;"></textarea>
       </div>
     </div>
     <div id="ej-hitos-content"><div class="loading">Cargando hitos...</div></div>
@@ -1435,6 +1439,32 @@
     <div id="np-guardando" style="display:none;text-align:center;padding:1rem;font-size:13px;color:#185FA5;">Guardando...</div>
     <div style="display:flex;justify-content:space-between;margin-top:1.5rem;"><button class="btn" onclick="npAnterior(4)">Anterior</button><button class="btn btn-success" id="np-btn-guardar" onclick="npGuardar()">Registrar proyecto</button></div>
   </div></div>
+</div>
+
+
+<!-- MODAL MODIFICAR HITO -->
+<div id="modal-modificar-hito" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;padding:1.5rem;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:1rem;">Modificar hito</div>
+    <div id="modal-hito-nombre" style="font-size:13px;color:#555;margin-bottom:1rem;padding:8px 12px;background:#f5f5f0;border-radius:6px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+      <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Nueva fecha planificada</label>
+        <input type="date" id="modal-hito-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"></div>
+      <div></div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:11px;color:#C0392B;display:block;margin-bottom:3px;font-weight:600;">* Motivo de la modificación (obligatorio)</label>
+      <textarea id="modal-hito-motivo" placeholder="Explica por qué se modifica esta fecha..." style="width:100%;padding:8px 10px;border:1px solid #C0392B;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">Observaciones adicionales</label>
+      <textarea id="modal-hito-notas" placeholder="Notas de interés para el equipo técnico y dirección..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:60px;resize:vertical;font-family:inherit;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="cerrarModalHito()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarModificacionHito()">Guardar cambios</button>
+    </div>
+  </div>
 </div>
 
 </div><!-- /main -->
@@ -4256,6 +4286,25 @@ async function abrirEjecucion(id, nameEnc) {
       btnHito.style.display = deptsHito.indexOf(currentDept) > -1 ? 'inline-block' : 'none';
     }
 
+    // Visibilidad de tabs según departamento
+    // Planning: solo Técnico y Dirección
+    var tabPlanning = document.getElementById('ej-tab-btn-planning');
+    if (tabPlanning) tabPlanning.style.display = ['tecnico','direccion'].indexOf(currentDept) > -1 ? 'block' : 'none';
+    // Hitos: todos los autorizados
+    var tabHitos = document.getElementById('ej-tab-btn-hitos');
+    if (tabHitos) tabHitos.style.display = ['tecnico','direccion','jefe_obra'].indexOf(currentDept) > -1 ? 'block' : 'none';
+    // Gastos: todos los autorizados  
+    var tabGastos = document.getElementById('ej-tab-btn-gastos');
+    if (tabGastos) tabGastos.style.display = ['tecnico','direccion','jefe_obra','admin'].indexOf(currentDept) > -1 ? 'block' : 'none';
+    // Económico: Técnico, Dirección y Jefe de obra
+    var tabEconomico = document.getElementById('ej-tab-btn-economico');
+    if (tabEconomico) tabEconomico.style.display = ['tecnico','direccion','jefe_obra'].indexOf(currentDept) > -1 ? 'block' : 'none';
+
+    // Si es jefe_obra, mostrar directamente Hitos (no Planning)
+    if (currentDept === 'jefe_obra') {
+      showEjTab('hitos', document.getElementById('ej-tab-btn-hitos'));
+    }
+
   } catch(e) { console.error('Error abriendo ejecución:',e); }
 }
 
@@ -4432,7 +4481,7 @@ async function cargarHitos(projectId) {
       var estadoBg = comp ? '#E1F5EE' : (retr ? '#FCEBEB' : '#EFF6FF');
       tablaHtml += '<tr style="border-top:1px solid #f0f0ea;">' +
         '<td style="padding:12px 14px;"><div style="font-weight:500;color:#1a1a1a;">' + (h.milestone_name||'-') + '</div>' +
-        (h.notes ? '<div style="font-size:11px;color:#aaa;">' + h.notes + '</div>' : '') + '</td>' +
+        (h.notes ? '<div style="font-size:11px;color:#3B6D11;margin-top:2px;background:#f0f7ee;padding:2px 6px;border-radius:4px;">📝 ' + h.notes + '</div>' : '') + '</td>' +
         '<td style="padding:12px 14px;text-align:center;color:#555;">' + fmtFechaCorta(h.planned_date) + '</td>' +
         '<td style="padding:12px 14px;text-align:center;">' +
         (comp ? '<span style="color:#0F6E56;font-weight:500;">' + fmtFechaCorta(h.actual_date) + '</span>' :
@@ -4443,7 +4492,7 @@ async function cargarHitos(projectId) {
         '</td>' +
         '<td style="padding:12px 14px;text-align:center;"><span style="font-size:11px;padding:3px 8px;border-radius:10px;background:' + estadoBg + ';color:' + estadoColor + ';font-weight:500;">' + estadoLabel + '</span></td>' +
         '<td style="padding:12px 14px;text-align:center;">' +
-        (canEdit ? '<button onclick="editarFechaHito(' + h.id + ',' + projectId + ',\'' + (h.planned_date||'') + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;" title="Editar fecha planificada">✏️</button>' : '') +
+        (canEdit ? '<button onclick="modificarHitoConMotivo(' + h.id + ',' + projectId + ',\'' + (h.planned_date||'').split('T')[0] + '\',\'' + (h.milestone_name||'').replace(/\'/g,\'\') + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;" title="Modificar hito">✏️</button>' : '') +
         '</td></tr>';
     });
 
@@ -4463,6 +4512,10 @@ async function guardarHitoEjecucion() {
   var fechaPlan = document.getElementById('hito-exec-fecha-plan') ? document.getElementById('hito-exec-fecha-plan').value : null;
   var tipo = document.getElementById('hito-exec-tipo') ? document.getElementById('hito-exec-tipo').value : 'hito';
   if (!nombre) { alert('Escribe el nombre del hito'); return; }
+  if (currentDept === 'jefe_obra') {
+    var motivo = document.getElementById('hito-exec-motivo') ? document.getElementById('hito-exec-motivo').value.trim() : '';
+    if (!motivo) { alert('El motivo del nuevo hito es obligatorio para el Jefe de Obra'); return; }
+  }
   if (!ejProyecto) return;
   try {
     await db.from('project_milestones').insert({
@@ -4475,6 +4528,25 @@ async function guardarHitoEjecucion() {
       is_mandatory: false,
       milestone_order: 99
     });
+
+    // Si lo crea el jefe de obra, notificar a técnico y dirección
+    if (currentDept === 'jefe_obra') {
+      var motivoHito = document.getElementById('hito-exec-motivo') ? document.getElementById('hito-exec-motivo').value.trim() : '';
+      var msgNotif = 'Nuevo hito creado por Jefe de Obra en ' + (ejProyecto.name||ejProyecto.code) + 
+        ': "' + nombre + '"' + (motivoHito ? ' — Motivo: ' + motivoHito : '');
+      var notifDepts = ['tecnico', 'direccion'];
+      for (var nd = 0; nd < notifDepts.length; nd++) {
+        try {
+          await db.from('automation_errors').insert({
+            flow_name: 'NOTIFICACION',
+            node_name: notifDepts[nd],
+            error_message: msgNotif,
+            created_at: new Date().toISOString()
+          });
+        } catch(ne) { console.error('Error notif hito:', ne); }
+      }
+    }
+
     document.getElementById('ej-form-hito-exec').style.display = 'none';
     document.getElementById('hito-exec-nombre').value = '';
     document.getElementById('hito-exec-fecha-plan').value = '';
@@ -4513,6 +4585,48 @@ async function editarFechaHito(hitoId, projectId, fechaActual) {
 }
 
 
+
+var _modalHitoId = null;
+var _modalProjectId = null;
+
+function modificarHitoConMotivo(hitoId, projectId, fechaActual, nombre) {
+  _modalHitoId = hitoId;
+  _modalProjectId = projectId;
+  var modal = document.getElementById('modal-modificar-hito');
+  document.getElementById('modal-hito-nombre').textContent = nombre || 'Hito';
+  document.getElementById('modal-hito-fecha').value = fechaActual || '';
+  document.getElementById('modal-hito-motivo').value = '';
+  document.getElementById('modal-hito-notas').value = '';
+  modal.style.display = 'flex';
+}
+
+function cerrarModalHito() {
+  document.getElementById('modal-modificar-hito').style.display = 'none';
+  _modalHitoId = null;
+  _modalProjectId = null;
+}
+
+async function guardarModificacionHito() {
+  var fecha = document.getElementById('modal-hito-fecha').value;
+  var motivo = document.getElementById('modal-hito-motivo').value.trim();
+  var notas = document.getElementById('modal-hito-notas').value.trim();
+
+  if (!fecha) { alert('La fecha es obligatoria'); return; }
+  if (!motivo) { alert('El motivo de la modificación es obligatorio'); return; }
+
+  var notasCompletas = '📝 Modificado por ' + (currentUser ? currentUser.email : 'usuario') + 
+    ' (' + new Date().toLocaleDateString('es-ES') + '): ' + motivo;
+  if (notas) notasCompletas += '\n' + notas;
+
+  try {
+    await db.from('project_milestones').update({
+      planned_date: fecha,
+      notes: notasCompletas
+    }).eq('id', _modalHitoId);
+    cerrarModalHito();
+    cargarHitos(_modalProjectId);
+  } catch(e) { alert('Error: ' + e.message); }
+}
 
 async function cargarEconomico(projectId) {
   var el = document.getElementById('ej-economico-content');
