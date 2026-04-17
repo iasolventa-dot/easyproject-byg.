@@ -7601,7 +7601,7 @@ async function cargarCertificaciones(projectId) {
         html += '<div><label style="font-size:10px;color:#C0392B;font-weight:600;display:block;margin-bottom:3px;">* Importe contrapropuesta ByG (EUR)</label>';
         html += '<input type="number" id="cert-contra-' + c.id + '" placeholder="0.00" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>';
         html += '<div><label style="font-size:10px;color:#888;font-weight:600;display:block;margin-bottom:3px;">Documento contrapropuesta</label>';
-        html += '<div id="cert-contra-dz-' + c.id + '" style="border:2px dashed #BFDBFE;border-radius:6px;padding:8px;text-align:center;cursor:pointer;background:#f8faff;font-size:11px;color:#3b82f6;" onclick="document.getElementById('cert-contra-doc-' + c.id + '').click()" ondrop="certContraDrop(event,' + c.id + ')" ondragover="event.preventDefault()" ondragleave="event.stopPropagation()">📄 Arrastra o selecciona</div>';
+        html += '<div id="cert-contra-dz-' + c.id + '" data-certid="' + c.id + '" style="border:2px dashed #BFDBFE;border-radius:6px;padding:8px;text-align:center;cursor:pointer;background:#f8faff;font-size:11px;color:#3b82f6;" onclick="certContraClick(this.dataset.certid)" ondrop="certContraDrop(event,this.dataset.certid)" ondragover="event.preventDefault()">📄 Arrastra o selecciona</div>';
         html += '<div id="cert-contra-doc-nom-' + c.id + '" style="font-size:10px;color:#888;margin-top:2px;"></div>';
         html += '<input type="file" id="cert-contra-doc-' + c.id + '" accept=".pdf,.xlsx,.xls,.doc,.docx" style="display:none;" onchange="certContraFileOk(this,' + c.id + ')"></div>';
         html += '</div>';
@@ -7665,6 +7665,11 @@ async function verDocCert(filePath) {
   } catch(e) { alert('Error: ' + e.message); }
 }
 
+
+function certContraClick(certId) {
+  var input = document.getElementById('cert-contra-doc-' + certId);
+  if (input) input.click();
+}
 
 function certContraDrop(e, certId) {
   e.preventDefault();
