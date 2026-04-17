@@ -1588,6 +1588,51 @@
   <div id="informes-desviaciones-content"><div class="loading">Cargando...</div></div>
 </div>
 
+
+<!-- MODAL PETICIÓN DE OFERTA -->
+<div id="modal-peticion-oferta" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;padding:1.5rem;max-width:560px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
+    <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:0.25rem;">📧 Petición de oferta</div>
+    <div id="modal-oferta-gremio" style="font-size:12px;color:#185FA5;margin-bottom:1rem;"></div>
+    
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Proveedores seleccionados</label>
+      <div id="modal-oferta-proveedores" style="background:#f9f9f6;border:1px solid #e5e5e0;border-radius:8px;padding:10px 14px;font-size:12px;"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;">
+      <div>
+        <label style="font-size:11px;color:#C0392B;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;">* Fecha límite respuesta</label>
+        <input type="date" id="modal-oferta-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+      </div>
+      <div>
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Recordatorio automático</label>
+        <select id="modal-oferta-recordatorio" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+          <option value="">Sin recordatorio</option>
+          <option value="1">1 día antes</option>
+          <option value="2">2 días antes</option>
+          <option value="3">3 días antes</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Descripción del proyecto para el proveedor</label>
+      <textarea id="modal-oferta-descripcion" placeholder="Ej: Reforma de local comercial de 450m² en centro comercial. Se requiere visita previa a obra..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:70px;resize:vertical;font-family:inherit;"></textarea>
+    </div>
+
+    <div style="margin-bottom:1.25rem;">
+      <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;">Notas adicionales (opcional)</label>
+      <textarea id="modal-oferta-notas" placeholder="Condiciones especiales, acceso a obra, contacto en obra..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:50px;resize:vertical;font-family:inherit;"></textarea>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="cerrarModalOferta()">Cancelar</button>
+      <button class="btn btn-primary" onclick="enviarPeticionOferta()">📧 Confirmar y registrar petición</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /main -->
 
 <!-- FOOTER COPYRIGHT -->
@@ -7010,25 +7055,103 @@ async function cargarProveedoresGremio(nombreGremio, idx) {
   } catch(e) { el.innerHTML = '<div style="color:#C0392B;font-size:11px;">Error: ' + e.message + '</div>'; }
 }
 
+var _ofertaProveedores = [];
+var _ofertaGremio = '';
+
 function prepararPeticionOferta(nombreGremio) {
-  // Collect selected suppliers
   var checkboxes = document.querySelectorAll('[id^="prov-check-"]:checked');
   if (!checkboxes.length) { alert('Selecciona al menos un proveedor'); return; }
 
-  var proveedores = [];
+  _ofertaProveedores = [];
   checkboxes.forEach(function(cb) {
-    proveedores.push({ id: cb.id.replace('prov-check-',''), email: cb.dataset.email, nombre: cb.dataset.nombre });
+    _ofertaProveedores.push({ id: cb.id.replace('prov-check-',''), email: cb.dataset.email, nombre: cb.dataset.nombre });
   });
+  _ofertaGremio = nombreGremio;
 
-  var fechaLimite = prompt('Fecha límite para recibir ofertas (YYYY-MM-DD):', new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0]);
-  if (!fechaLimite) return;
+  // Fill modal
+  var gremioEl = document.getElementById('modal-oferta-gremio');
+  if (gremioEl) gremioEl.textContent = 'Gremio: ' + nombreGremio + ' · ' + _ofertaProveedores.length + ' proveedor(es) seleccionado(s)';
 
-  var mensajeExtra = prompt('Mensaje adicional para los proveedores (opcional):', '');
+  var provEl = document.getElementById('modal-oferta-proveedores');
+  if (provEl) provEl.innerHTML = _ofertaProveedores.map(function(p){
+    return '<div style="padding:4px 0;border-bottom:1px solid #f0f0ea;">✉️ <strong>' + p.nombre + '</strong> — ' + p.email + '</div>';
+  }).join('');
 
-  alert('✅ Petición preparada para ' + proveedores.length + ' proveedor(es) de ' + nombreGremio + '.\n\n' +
-    proveedores.map(function(p){ return '• ' + p.nombre + ' (' + p.email + ')'; }).join('\n') + '\n\n' +
-    'Fecha límite: ' + fechaLimite + '\n\n' +
-    'En la próxima versión se enviará por email automáticamente.');
+  // Default date = 7 days from now
+  var fechaEl = document.getElementById('modal-oferta-fecha');
+  if (fechaEl) fechaEl.value = new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0];
+
+  // Clear fields
+  var descEl = document.getElementById('modal-oferta-descripcion');
+  if (descEl && ejProyecto) descEl.value = ejProyecto.name || ejProyecto.code || '';
+  var notasEl = document.getElementById('modal-oferta-notas');
+  if (notasEl) notasEl.value = '';
+
+  // Show modal
+  var modal = document.getElementById('modal-peticion-oferta');
+  if (modal) modal.style.display = 'flex';
+}
+
+function cerrarModalOferta() {
+  var modal = document.getElementById('modal-peticion-oferta');
+  if (modal) modal.style.display = 'none';
+}
+
+async function enviarPeticionOferta() {
+  var fecha = document.getElementById('modal-oferta-fecha') ? document.getElementById('modal-oferta-fecha').value : '';
+  var descripcion = document.getElementById('modal-oferta-descripcion') ? document.getElementById('modal-oferta-descripcion').value.trim() : '';
+  var notas = document.getElementById('modal-oferta-notas') ? document.getElementById('modal-oferta-notas').value.trim() : '';
+  var recordatorio = document.getElementById('modal-oferta-recordatorio') ? document.getElementById('modal-oferta-recordatorio').value : '';
+
+  if (!fecha) { alert('La fecha límite es obligatoria'); return; }
+  if (!_ofertaProveedores.length) { alert('No hay proveedores seleccionados'); return; }
+
+  try {
+    // Save offer requests in DB
+    for (var i = 0; i < _ofertaProveedores.length; i++) {
+      var prov = _ofertaProveedores[i];
+      await db.from('offer_requests').insert({
+        project_id: _medicionesProjectId || (ejProyecto ? ejProyecto.id : null),
+        supplier_id: parseInt(prov.id),
+        specialty: _ofertaGremio,
+        deadline: fecha,
+        description: descripcion,
+        notes: notas,
+        reminder_days: recordatorio ? parseInt(recordatorio) : null,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        sent_by: currentUser ? currentUser.email : null
+      });
+    }
+
+    cerrarModalOferta();
+    alert('✅ Petición registrada para ' + _ofertaProveedores.length + ' proveedor(es) de ' + _ofertaGremio + '.
+
+Fecha límite: ' + fecha + '
+
+En cuanto se conecte el email automático se enviarán los correos.');
+
+  } catch(e) {
+    // If offer_requests table doesn't have all columns, try simpler insert
+    try {
+      for (var j = 0; j < _ofertaProveedores.length; j++) {
+        var p2 = _ofertaProveedores[j];
+        await db.from('offer_requests').insert({
+          project_id: ejProyecto ? ejProyecto.id : null,
+          supplier_id: parseInt(p2.id),
+          deadline: fecha,
+          status: 'sent',
+          sent_at: new Date().toISOString()
+        });
+      }
+      cerrarModalOferta();
+      alert('✅ Petición registrada para ' + _ofertaProveedores.length + ' proveedor(es).');
+    } catch(e2) {
+      alert('Petición preparada (no guardada en BD): ' + e2.message + '\n\nLos proveedores seleccionados son:\n' + 
+        _ofertaProveedores.map(function(p){ return p.nombre + ' — ' + p.email; }).join('\n'));
+      cerrarModalOferta();
+    }
+  }
 }
 
 
