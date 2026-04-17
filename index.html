@@ -6177,9 +6177,16 @@ async function loadDashboardJefeObra() {
           '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">🔔 Notificaciones</div>' +
           notifRes.data.map(function(n) {
             var fecha = new Date(n.created_at).toLocaleDateString('es-ES');
-            return '<div style="background:#E1F5EE;border:1px solid #A7DEC9;border-radius:8px;padding:10px 14px;margin-bottom:6px;">' +
+            // Try to extract project_id from message to link directly
+            var proyId = n.project_id || null;
+            var verBtn = proyId ? '<button class="btn btn-sm" style="font-size:10px;padding:3px 8px;" onclick="abrirEjecucion('+proyId+',\'\')">Ver hitos →</button>' : '';
+            return '<div style="background:#E1F5EE;border:1px solid #A7DEC9;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">' +
+              '<div style="flex:1;">' +
               '<div style="font-size:12px;font-weight:500;color:#0F6E56;">' + n.error_message + '</div>' +
-              '<div style="font-size:10px;color:#888;margin-top:2px;">' + fecha + '</div></div>';
+              '<div style="font-size:10px;color:#888;margin-top:2px;">' + fecha + '</div></div>' +
+              '<div style="display:flex;gap:6px;flex-shrink:0;">' + verBtn +
+              '<button class="btn btn-sm" style="font-size:10px;padding:3px 8px;background:#f5f5f0;" onclick="marcarNotifLeida('+n.id+')">✓ Leída</button>' +
+              '</div></div>';
           }).join('') + '</div>';
         el.innerHTML = notifHtml + el.innerHTML;
       }
@@ -7240,12 +7247,22 @@ async function publicarPlanningJefeObra(projectId) {
     var h = await db.from('project_milestones').select('id').eq('project_id', projectId);
     var nh = h.data ? h.data.length : 0;
     await db.from('automation_errors').insert({ flow_name:'NOTIFICACION', node_name:'jefe_obra',
-      error_message:'Planning de '+pn+' publicado. '+nh+' hitos planificados.', created_at:new Date().toISOString() });
+      project_id: projectId,
+      error_message:'Planning de '+pn+' publicado. '+nh+' hitos planificados. Entra en Hitos de Obra para verlos.', created_at:new Date().toISOString() });
     await db.from('automation_errors').insert({ flow_name:'NOTIFICACION', node_name:'direccion',
       error_message:'Planning de '+pn+' publicado al Jefe de Obra.', created_at:new Date().toISOString() });
     alert('Planning publicado. El Jefe de Obra recibirá notificación en su dashboard.');
     cargarPlanning(projectId);
   } catch(e) { alert('Error: ' + e.message); }
+}
+
+
+async function marcarNotifLeida(notifId) {
+  try {
+    await db.from('automation_errors').delete().eq('id', notifId);
+    // Remove from DOM
+    loadDashboardJefeObra();
+  } catch(e) { console.error('Error marcando leída:', e); }
 }
 
 </script>
