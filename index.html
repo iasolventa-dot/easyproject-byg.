@@ -1300,7 +1300,7 @@
   </div>
 
   <!-- GREMIOS Y PROVEEDORES -->
-  <div class="card" style="margin-bottom:1rem;">
+  <div class="card" id="an-proveedores-section" style="margin-bottom:1rem;display:none;">
     <div class="card-header">
       <div class="card-title">Selección de proveedores por gremio</div>
       <span style="font-size:11px;color:#888;">La IA propone 3 candidatos por gremio. Puedes modificar la selección.</span>
@@ -7125,11 +7125,7 @@ async function enviarPeticionOferta() {
     }
 
     cerrarModalOferta();
-    alert('✅ Petición registrada para ' + _ofertaProveedores.length + ' proveedor(es) de ' + _ofertaGremio + '.
-
-Fecha límite: ' + fecha + '
-
-En cuanto se conecte el email automático se enviarán los correos.');
+    alert('✅ Petición registrada para ' + _ofertaProveedores.length + ' proveedor(es) de ' + _ofertaGremio + '. Fecha límite: ' + fecha + '. En cuanto se conecte el email automático se enviarán los correos.');
 
   } catch(e) {
     // If offer_requests table doesn't have all columns, try simpler insert
