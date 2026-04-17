@@ -838,7 +838,7 @@
     <div class="proj-tab" id="ej-tab-btn-hitos" onclick="showEjTab('hitos',this)">Hitos de obra</div>
     <div class="proj-tab" id="ej-tab-btn-economico" onclick="showEjTab('economico',this)">Estado económico</div>
     <div class="proj-tab" id="ej-tab-btn-gastos" onclick="showEjTab('gastos',this)">Gastos</div>
-    <div class="proj-tab" onclick="showEjTab('certificaciónes',this)">Certificaciónes</div>
+    <div class="proj-tab" onclick="showEjTab('certificaciones',this)">Certificaciónes</div>
   </div>
 
   <!-- TAB PLANNING -->
@@ -959,12 +959,57 @@
   </div>
 
   <!-- TAB CERTIFICACIONES -->
-  <div id="ej-tab-certificacioneses" style="display:none;">
+  <div id="ej-tab-certificaciones" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-size:13px;color:#888;">Certificaciónes económicas emitidas al cliente</div>
-      <button class="btn btn-primary btn-sm" onclick="alert('En produccion: crear nueva certificación')">+ Nueva certificación</button>
+      <div style="font-size:13px;color:#888;">Certificación final de obra — liquidación económica con el cliente</div>
+      <button class="btn btn-primary btn-sm" id="btn-nueva-cert" onclick="mostrarFormCertificacion()" style="display:none;">+ Nueva certificación</button>
     </div>
-    <div id="ej-certs-content"><div class="loading">Cargando certificaciónes...</div></div>
+    <!-- Formulario nueva certificación -->
+    <div id="ej-form-cert" style="display:none;background:#f9f9f6;border:1px solid #ddd;border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
+      <div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:1rem;">Nueva certificación de obra</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;">
+        <div>
+          <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;font-weight:600;">¿Quién inicia?</label>
+          <select id="cert-iniciado-por" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;" onchange="toggleCertModo()">
+            <option value="cliente">El cliente envía propuesta</option>
+            <option value="byg">ByG emite la certificación</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;font-weight:600;">Fecha</label>
+          <input type="date" id="cert-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+        </div>
+      </div>
+      <div id="cert-modo-cliente" style="margin-bottom:1rem;">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;font-weight:600;">Importe propuesto por el cliente (EUR)</label>
+        <input type="number" id="cert-importe-cliente" placeholder="0.00" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;margin-bottom:8px;">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;font-weight:600;">Documento del cliente</label>
+        <div id="cert-dropzone-cliente" style="border:2px dashed #BFDBFE;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;background:#f8faff;" onclick="document.getElementById('cert-file-cliente').click()" ondrop="certDrop(event,'cliente')" ondragover="event.preventDefault()">
+          <div style="font-size:12px;color:#3b82f6;">📄 Arrastra el documento aquí o pulsa para seleccionar</div>
+          <div id="cert-file-cliente-nombre" style="font-size:11px;color:#888;margin-top:4px;"></div>
+        </div>
+        <input type="file" id="cert-file-cliente" accept=".pdf,.xlsx,.xls,.doc,.docx" style="display:none;" onchange="certFileSeleccionado(this,'cliente')">
+      </div>
+      <div id="cert-modo-byg" style="display:none;margin-bottom:1rem;">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;font-weight:600;">Importe certificado por ByG (EUR)</label>
+        <input type="number" id="cert-importe-byg" placeholder="0.00" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;margin-bottom:8px;">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;font-weight:600;">Documento de certificación ByG</label>
+        <div id="cert-dropzone-byg" style="border:2px dashed #BFDBFE;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;background:#f8faff;" onclick="document.getElementById('cert-file-byg').click()" ondrop="certDrop(event,'byg')" ondragover="event.preventDefault()">
+          <div style="font-size:12px;color:#3b82f6;">📄 Arrastra el documento aquí o pulsa para seleccionar</div>
+          <div id="cert-file-byg-nombre" style="font-size:11px;color:#888;margin-top:4px;"></div>
+        </div>
+        <input type="file" id="cert-file-byg" accept=".pdf,.xlsx,.xls,.doc,.docx" style="display:none;" onchange="certFileSeleccionado(this,'byg')">
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;text-transform:uppercase;font-weight:600;">Observaciones</label>
+        <textarea id="cert-notas" placeholder="Variaciones respecto al alcance inicial, trabajos adicionales, etc..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;min-height:60px;resize:vertical;font-family:inherit;"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn" onclick="document.getElementById('ej-form-cert').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarCertificacion()">Guardar certificación</button>
+      </div>
+    </div>
+    <div id="ej-certs-content"><div class="loading">Cargando certificaciones...</div></div>
   </div>
 </div>
 
@@ -4504,7 +4549,7 @@ async function abrirEjecucion(id, nameEnc) {
 }
 
 function showEjTab(tab, el) {
-  ['planning','hitos','económico','gastos','certificaciónes'].forEach(function(t){
+  ['planning','hitos','economico','gastos','certificaciones'].forEach(function(t){
     var el2 = document.getElementById('ej-tab-'+t);
     if (el2) el2.style.display = 'none';
   });
@@ -4512,6 +4557,13 @@ function showEjTab(tab, el) {
   var tabEl = document.getElementById('ej-tab-'+tab);
   if (tabEl) tabEl.style.display = 'block';
   if (el) el.classList.add('active');
+  if (ejProyecto) {
+    if (tab==='planning') cargarPlanning(ejProyecto.id);
+    if (tab==='hitos') cargarHitos(ejProyecto.id);
+    if (tab==='gastos') cargarGastos(ejProyecto.id);
+    if (tab==='certificaciones') cargarCertificaciones(ejProyecto.id);
+    if (tab==='economico') cargarEconomico(ejProyecto.id);
+  }
 }
 
 async function cargarHitos(projectId) {
@@ -7352,6 +7404,240 @@ async function avanzarAOfertaEnCurso(projectId) {
     showProyectosFase('en_analisis');
 
   } catch(e) { alert('Error al avanzar: ' + e.message); }
+}
+
+
+// ============================================================
+// MÓDULO CERTIFICACIONES
+// ============================================================
+
+var _certFiles = { cliente: null, byg: null };
+
+function mostrarFormCertificacion() {
+  var f = document.getElementById('ej-form-cert');
+  if (f) {
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    // Set default date
+    var fechaEl = document.getElementById('cert-fecha');
+    if (fechaEl && !fechaEl.value) fechaEl.value = new Date().toISOString().split('T')[0];
+  }
+}
+
+function toggleCertModo() {
+  var modo = document.getElementById('cert-iniciado-por') ? document.getElementById('cert-iniciado-por').value : 'cliente';
+  var modoCliente = document.getElementById('cert-modo-cliente');
+  var modoByg = document.getElementById('cert-modo-byg');
+  if (modoCliente) modoCliente.style.display = modo === 'cliente' ? 'block' : 'none';
+  if (modoByg) modoByg.style.display = modo === 'byg' ? 'block' : 'none';
+}
+
+function certDrop(e, tipo) {
+  e.preventDefault();
+  var files = e.dataTransfer.files;
+  if (files && files.length > 0) {
+    var input = document.getElementById('cert-file-' + tipo);
+    var dt = new DataTransfer();
+    dt.items.add(files[0]);
+    input.files = dt.files;
+    certFileSeleccionado(input, tipo);
+  }
+}
+
+function certFileSeleccionado(input, tipo) {
+  var file = input.files[0];
+  if (!file) return;
+  _certFiles[tipo] = file;
+  var nombreEl = document.getElementById('cert-file-' + tipo + '-nombre');
+  if (nombreEl) nombreEl.textContent = '📎 ' + file.name + ' (' + Math.round(file.size/1024) + ' KB)';
+}
+
+async function guardarCertificacion() {
+  if (!ejProyecto) return;
+
+  var iniciado = document.getElementById('cert-iniciado-por') ? document.getElementById('cert-iniciado-por').value : 'cliente';
+  var fecha = document.getElementById('cert-fecha') ? document.getElementById('cert-fecha').value : new Date().toISOString().split('T')[0];
+  var notas = document.getElementById('cert-notas') ? document.getElementById('cert-notas').value.trim() : '';
+  var importeCliente = document.getElementById('cert-importe-cliente') ? parseFloat(document.getElementById('cert-importe-cliente').value) : null;
+  var importeByg = document.getElementById('cert-importe-byg') ? parseFloat(document.getElementById('cert-importe-byg').value) : null;
+
+  var importe = iniciado === 'cliente' ? importeCliente : importeByg;
+  if (!importe || isNaN(importe)) { alert('El importe es obligatorio'); return; }
+
+  try {
+    // Upload document if exists
+    var clientDocPath = null, bygDocPath = null;
+    var file = _certFiles[iniciado];
+    if (file) {
+      var fileExt = file.name.split('.').pop();
+      var filePath = 'cert_' + ejProyecto.id + '_' + Date.now() + '.' + fileExt;
+      var reader = new FileReader();
+      var base64 = await new Promise(function(resolve, reject) {
+        reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      // Store as base64 in notes for now (simple approach without storage bucket)
+      var docRef = 'DOC:' + file.name + ':' + base64.substring(0, 50) + '...';
+      if (iniciado === 'cliente') clientDocPath = file.name;
+      else bygDocPath = file.name;
+
+      // Try upload to Supabase storage
+      try {
+        var arrayBuf = await file.arrayBuffer();
+        var uploadRes = await db.storage.from('project-attachments').upload(
+          'certificaciones/' + filePath,
+          new Uint8Array(arrayBuf),
+          { contentType: file.type }
+        );
+        if (!uploadRes.error) {
+          if (iniciado === 'cliente') clientDocPath = 'certificaciones/' + filePath;
+          else bygDocPath = 'certificaciones/' + filePath;
+        }
+      } catch(eu) { console.error('Upload error:', eu); }
+    }
+
+    // Save to DB
+    var certData = {
+      project_id: ejProyecto.id,
+      cert_date: fecha,
+      amount: importe,
+      initiated_by: iniciado,
+      status: 'pendiente',
+      notes: notas || null,
+      client_amount: importeCliente || null,
+      byg_amount: importeByg || null,
+      client_doc_path: clientDocPath,
+      byg_doc_path: bygDocPath,
+      created_by: currentUser ? currentUser.email : null,
+      created_at: new Date().toISOString()
+    };
+
+    await db.from('project_certifications').insert(certData);
+
+    // Reset form
+    document.getElementById('ej-form-cert').style.display = 'none';
+    document.getElementById('cert-notas').value = '';
+    document.getElementById('cert-fecha').value = '';
+    if (document.getElementById('cert-importe-cliente')) document.getElementById('cert-importe-cliente').value = '';
+    if (document.getElementById('cert-importe-byg')) document.getElementById('cert-importe-byg').value = '';
+    document.getElementById('cert-file-cliente-nombre').textContent = '';
+    document.getElementById('cert-file-byg-nombre').textContent = '';
+    _certFiles = { cliente: null, byg: null };
+
+    cargarCertificaciones(ejProyecto.id);
+    alert('✅ Certificación guardada correctamente.');
+
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function cargarCertificaciones(projectId) {
+  var el = document.getElementById('ej-certs-content');
+  if (!el) return;
+
+  // Show button for tecnico and direccion
+  var btnCert = document.getElementById('btn-nueva-cert');
+  if (btnCert) {
+    btnCert.style.display = ['tecnico','direccion'].indexOf(currentDept) > -1 ? 'inline-block' : 'none';
+  }
+
+  try {
+    var res = await db.from('project_certifications').select('*').eq('project_id', projectId).order('created_at', {ascending: false});
+    var certs = res.data || [];
+
+    if (!certs.length) {
+      el.innerHTML = '<div class="empty">No hay certificaciones registradas. Crea la primera cuando el cliente envíe su propuesta o cuando ByG emita la certificación.</div>';
+      return;
+    }
+
+    var estadoColors = { pendiente: '#FEF3C7', aceptada: '#E1F5EE', negociacion: '#FEE2E2', cerrada: '#F0F9FF' };
+    var estadoLabels = { pendiente: 'Pendiente revisión', aceptada: 'Aceptada', negociacion: 'En negociación', cerrada: 'Cerrada' };
+
+    var html = '<div style="display:flex;flex-direction:column;gap:12px;">';
+    certs.forEach(function(c) {
+      var iniciado = c.initiated_by === 'byg' ? '📤 ByG emite' : '📥 Cliente propone';
+      var estado = c.status || 'pendiente';
+      var estadoColor = estadoColors[estado] || '#f5f5f0';
+      var estadoLabel = estadoLabels[estado] || estado;
+      var fecha = c.cert_date ? new Date(c.cert_date).toLocaleDateString('es-ES') : '-';
+      var importe = c.amount ? parseFloat(c.amount).toLocaleString('es-ES', {minimumFractionDigits:2}) + ' EUR' : '-';
+
+      html += '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1.25rem;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">';
+      html += '<div>';
+      html += '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:3px;">' + iniciado + ' · ' + fecha + '</div>';
+      html += '<div style="font-size:12px;color:#555;">Importe: <strong>' + importe + '</strong></div>';
+      if (c.notes) html += '<div style="font-size:11px;color:#888;margin-top:4px;">' + c.notes + '</div>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:8px;align-items:center;">';
+      html += '<span style="font-size:11px;padding:3px 10px;border-radius:10px;font-weight:500;background:' + estadoColor + ';">' + estadoLabel + '</span>';
+      if (['tecnico','direccion'].indexOf(currentDept) > -1) {
+        html += '<button class="btn btn-sm" style="font-size:11px;" onclick="cambiarEstadoCert(' + c.id + ',\'' + estado + '\',' + projectId + ')">Cambiar estado</button>';
+      }
+      html += '</div></div>';
+
+      // Documents
+      var docs = [];
+      if (c.client_doc_path) docs.push({ label: '📄 Doc. cliente', path: c.client_doc_path });
+      if (c.byg_doc_path) docs.push({ label: '📄 Doc. ByG', path: c.byg_doc_path });
+
+      if (docs.length > 0) {
+        html += '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">';
+        docs.forEach(function(d) {
+          html += '<button class="btn btn-sm" style="font-size:11px;" onclick="verDocCert(\'' + d.path + '\')">' + d.label + '</button>';
+        });
+        html += '</div>';
+      }
+
+      // Contrapropuesta section
+      if (estado === 'negociacion' && ['tecnico','direccion'].indexOf(currentDept) > -1) {
+        html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0ea;">';
+        html += '<div style="font-size:11px;color:#888;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Contrapropuesta ByG</div>';
+        html += '<div style="display:flex;gap:8px;align-items:center;">';
+        html += '<input type="number" id="cert-contra-' + c.id + '" placeholder="Importe contrapropuesta EUR" style="flex:1;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;">';
+        html += '<button class="btn btn-primary btn-sm" style="font-size:11px;" onclick="guardarContrapropuesta(' + c.id + ',' + projectId + ')">Guardar contrapropuesta</button>';
+        html += '</div></div>';
+      }
+
+      html += '</div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+
+  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
+}
+
+async function cambiarEstadoCert(certId, estadoActual, projectId) {
+  var estados = ['pendiente', 'aceptada', 'negociacion', 'cerrada'];
+  var labels = ['Pendiente revisión', 'Aceptada', 'En negociación', 'Cerrada'];
+  var opciones = estados.map(function(e,i){ return (i+1) + '. ' + labels[i]; }).join('\n');
+  var resp = prompt('Cambiar estado a:\n\n' + opciones + '\n\nEscribe el número:', '');
+  if (!resp) return;
+  var idx = parseInt(resp) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= estados.length) { alert('Número incorrecto'); return; }
+  try {
+    await db.from('project_certifications').update({ status: estados[idx] }).eq('id', certId);
+    cargarCertificaciones(projectId);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function guardarContrapropuesta(certId, projectId) {
+  var importe = parseFloat(document.getElementById('cert-contra-' + certId) ? document.getElementById('cert-contra-' + certId).value : 0);
+  if (!importe || isNaN(importe)) { alert('El importe es obligatorio'); return; }
+  try {
+    await db.from('project_certifications').update({
+      byg_amount: importe,
+      status: 'negociacion'
+    }).eq('id', certId);
+    cargarCertificaciones(projectId);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function verDocCert(filePath) {
+  try {
+    var res = await db.storage.from('project-attachments').createSignedUrl(filePath, 300);
+    if (res.data && res.data.signedUrl) window.open(res.data.signedUrl, '_blank');
+    else alert('No se pudo generar el enlace al documento.');
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 </script>
