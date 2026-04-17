@@ -7195,7 +7195,6 @@ function confirmarGremio(nombre, idx) {
   };
   var gremioCode = mapaCodigosGremio3[nombre] || nombre.toUpperCase().replace(/\s/g,'_');
   var checkboxes = document.querySelectorAll('[id^="prov-check-"]:checked');
-  alert('DEBUG confirmarGremio: ' + nombre + ' | checkboxes encontrados: ' + checkboxes.length + ' | gremioCode: ' + gremioCode);
   _medicionesProveedoresSeleccionados[gremioCode] = [];
   checkboxes.forEach(function(cb) {
     _medicionesProveedoresSeleccionados[gremioCode].push({
