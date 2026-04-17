@@ -6857,6 +6857,7 @@ function mostrarResultadoMediciones(resultado, projectId, loadingDiv) {
 
 var _medicionesGremioActual = '';
 var _medicionesGremioIdx = 0;
+var _medicionesProveedoresSeleccionados = {}; // {gremioCode: [{id, email, nombre}]}
 
 function verPartidasGremio(nombre, data, idx) {
   _medicionesGremioActual = nombre;
@@ -7185,6 +7186,23 @@ function cerrarRevisionGremio() {
 var _medicionesConfirmados = {};
 
 function confirmarGremio(nombre, idx) {
+  // Save selected suppliers for this gremio
+  var mapaCodigosGremio3 = {
+    'Demoliciones':'DEMOLICION','Albañilería':'ALBANILERIA','Pladur':'PLADUR',
+    'Climatización':'CLIMATIZACION','Electricidad':'ELECTRICIDAD',
+    'Contraincendios':'CONTRAINCENDIOS','Fontanería':'FONTANERIA',
+    'Varios':'VARIOS','Gestión de Residuos':'GESTION_RESIDUOS','Seguridad y Salud':'SEGURIDAD_SALUD'
+  };
+  var gremioCode = mapaCodigosGremio3[nombre] || nombre.toUpperCase().replace(/\s/g,'_');
+  var checkboxes = document.querySelectorAll('[id^="prov-check-"]:checked');
+  _medicionesProveedoresSeleccionados[gremioCode] = [];
+  checkboxes.forEach(function(cb) {
+    _medicionesProveedoresSeleccionados[gremioCode].push({
+      id: parseInt(cb.id.replace('prov-check-','')),
+      email: cb.dataset.email,
+      nombre: cb.dataset.nombre
+    });
+  });
   _medicionesConfirmados[nombre] = true;
   var card = document.getElementById('med-card-' + idx);
   if (card) {
@@ -7239,11 +7257,29 @@ async function confirmarMediciones() {
         created_at: new Date().toISOString()
       });
     }
+    // Save selected suppliers from all confirmed gremios
+    try {
+      await db.from('project_gremio_suppliers').delete().eq('project_id', pid);
+      for (var gc in _medicionesProveedoresSeleccionados) {
+        var provs = _medicionesProveedoresSeleccionados[gc];
+        for (var jp = 0; jp < provs.length; jp++) {
+          await db.from('project_gremio_suppliers').insert({
+            project_id: pid,
+            specialty_code: gc,
+            supplier_id: provs[jp].id,
+            selected: true,
+            created_at: new Date().toISOString()
+          });
+        }
+      }
+    } catch(es) { console.error('Error guardando proveedores:', es); }
+
     // Show success with option to advance
     var avanzar = confirm('✅ ' + gremiosArr.length + ' gremios guardados correctamente.\n\n¿Avanzar el proyecto a "Oferta en curso"?');
     _medicionesResultado = null;
     _medicionesProjectId = null;
     _medicionesConfirmados = {};
+    _medicionesProveedoresSeleccionados = {};
     var wrap = document.getElementById('mediciones-resultado-wrap');
     if (wrap) wrap.remove();
     if (avanzar) {
