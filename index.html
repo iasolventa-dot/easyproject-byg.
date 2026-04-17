@@ -838,7 +838,7 @@
     <div class="proj-tab" id="ej-tab-btn-hitos" onclick="showEjTab('hitos',this)">Hitos de obra</div>
     <div class="proj-tab" id="ej-tab-btn-economico" onclick="showEjTab('economico',this)">Estado económico</div>
     <div class="proj-tab" id="ej-tab-btn-gastos" onclick="showEjTab('gastos',this)">Gastos</div>
-    <div class="proj-tab" onclick="showEjTab('certificaciones',this)">Certificaciónes</div>
+    <div class="proj-tab" id="ej-tab-btn-certificaciones" onclick="showEjTab('certificaciones',this)" style="display:none;">Certificaciones</div>
   </div>
 
   <!-- TAB PLANNING -->
@@ -4533,6 +4533,8 @@ async function abrirEjecucion(id, nameEnc) {
     // Hitos: todos los autorizados
     var tabHitos = document.getElementById('ej-tab-btn-hitos');
     if (tabHitos) tabHitos.style.display = ['tecnico','direccion','jefe_obra'].indexOf(currentDept) > -1 ? 'block' : 'none';
+    var tabCerts = document.getElementById('ej-tab-btn-certificaciones');
+    if (tabCerts) tabCerts.style.display = ['tecnico','direccion','jefe_obra','admin'].indexOf(currentDept) > -1 ? 'block' : 'none';
     // Gastos: todos los autorizados  
     var tabGastos = document.getElementById('ej-tab-btn-gastos');
     if (tabGastos) tabGastos.style.display = ['tecnico','direccion','jefe_obra','admin'].indexOf(currentDept) > -1 ? 'block' : 'none';
