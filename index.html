@@ -6794,59 +6794,66 @@ function verPartidasGremio(nombre, data, idx) {
   var panel = document.getElementById('med-review-panel');
   if (!panel) return;
 
+  // Recopilar todas las partidas con referencia editable
   var todasPartidas = [];
-  data.capitulos.forEach(function(cap) {
-    (cap.partidas || []).forEach(function(p) {
-      todasPartidas.push({ capitulo: cap.descripcion || cap.codigo, partida: p });
+  data.capitulos.forEach(function(cap, ci) {
+    (cap.partidas || []).forEach(function(p, pi) {
+      todasPartidas.push({ capitulo: cap.descripcion || cap.codigo, cap_idx: ci, part_idx: pi, partida: p });
     });
   });
 
   panel.style.display = 'block';
   panel.innerHTML = '';
 
-  // Title bar
+  // === TÍTULO ===
   var titleBar = document.createElement('div');
-  titleBar.style.cssText = 'background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;margin-bottom:0.5rem;';
-  
+  titleBar.style.cssText = 'background:white;border:1px solid #e5e5e0;border-radius:10px;overflow:hidden;margin-bottom:1rem;';
+
   var titleHead = document.createElement('div');
   titleHead.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f9f9f6;border-bottom:1px solid #e5e5e0;';
-  
+
   var titleText = document.createElement('div');
   titleText.style.cssText = 'font-size:13px;font-weight:600;color:#1a1a1a;';
   titleText.textContent = '📋 ' + nombre + ' — ' + todasPartidas.length + ' partidas';
-  
+
   var btnsCont = document.createElement('div');
   btnsCont.style.cssText = 'display:flex;gap:8px;';
-  
+
   var btnCerrar = document.createElement('button');
   btnCerrar.className = 'btn btn-sm';
   btnCerrar.style.fontSize = '11px';
   btnCerrar.textContent = 'Cerrar';
   btnCerrar.onclick = cerrarRevisionGremio;
-  
+
   var btnConf = document.createElement('button');
   btnConf.className = 'btn btn-success btn-sm';
   btnConf.style.fontSize = '11px';
   btnConf.textContent = '✓ Confirmar gremio';
   btnConf.onclick = function(){ confirmarGremio(nombre, idx); };
-  
+
   btnsCont.appendChild(btnCerrar);
   btnsCont.appendChild(btnConf);
   titleHead.appendChild(titleText);
   titleHead.appendChild(btnsCont);
   titleBar.appendChild(titleHead);
 
-  // Table
+  // Instrucción edición
+  var instruccion = document.createElement('div');
+  instruccion.style.cssText = 'padding:8px 16px;background:#fffbeb;border-bottom:1px solid #fef3c7;font-size:11px;color:#92400e;';
+  instruccion.textContent = '✏️ Haz doble clic en cualquier celda para editarla. Usa ↕ para mover una partida a otro gremio.';
+  titleBar.appendChild(instruccion);
+
+  // === TABLA DE PARTIDAS ===
   var tabla = document.createElement('table');
   tabla.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px;';
-  
+
   var thead = document.createElement('thead');
   var theadRow = document.createElement('tr');
   theadRow.style.background = '#f5f5f0';
-  ['Capítulo','Código','Descripción','Ud','Cantidad'].forEach(function(th) {
+  [['Capítulo','120px'], ['Código','80px'], ['Descripción','auto'], ['Ud','50px'], ['Cantidad','80px'], ['','40px']].forEach(function(th) {
     var cell = document.createElement('th');
-    cell.style.cssText = 'padding:8px 12px;text-align:left;font-size:11px;color:#666;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;white-space:nowrap;';
-    cell.textContent = th;
+    cell.style.cssText = 'padding:8px 12px;text-align:left;font-size:11px;color:#666;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e5e5e0;white-space:nowrap;width:'+th[1]+';';
+    cell.textContent = th[0];
     theadRow.appendChild(cell);
   });
   thead.appendChild(theadRow);
@@ -6856,27 +6863,174 @@ function verPartidasGremio(nombre, data, idx) {
   todasPartidas.forEach(function(item, i) {
     var tr = document.createElement('tr');
     tr.style.cssText = 'border-bottom:1px solid #f0f0ea;' + (i%2===0?'':'background:#fafaf8;');
-    
-    var cells = [
-      item.capitulo || '-',
-      item.partida.codigo || '-',
-      item.partida.descripcion || '-',
-      item.partida.unidad || '-',
-      item.partida.cantidad !== null && item.partida.cantidad !== undefined ? item.partida.cantidad : '-'
-    ];
-    cells.forEach(function(val, ci) {
+    tr.id = 'med-row-' + i;
+
+    // Helper: editable cell
+    function makeEditableCell(val, field, style) {
       var td = document.createElement('td');
-      td.style.cssText = 'padding:8px 12px;' + (ci===2?'max-width:250px;':'white-space:nowrap;');
-      td.textContent = val;
-      tr.appendChild(td);
-    });
+      td.style.cssText = 'padding:8px 12px;' + (style||'');
+      td.textContent = val !== null && val !== undefined ? val : '-';
+      td.title = 'Doble clic para editar';
+      td.addEventListener('dblclick', function() {
+        var input = document.createElement('input');
+        input.type = field === 'cantidad' ? 'number' : 'text';
+        input.value = val !== null && val !== undefined ? val : '';
+        input.style.cssText = 'width:100%;padding:4px 6px;border:1px solid #185FA5;border-radius:4px;font-size:12px;';
+        td.innerHTML = '';
+        td.appendChild(input);
+        input.focus();
+        input.select();
+        function guardar() {
+          var nuevo = field === 'cantidad' ? parseFloat(input.value) : input.value;
+          item.partida[field] = isNaN(nuevo) ? input.value : nuevo;
+          val = item.partida[field];
+          td.textContent = val !== null && val !== undefined ? val : '-';
+          // Update in _medicionesResultado
+          var gremioData = _medicionesResultado.gremios[nombre];
+          if (gremioData && gremioData.capitulos[item.cap_idx] && gremioData.capitulos[item.cap_idx].partidas[item.part_idx]) {
+            gremioData.capitulos[item.cap_idx].partidas[item.part_idx][field] = item.partida[field];
+          }
+        }
+        input.addEventListener('blur', guardar);
+        input.addEventListener('keydown', function(e){ if(e.key==='Enter') { guardar(); } });
+      });
+      return td;
+    }
+
+    tr.appendChild(makeEditableCell(item.capitulo, 'capitulo', 'font-size:11px;color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'));
+    tr.appendChild(makeEditableCell(item.partida.codigo, 'codigo', 'font-family:monospace;font-size:10px;color:#555;'));
+    tr.appendChild(makeEditableCell(item.partida.descripcion, 'descripcion', 'max-width:250px;'));
+    tr.appendChild(makeEditableCell(item.partida.unidad, 'unidad', 'text-align:center;color:#555;'));
+    tr.appendChild(makeEditableCell(item.partida.cantidad, 'cantidad', 'text-align:right;color:#555;'));
+
+    // Botón mover
+    var tdMove = document.createElement('td');
+    tdMove.style.cssText = 'padding:8px 12px;text-align:center;';
+    var btnMove = document.createElement('button');
+    btnMove.style.cssText = 'background:none;border:none;cursor:pointer;font-size:14px;color:#aaa;';
+    btnMove.title = 'Mover a otro gremio';
+    btnMove.textContent = '↕';
+    btnMove.addEventListener('click', (function(it){ return function(){ moverPartida(it, nombre); }; })(item));
+    tdMove.appendChild(btnMove);
+    tr.appendChild(tdMove);
+
     tbody.appendChild(tr);
   });
   tabla.appendChild(tbody);
   titleBar.appendChild(tabla);
   panel.appendChild(titleBar);
+
+  // === PROVEEDORES DEL GREMIO ===
+  var provSection = document.createElement('div');
+  provSection.id = 'med-proveedores-' + idx;
+  provSection.style.cssText = 'background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1rem 1.25rem;margin-top:0;';
+  provSection.innerHTML = '<div style="font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:0.75rem;">🏢 Proveedores disponibles para ' + nombre + '</div>' +
+    '<div id="med-prov-lista-' + idx + '" style="font-size:12px;color:#888;">Cargando proveedores...</div>';
+  panel.appendChild(provSection);
+
+  // Cargar proveedores de este gremio
+  cargarProveedoresGremio(nombre, idx);
+
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+function moverPartida(item, gremioOrigen) {
+  var gremios = Object.keys(_medicionesResultado.gremios).filter(function(g){ return g !== gremioOrigen; });
+  var opcionesTexto = gremios.map(function(g,i){ return (i+1) + '. ' + g; }).join('\n');
+  var resp = prompt('Mover partida "' + (item.partida.descripcion||'').substring(0,40) + '" a:\n\n' + opcionesTexto + '\n\nEscribe el número:');
+  if (!resp) return;
+  var destIdx = parseInt(resp) - 1;
+  if (isNaN(destIdx) || destIdx < 0 || destIdx >= gremios.length) { alert('Número incorrecto'); return; }
+  var destGremio = gremios[destIdx];
+
+  // Remove from origen
+  var origen = _medicionesResultado.gremios[gremioOrigen];
+  origen.capitulos.forEach(function(cap) {
+    var i = cap.partidas ? cap.partidas.indexOf(item.partida) : -1;
+    if (i > -1) cap.partidas.splice(i, 1);
+  });
+
+  // Add to destino
+  var destino = _medicionesResultado.gremios[destGremio];
+  if (destino.capitulos.length === 0) destino.capitulos.push({ codigo: '', descripcion: destGremio, partidas: [] });
+  if (!destino.capitulos[0].partidas) destino.capitulos[0].partidas = [];
+  destino.capitulos[0].partidas.push(item.partida);
+
+  alert('✅ Partida movida a ' + destGremio);
+
+  // Refresh current view
+  verPartidasGremio(gremioOrigen, origen, _medicionesGremioIdx);
+}
+
+async function cargarProveedoresGremio(nombreGremio, idx) {
+  var el = document.getElementById('med-prov-lista-' + idx);
+  if (!el) return;
+
+  // Map gremio name to specialty_code
+  var mapaEspecialidades = {
+    'Demoliciones': 'DEMOLICION', 'Albañilería': 'ALBANILERIA', 'Pladur': 'PLADUR',
+    'Climatización': 'CLIMATIZACION', 'Electricidad': 'ELECTRICIDAD',
+    'Contraincendios': 'CONTRAINCENDIOS', 'Fontanería': 'FONTANERIA',
+    'Varios': 'VARIOS', 'Gestión de Residuos': 'GESTION_RESIDUOS', 'Seguridad y Salud': 'SEGURIDAD_SALUD'
+  };
+  var specialtyCode = mapaEspecialidades[nombreGremio];
+
+  try {
+    var idsRes = await db.from('supplier_specialty_rel').select('supplier_id').eq('specialty_code', specialtyCode || nombreGremio.toUpperCase());
+    if (!idsRes.data || !idsRes.data.length) {
+      // Try partial match
+      idsRes = await db.from('supplier_specialty_rel').select('supplier_id').ilike('specialty_code', '%' + nombreGremio.substring(0,5).toUpperCase() + '%');
+    }
+    var supplierIds = (idsRes.data || []).map(function(r){ return r.supplier_id; });
+    if (!supplierIds.length) { el.innerHTML = '<div style="color:#aaa;font-size:11px;font-style:italic;">No hay proveedores registrados para este gremio</div>'; return; }
+
+    var provRes = await db.from('suppliers').select('id,commercial_name,commercial_email,rating,city').in('id', supplierIds).eq('status','active');
+    var proveedores = provRes.data || [];
+
+    if (!proveedores.length) { el.innerHTML = '<div style="color:#aaa;font-size:11px;">No hay proveedores activos para este gremio</div>'; return; }
+
+    var html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+    proveedores.forEach(function(p) {
+      var estrellas = '★'.repeat(p.rating||0) + '☆'.repeat(5-(p.rating||0));
+      html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid #e5e5e0;border-radius:8px;background:#fafaf8;">' +
+        '<input type="checkbox" id="prov-check-'+p.id+'" data-email="'+(p.commercial_email||'')+'" data-nombre="'+p.commercial_name+'" style="width:16px;height:16px;cursor:pointer;">' +
+        '<div style="flex:1;">' +
+        '<div style="font-size:13px;font-weight:500;">' + p.commercial_name + '</div>' +
+        '<div style="font-size:11px;color:#888;">' + (p.commercial_email||'-') + ' · ' + (p.city||'-') + '</div>' +
+        '</div>' +
+        '<div style="font-size:13px;color:#E67E22;">' + estrellas + '</div>' +
+        '</div>';
+    });
+    html += '</div>' +
+      '<div style="margin-top:0.75rem;display:flex;justify-content:flex-end;">' +
+      '<button class="btn btn-primary btn-sm" onclick="prepararPeticionOferta(\''+nombreGremio+'\')" style="font-size:11px;">📧 Preparar petición de oferta</button>' +
+      '</div>';
+    el.innerHTML = html;
+
+  } catch(e) { el.innerHTML = '<div style="color:#C0392B;font-size:11px;">Error: ' + e.message + '</div>'; }
+}
+
+function prepararPeticionOferta(nombreGremio) {
+  // Collect selected suppliers
+  var checkboxes = document.querySelectorAll('[id^="prov-check-"]:checked');
+  if (!checkboxes.length) { alert('Selecciona al menos un proveedor'); return; }
+
+  var proveedores = [];
+  checkboxes.forEach(function(cb) {
+    proveedores.push({ id: cb.id.replace('prov-check-',''), email: cb.dataset.email, nombre: cb.dataset.nombre });
+  });
+
+  var fechaLimite = prompt('Fecha límite para recibir ofertas (YYYY-MM-DD):', new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0]);
+  if (!fechaLimite) return;
+
+  var mensajeExtra = prompt('Mensaje adicional para los proveedores (opcional):', '');
+
+  alert('✅ Petición preparada para ' + proveedores.length + ' proveedor(es) de ' + nombreGremio + '.\n\n' +
+    proveedores.map(function(p){ return '• ' + p.nombre + ' (' + p.email + ')'; }).join('\n') + '\n\n' +
+    'Fecha límite: ' + fechaLimite + '\n\n' +
+    'En la próxima versión se enviará por email automáticamente.');
+}
+
 
 function cerrarRevisionGremio() {
   var panel = document.getElementById('med-review-panel');
