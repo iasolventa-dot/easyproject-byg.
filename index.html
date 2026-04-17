@@ -6167,6 +6167,24 @@ async function loadDashboardJefeObra() {
 
     el.innerHTML = html;
 
+    // Cargar notificaciones
+    try {
+      var notifRes = await db.from('automation_errors')
+        .select('*').eq('node_name','jefe_obra').eq('flow_name','NOTIFICACION')
+        .order('created_at',{ascending:false}).limit(5);
+      if (notifRes.data && notifRes.data.length > 0) {
+        var notifHtml = '<div style="margin-bottom:1rem;">' +
+          '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">🔔 Notificaciones</div>' +
+          notifRes.data.map(function(n) {
+            var fecha = new Date(n.created_at).toLocaleDateString('es-ES');
+            return '<div style="background:#E1F5EE;border:1px solid #A7DEC9;border-radius:8px;padding:10px 14px;margin-bottom:6px;">' +
+              '<div style="font-size:12px;font-weight:500;color:#0F6E56;">' + n.error_message + '</div>' +
+              '<div style="font-size:10px;color:#888;margin-top:2px;">' + fecha + '</div></div>';
+          }).join('') + '</div>';
+        el.innerHTML = notifHtml + el.innerHTML;
+      }
+    } catch(en) { console.error('notif error:', en); }
+
   } catch(e) {
     console.error('Error jefe obra dashboard:', e);
     el.innerHTML = '<div class="empty">Error cargando proyectos</div>';
