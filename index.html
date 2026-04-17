@@ -7454,8 +7454,7 @@ function certFileSeleccionado(input, tipo) {
 }
 
 async function guardarCertificacion() {
-  if (!ejProyecto) { alert('Error: ejProyecto es null'); return; }
-  alert('DEBUG: ejProyecto.id = ' + ejProyecto.id);
+  if (!ejProyecto) return;
 
   var iniciado = document.getElementById('cert-iniciado-por') ? document.getElementById('cert-iniciado-por').value : 'cliente';
   var fecha = document.getElementById('cert-fecha') ? document.getElementById('cert-fecha').value : new Date().toISOString().split('T')[0];
@@ -7500,30 +7499,25 @@ async function guardarCertificacion() {
     }
 
     // Save to DB - use only confirmed columns
-    var certData = {
+    // Get next cert_number for this project
+    var certCountRes = await db.from('project_certifications').select('id').eq('project_id', ejProyecto.id);
+    var certNumber = (certCountRes.data ? certCountRes.data.length : 0) + 1;
+
+    await db.from('project_certifications').insert({
       project_id: ejProyecto.id,
+      cert_number: certNumber,
       cert_date: fecha,
       amount: importe,
-      notes: (notas || '') + (iniciado === 'cliente' ? ' [CLIENTE PROPONE]' : ' [BYG EMITE]') + (clientDocPath ? ' | Doc: ' + clientDocPath : '') + (bygDocPath ? ' | Doc ByG: ' + bygDocPath : ''),
+      notes: notas || null,
       invoiced: false,
-      created_at: new Date().toISOString()
-    };
-
-    // Try with extra columns first, fallback to basic
-    try {
-      await db.from('project_certifications').insert({
-        ...certData,
-        initiated_by: iniciado,
-        status: 'pendiente',
-        client_amount: importeCliente || null,
-        byg_amount: importeByg || null,
-        client_doc_path: clientDocPath,
-        byg_doc_path: bygDocPath,
-        created_by: currentUser ? currentUser.email : null
-      });
-    } catch(e2) {
-      await db.from('project_certifications').insert(certData);
-    }
+      initiated_by: iniciado,
+      status: 'pendiente',
+      client_amount: importeCliente || null,
+      byg_amount: importeByg || null,
+      client_doc_path: clientDocPath,
+      byg_doc_path: bygDocPath,
+      created_by: currentUser ? currentUser.email : null
+    });
 
     // Reset form
     document.getElementById('ej-form-cert').style.display = 'none';
