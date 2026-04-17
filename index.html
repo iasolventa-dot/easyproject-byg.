@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7212,6 +7213,7 @@ var _medicionesProjectId = null;
 async function confirmarMediciones() {
   // Use fallback to ejProyecto if _medicionesProjectId is null
   var pid = _medicionesProjectId || (ejProyecto ? ejProyecto.id : null) || (anProyecto ? anProyecto.id : null);
+  alert('DEBUG - projectId: ' + pid + ' | gremios: ' + (_medicionesResultado ? Object.keys(_medicionesResultado.gremios).length : 'null'));
   if (!_medicionesResultado || !pid) {
     alert('Error: no se pudo identificar el proyecto. Recarga la página e inténtalo de nuevo.');
     return;
