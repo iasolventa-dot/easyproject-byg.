@@ -7222,9 +7222,18 @@ async function confirmarMediciones() {
     var gremiosArr = Object.keys(_medicionesResultado.gremios);
     for (var i = 0; i < gremiosArr.length; i++) {
       var gremioNombre = gremiosArr[i];
+      // Normalize gremio name to specialty_code
+      var mapaCodigosGremio = {
+        'Demoliciones': 'DEMOLICION', 'Albañilería': 'ALBANILERIA', 'Pladur': 'PLADUR',
+        'Climatización': 'CLIMATIZACION', 'Electricidad': 'ELECTRICIDAD',
+        'Contraincendios': 'CONTRAINCENDIOS', 'Fontanería': 'FONTANERIA',
+        'Varios': 'VARIOS', 'Gestión de Residuos': 'GESTION_RESIDUOS',
+        'Seguridad y Salud': 'SEGURIDAD_SALUD'
+      };
+      var specialtyCode = mapaCodigosGremio[gremioNombre] || gremioNombre.toUpperCase().replace(/\s/g,'_').replace(/[ÁÉÍÓÚ]/g, function(c){ return {Á:'A',É:'E',Í:'I',Ó:'O',Ú:'U'}[c]||c; });
       await db.from('project_specialties').insert({
         project_id: pid,
-        specialty_code: gremioNombre,
+        specialty_code: specialtyCode,
         detected_by_ai: _medicionesResultado.fromIA ? true : false,
         confidence: 1.0,
         created_at: new Date().toISOString()
