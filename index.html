@@ -7597,8 +7597,12 @@ async function cargarCertificaciones(projectId) {
       if (estado === 'negociacion' && ['tecnico','direccion'].indexOf(currentDept) > -1) {
         html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0ea;">';
         html += '<div style="font-size:11px;color:#888;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Contrapropuesta ByG</div>';
-        html += '<div style="display:flex;gap:8px;align-items:center;">';
-        html += '<input type="number" id="cert-contra-' + c.id + '" placeholder="Importe contrapropuesta EUR" style="flex:1;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;">';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
+        html += '<div><label style="font-size:10px;color:#C0392B;font-weight:600;display:block;margin-bottom:3px;">* Importe contrapropuesta ByG (EUR)</label>';
+        html += '<input type="number" id="cert-contra-' + c.id + '" placeholder="0.00" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>';
+        html += '<div><label style="font-size:10px;color:#888;font-weight:600;display:block;margin-bottom:3px;">Documento contrapropuesta</label>';
+        html += '<input type="file" id="cert-contra-doc-' + c.id + '" accept=".pdf,.xlsx,.xls,.doc,.docx" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:6px;font-size:11px;"></div>';
+        html += '</div>';
         html += '<button class="btn btn-primary btn-sm" style="font-size:11px;" onclick="guardarContrapropuesta(' + c.id + ',' + projectId + ')">Guardar contrapropuesta</button>';
         html += '</div></div>';
       }
@@ -7626,13 +7630,27 @@ async function cambiarEstadoCert(certId, estadoActual, projectId) {
 }
 
 async function guardarContrapropuesta(certId, projectId) {
-  var importe = parseFloat(document.getElementById('cert-contra-' + certId) ? document.getElementById('cert-contra-' + certId).value : 0);
-  if (!importe || isNaN(importe)) { alert('El importe es obligatorio'); return; }
+  var importeEl = document.getElementById('cert-contra-' + certId);
+  var importe = parseFloat(importeEl ? importeEl.value : 0);
+  if (!importe || isNaN(importe)) { alert('El importe de contrapropuesta es obligatorio'); return; }
+
+  var bygDocPath = null;
+  var fileInput = document.getElementById('cert-contra-doc-' + certId);
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    var file = fileInput.files[0];
+    try {
+      var arrayBuf = await file.arrayBuffer();
+      var filePath = 'certificaciones/contra_' + certId + '_' + Date.now() + '.' + file.name.split('.').pop();
+      var uploadRes = await db.storage.from('project-attachments').upload(filePath, new Uint8Array(arrayBuf), { contentType: file.type });
+      if (!uploadRes.error) bygDocPath = filePath;
+    } catch(eu) { console.error('Upload error:', eu); }
+  }
+
   try {
-    await db.from('project_certifications').update({
-      byg_amount: importe,
-      status: 'negociacion'
-    }).eq('id', certId);
+    var updateData = { byg_amount: importe, status: 'negociacion' };
+    if (bygDocPath) updateData.byg_doc_path = bygDocPath;
+    await db.from('project_certifications').update(updateData).eq('id', certId);
+    alert('Contrapropuesta guardada correctamente.');
     cargarCertificaciones(projectId);
   } catch(e) { alert('Error: ' + e.message); }
 }
