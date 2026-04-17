@@ -7601,7 +7601,9 @@ async function cargarCertificaciones(projectId) {
         html += '<div><label style="font-size:10px;color:#C0392B;font-weight:600;display:block;margin-bottom:3px;">* Importe contrapropuesta ByG (EUR)</label>';
         html += '<input type="number" id="cert-contra-' + c.id + '" placeholder="0.00" style="width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:6px;font-size:12px;"></div>';
         html += '<div><label style="font-size:10px;color:#888;font-weight:600;display:block;margin-bottom:3px;">Documento contrapropuesta</label>';
-        html += '<input type="file" id="cert-contra-doc-' + c.id + '" accept=".pdf,.xlsx,.xls,.doc,.docx" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:6px;font-size:11px;"></div>';
+        html += '<div id="cert-contra-dz-' + c.id + '" style="border:2px dashed #BFDBFE;border-radius:6px;padding:8px;text-align:center;cursor:pointer;background:#f8faff;font-size:11px;color:#3b82f6;" onclick="document.getElementById('cert-contra-doc-' + c.id + '').click()" ondrop="certContraDrop(event,' + c.id + ')" ondragover="event.preventDefault()" ondragleave="event.stopPropagation()">📄 Arrastra o selecciona</div>';
+        html += '<div id="cert-contra-doc-nom-' + c.id + '" style="font-size:10px;color:#888;margin-top:2px;"></div>';
+        html += '<input type="file" id="cert-contra-doc-' + c.id + '" accept=".pdf,.xlsx,.xls,.doc,.docx" style="display:none;" onchange="certContraFileOk(this,' + c.id + ')"></div>';
         html += '</div>';
         html += '<button class="btn btn-primary btn-sm" style="font-size:11px;" onclick="guardarContrapropuesta(' + c.id + ',' + projectId + ')">Guardar contrapropuesta</button>';
         html += '</div></div>';
@@ -7661,6 +7663,28 @@ async function verDocCert(filePath) {
     if (res.data && res.data.signedUrl) window.open(res.data.signedUrl, '_blank');
     else alert('No se pudo generar el enlace al documento.');
   } catch(e) { alert('Error: ' + e.message); }
+}
+
+
+function certContraDrop(e, certId) {
+  e.preventDefault();
+  var files = e.dataTransfer.files;
+  if (files && files.length > 0) {
+    var input = document.getElementById('cert-contra-doc-' + certId);
+    var dt = new DataTransfer();
+    dt.items.add(files[0]);
+    input.files = dt.files;
+    certContraFileOk(input, certId);
+  }
+}
+
+function certContraFileOk(input, certId) {
+  var file = input.files[0];
+  if (!file) return;
+  var dz = document.getElementById('cert-contra-dz-' + certId);
+  var nom = document.getElementById('cert-contra-doc-nom-' + certId);
+  if (dz) dz.style.borderColor = '#0F6E56';
+  if (nom) nom.textContent = '📎 ' + file.name + ' (' + Math.round(file.size/1024) + ' KB)';
 }
 
 </script>
