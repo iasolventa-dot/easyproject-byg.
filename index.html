@@ -5167,7 +5167,8 @@ async function cargarPlanning(projectId) {
         '<span style="font-size:18px;">📋</span>' +
         '<div><div style="font-size:12px;font-weight:600;color:#92400e;">Planning pendiente de enviar a Dirección</div>' +
         '<div style="font-size:11px;color:#854F0B;margin-top:2px;">Crea los hitos del proyecto y envialos para que Dirección los revise</div></div>' +
-        '<button class="btn btn-primary btn-sm" style="margin-left:auto;white-space:nowrap;" onclick="enviarPlanningADirección(' + projectId + ')">Enviar a Dirección</button>' +
+        '<button class="btn btn-primary btn-sm" style="margin-left:auto;white-space:nowrap;" onclick="enviarPlanningADirección(' + projectId + ')">Notificar Dirección</button>' +
+        '<button class="btn btn-primary btn-sm" style="font-size:11px;margin-left:6px;white-space:nowrap;" onclick="publicarPlanningJefeObra(' + projectId + ')">📋 Publicar a Jefe de Obra</button>' +
         '</div>';
     } else if (planning_submitted) {
       var fechaEnvio = execRes.data.planning_submitted_at ? new Date(execRes.data.planning_submitted_at).toLocaleDateString('es-ES') : '';
@@ -7205,6 +7206,28 @@ async function confirmarMediciones() {
     var wrap = document.getElementById('mediciones-resultado-wrap');
     if (wrap) wrap.remove();
   } catch(e) { alert('Error al guardar: ' + e.message); }
+}
+
+
+async function publicarPlanningJefeObra(projectId) {
+  if (!confirm('Publicar planning al Jefe de Obra?')) return;
+  try {
+    var mgrRes = await db.from('projects').select('name,code').eq('id', projectId).single();
+    var pn = mgrRes.data ? (mgrRes.data.name || mgrRes.data.code) : 'Proyecto';
+    await db.from('project_execution').upsert({
+      project_id: projectId, planning_submitted: true,
+      planning_submitted_at: new Date().toISOString(),
+      planning_submitted_by: currentUser ? currentUser.email : ''
+    }, { onConflict: 'project_id' });
+    var h = await db.from('project_milestones').select('id').eq('project_id', projectId);
+    var nh = h.data ? h.data.length : 0;
+    await db.from('automation_errors').insert({ flow_name:'NOTIFICACION', node_name:'jefe_obra',
+      error_message:'Planning de '+pn+' publicado. '+nh+' hitos planificados.', created_at:new Date().toISOString() });
+    await db.from('automation_errors').insert({ flow_name:'NOTIFICACION', node_name:'direccion',
+      error_message:'Planning de '+pn+' publicado al Jefe de Obra.', created_at:new Date().toISOString() });
+    alert('Planning publicado. El Jefe de Obra recibirá notificación en su dashboard.');
+    cargarPlanning(projectId);
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 </script>
