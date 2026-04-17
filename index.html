@@ -7498,23 +7498,31 @@ async function guardarCertificacion() {
       } catch(eu) { console.error('Upload error:', eu); }
     }
 
-    // Save to DB
+    // Save to DB - use only confirmed columns
     var certData = {
       project_id: ejProyecto.id,
       cert_date: fecha,
       amount: importe,
-      initiated_by: iniciado,
-      status: 'pendiente',
-      notes: notas || null,
-      client_amount: importeCliente || null,
-      byg_amount: importeByg || null,
-      client_doc_path: clientDocPath,
-      byg_doc_path: bygDocPath,
-      created_by: currentUser ? currentUser.email : null,
+      notes: (notas || '') + (iniciado === 'cliente' ? ' [CLIENTE PROPONE]' : ' [BYG EMITE]') + (clientDocPath ? ' | Doc: ' + clientDocPath : '') + (bygDocPath ? ' | Doc ByG: ' + bygDocPath : ''),
+      invoiced: false,
       created_at: new Date().toISOString()
     };
 
-    await db.from('project_certifications').insert(certData);
+    // Try with extra columns first, fallback to basic
+    try {
+      await db.from('project_certifications').insert({
+        ...certData,
+        initiated_by: iniciado,
+        status: 'pendiente',
+        client_amount: importeCliente || null,
+        byg_amount: importeByg || null,
+        client_doc_path: clientDocPath,
+        byg_doc_path: bygDocPath,
+        created_by: currentUser ? currentUser.email : null
+      });
+    } catch(e2) {
+      await db.from('project_certifications').insert(certData);
+    }
 
     // Reset form
     document.getElementById('ej-form-cert').style.display = 'none';
