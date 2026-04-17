@@ -7454,7 +7454,8 @@ function certFileSeleccionado(input, tipo) {
 }
 
 async function guardarCertificacion() {
-  if (!ejProyecto) return;
+  if (!ejProyecto) { alert('Error: ejProyecto es null'); return; }
+  alert('DEBUG: ejProyecto.id = ' + ejProyecto.id);
 
   var iniciado = document.getElementById('cert-iniciado-por') ? document.getElementById('cert-iniciado-por').value : 'cliente';
   var fecha = document.getElementById('cert-fecha') ? document.getElementById('cert-fecha').value : new Date().toISOString().split('T')[0];
