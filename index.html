@@ -3156,7 +3156,7 @@ async function cargarDocumentosAnálisis(projectId, categoria) {
       var ba=document.createElement('button');
       ba.className='btn btn-primary btn-sm';
       ba.textContent='Analizar mediciones con IA';
-      ba.onclick=(function(pid,aids){return function(){anAnalizarMediciones(pid,aids);};})(projectId,archsMed.map(function(a){return a.id;}));
+      ba.onclick=(function(pid,aids){return function(){_medicionesProjectId=pid;anAnalizarMediciones(pid,aids);};})(projectId,archsMed.map(function(a){return a.id;}));
       mb.appendChild(ba);
       el.appendChild(mb);
     } else if(adj.length){
@@ -7210,14 +7210,20 @@ function confirmarGremio(nombre, idx) {
 var _medicionesProjectId = null;
 
 async function confirmarMediciones() {
-  if (!_medicionesResultado || !_medicionesProjectId) return;
+  // Use fallback to ejProyecto if _medicionesProjectId is null
+  var pid = _medicionesProjectId || (ejProyecto ? ejProyecto.id : null) || (anProyecto ? anProyecto.id : null);
+  if (!_medicionesResultado || !pid) {
+    alert('Error: no se pudo identificar el proyecto. Recarga la página e inténtalo de nuevo.');
+    return;
+  }
+  _medicionesProjectId = pid;
   try {
-    await db.from('project_specialties').delete().eq('project_id', _medicionesProjectId);
+    await db.from('project_specialties').delete().eq('project_id', pid);
     var gremiosArr = Object.keys(_medicionesResultado.gremios);
     for (var i = 0; i < gremiosArr.length; i++) {
       var gremioNombre = gremiosArr[i];
       await db.from('project_specialties').insert({
-        project_id: _medicionesProjectId,
+        project_id: pid,
         specialty_code: gremioNombre,
         detected_by_ai: _medicionesResultado.fromIA ? true : false,
         confidence: 1.0,
