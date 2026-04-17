@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7213,7 +7212,6 @@ var _medicionesProjectId = null;
 async function confirmarMediciones() {
   // Use fallback to ejProyecto if _medicionesProjectId is null
   var pid = _medicionesProjectId || (ejProyecto ? ejProyecto.id : null) || (anProyecto ? anProyecto.id : null);
-  alert('DEBUG - projectId: ' + pid + ' | gremios: ' + (_medicionesResultado ? Object.keys(_medicionesResultado.gremios).length : 'null'));
   if (!_medicionesResultado || !pid) {
     alert('Error: no se pudo identificar el proyecto. Recarga la página e inténtalo de nuevo.');
     return;
@@ -7232,12 +7230,16 @@ async function confirmarMediciones() {
         created_at: new Date().toISOString()
       });
     }
-    alert('✅ ' + gremiosArr.length + ' gremios guardados correctamente.');
+    // Show success with option to advance
+    var avanzar = confirm('✅ ' + gremiosArr.length + ' gremios guardados correctamente.\n\n¿Avanzar el proyecto a "Oferta en curso"?');
     _medicionesResultado = null;
     _medicionesProjectId = null;
     _medicionesConfirmados = {};
     var wrap = document.getElementById('mediciones-resultado-wrap');
     if (wrap) wrap.remove();
+    if (avanzar) {
+      await avanzarAOfertaEnCurso(pid);
+    }
   } catch(e) { alert('Error al guardar: ' + e.message); }
 }
 
@@ -7271,6 +7273,40 @@ async function marcarNotifLeida(notifId) {
     // Remove from DOM
     loadDashboardJefeObra();
   } catch(e) { console.error('Error marcando leída:', e); }
+}
+
+
+async function avanzarAOfertaEnCurso(projectId) {
+  try {
+    // Get oferta_en_curso status id
+    var statusRes = await db.from('project_statuses').select('id').eq('code','oferta_en_curso').single();
+    if (!statusRes.data) { alert('No se encontró el estado "Oferta en curso"'); return; }
+
+    await db.from('projects').update({
+      project_status_id: statusRes.data.id,
+      updated_at: new Date().toISOString()
+    }).eq('id', projectId);
+
+    // Notify comercial and direccion
+    var projRes = await db.from('projects').select('name,code').eq('id', projectId).single();
+    var pn = projRes.data ? (projRes.data.name || projRes.data.code) : 'Proyecto';
+
+    for (var dept of ['comercial', 'direccion']) {
+      await db.from('automation_errors').insert({
+        flow_name: 'NOTIFICACION',
+        node_name: dept,
+        project_id: projectId,
+        error_message: 'Proyecto "' + pn + '" avanzado a Oferta en curso. Mediciones analizadas y gremios confirmados.',
+        created_at: new Date().toISOString()
+      });
+    }
+
+    alert('✅ Proyecto avanzado a "Oferta en curso". Se ha notificado a Comercial y Dirección.');
+
+    // Reload the panel to show new state
+    showProyectosFase('en_analisis');
+
+  } catch(e) { alert('Error al avanzar: ' + e.message); }
 }
 
 </script>
