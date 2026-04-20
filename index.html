@@ -1342,6 +1342,7 @@
     <div id="an-docs-list">
       <div class="loading">Cargando documentos...</div>
     </div>
+    <div id="an-doc-analysis-section"></div>
   </div>
 
   <!-- GREMIOS Y PROVEEDORES -->
@@ -3107,6 +3108,7 @@ async function abrirAnalisis(id, nameEnc) {
 
     // Cargar documentos
     cargarDocumentosAnálisis(id, análisisProyecto.category);
+    cargarSeccionAnalisisDocumental(id);
 
     // Cargar gremios y proveedores propuestos
     cargarGremiosAnálisis(análisisProyecto.category);
@@ -7690,6 +7692,353 @@ function certContraFileOk(input, certId) {
   var nom = document.getElementById('cert-contra-doc-nom-' + certId);
   if (dz) dz.style.borderColor = '#0F6E56';
   if (nom) nom.textContent = '📎 ' + file.name + ' (' + Math.round(file.size/1024) + ' KB)';
+}
+
+
+// ============================================================
+// MÓDULO ANÁLISIS DOCUMENTAL CON IA
+// ============================================================
+
+var _docAnalysisProjectId = null;
+
+// Tipos de documento
+var DOC_TYPES = {
+  'MEDICIONES': { label: 'Mediciones', icon: '📊', color: '#217346' },
+  'PLANOS_PDF': { label: 'Planos PDF', icon: '🗺️', color: '#E02020' },
+  'MEMORIA_TECNICA': { label: 'Memoria técnica', icon: '📄', color: '#185FA5' },
+  'ESPECIFICACIONES': { label: 'Especificaciones', icon: '📋', color: '#7B3F9E' },
+  'DWG': { label: 'Planos DWG', icon: '📐', color: '#B8860B' },
+  'OTRO': { label: 'Otro', icon: '📁', color: '#888888' }
+};
+
+// Prompts por tipo de documento
+var DOC_PROMPTS = {
+  'PLANOS_PDF': `Eres un técnico de obras experto en construcción e instalaciones de espacios comerciales. Analiza este plano de construcción y extrae la siguiente información de forma estructurada:
+1. TIPO DE PLANO: (arquitectónico, eléctrico, climatización, contraincendios, fontanería, acabados, etc.)
+2. SUPERFICIES: Lista de estancias con sus superficies en m² si aparecen
+3. MATERIALES Y ACABADOS: Lista de materiales y acabados mencionados
+4. INSTALACIONES: Instalaciones especiales requeridas (electricidad, climatización, fontanería, contraincendios, etc.)
+5. OBSERVACIONES TÉCNICAS: Aspectos relevantes para presupuestar la obra
+Responde en español de forma concisa y estructurada.`,
+
+  'MEMORIA_TECNICA': `Eres un técnico de obras experto en construcción de espacios comerciales. Analiza esta memoria técnica y extrae:
+1. ALCANCE DE LOS TRABAJOS: Descripción completa de todos los trabajos a realizar
+2. MATERIALES REQUERIDOS: Materiales específicos con marcas o referencias si se mencionan
+3. CONDICIONES TÉCNICAS: Condiciones especiales o restricciones de ejecución
+4. PLAZO DE EJECUCIÓN: Plazo previsto si se menciona
+5. INSTALACIONES AFECTADAS: Electricidad, fontanería, climatización, contraincendios, etc.
+6. RESUMEN EJECUTIVO: Resumen en 5 líneas del trabajo a realizar
+Responde en español de forma estructurada.`,
+
+  'ESPECIFICACIONES': `Eres un técnico de obras experto. Analiza este documento de especificaciones técnicas y extrae:
+1. TIPO DE DOCUMENTO: De qué tipo de especificación se trata
+2. REQUERIMIENTOS TÉCNICOS: Lista de requisitos técnicos para la ejecución
+3. MATERIALES ESPECÍFICOS: Materiales, dimensiones o referencias concretas
+4. CONDICIONES DEL CLIENTE: Requisitos especiales que el cliente exige
+5. PUNTOS CRÍTICOS: Aspectos que ByG debe tener en cuenta antes de presupuestar
+Responde en español de forma concisa.`,
+
+  'OTRO': `Eres un técnico de obras experto. Analiza este documento y extrae:
+1. TIPO DE DOCUMENTO: Qué tipo de documento es
+2. INFORMACIÓN RELEVANTE: Información útil para la ejecución o presupuestación de la obra
+3. CONDICIONES O RESTRICCIONES: Cualquier condición especial que ByG deba conocer
+Responde en español de forma concisa.`
+};
+
+// Clasificación automática por nombre de archivo
+function clasificarDocumentoPorNombre(fileName, mimeType) {
+  var name = fileName.toLowerCase();
+  var mime = (mimeType || '').toLowerCase();
+
+  if (name.includes('.dwg') || name.includes('.dxf')) return 'DWG';
+  if (name.includes('medicion') || name.includes('medición') ||
+      name.includes('presupuest') || name.includes('bom') ||
+      mime.includes('spreadsheet') || name.endsWith('.xlsx') || name.endsWith('.xls')) return 'MEDICIONES';
+  if (name.includes('memoria') || name.includes('descripti') ||
+      name.includes('especificac')) return 'MEMORIA_TECNICA';
+  if (name.includes('plano') || name.includes('plan') ||
+      name.includes('alzado') || name.includes('seccion') ||
+      name.includes('instalac') || name.includes('e actual') ||
+      name.includes('layout') || name.includes('floor')) return 'PLANOS_PDF';
+  if (mime.includes('pdf')) return 'PLANOS_PDF';
+  return 'OTRO';
+}
+
+// Cargar sección de análisis documental IA en el panel En Análisis
+async function cargarSeccionAnalisisDocumental(projectId) {
+  _docAnalysisProjectId = projectId;
+  var el = document.getElementById('an-doc-analysis-section');
+  if (!el) return;
+
+  try {
+    // Load attachments with their doc_type
+    var res = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
+    var adj = res.data || [];
+
+    // Load existing AI report
+    var repRes = await db.from('project_analysis').select('ai_report,ai_report_generated_at,ai_report_by,external_links').eq('project_id', projectId).maybeSingle();
+    var repData = repRes.data || {};
+
+    var html = '<div style="background:white;border:1px solid #e5e5e0;border-radius:10px;padding:1.25rem;margin-top:1rem;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">';
+    html += '<div style="font-size:13px;font-weight:600;color:#1a1a1a;">🤖 Análisis documental con IA</div>';
+
+    var hasAnalyzable = adj.some(function(a) {
+      var t = a.doc_type || clasificarDocumentoPorNombre(a.file_name, a.mime_type);
+      return t !== 'DWG' && t !== 'MEDICIONES';
+    });
+
+    if (hasAnalyzable) {
+      html += '<button class="btn btn-primary btn-sm" onclick="ejecutarAnalisisIA(' + projectId + ')">🔍 Analizar con IA</button>';
+    }
+    html += '</div>';
+
+    // Check for external links in email body
+    if (repData.external_links) {
+      html += '<div style="background:#FEF3C7;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:12px;color:#854F0B;">';
+      html += '⚠️ <strong>Archivos en enlace externo detectado:</strong> ' + repData.external_links;
+      html += ' — Descárgalos manualmente y súbelos al proyecto.</div>';
+    }
+
+    if (!adj.length) {
+      html += '<div class="empty" style="font-size:12px;">No hay archivos adjuntos para clasificar.</div>';
+    } else {
+      html += '<div style="font-size:11px;color:#888;margin-bottom:8px;">Revisa y confirma el tipo de cada documento antes de analizar:</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:1rem;">';
+
+      adj.forEach(function(a) {
+        var tipoActual = a.doc_type || clasificarDocumentoPorNombre(a.file_name, a.mime_type);
+        var confirmado = a.doc_type_confirmed;
+        var isDWG = tipoActual === 'DWG';
+        var isMed = tipoActual === 'MEDICIONES' || a.is_measurements;
+
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:' + (confirmado ? '#F0FBF5' : '#fafaf8') + ';border:1px solid ' + (confirmado ? '#C0DD97' : '#e5e5e0') + ';border-radius:8px;">';
+
+        // File icon
+        var ext = a.file_name.split('.').pop().toUpperCase();
+        var bgColor = ext === 'PDF' ? '#E02020' : (ext === 'XLSX' || ext === 'XLS') ? '#217346' : '#185FA5';
+        html += '<div style="width:30px;height:30px;border-radius:5px;background:' + bgColor + ';color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + ext + '</div>';
+
+        // File name
+        html += '<div style="flex:1;min-width:0;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + a.file_name + '</div>';
+
+        // Type selector
+        html += '<select id="doctype-' + a.id + '" style="font-size:11px;padding:4px 6px;border:1px solid #ddd;border-radius:5px;background:white;" onchange="cambiarTipoDoc(' + a.id + ',this.value,' + projectId + ')">';
+        Object.keys(DOC_TYPES).forEach(function(k) {
+          html += '<option value="' + k + '"' + (tipoActual === k ? ' selected' : '') + '>' + DOC_TYPES[k].icon + ' ' + DOC_TYPES[k].label + '</option>';
+        });
+        html += '</select>';
+
+        // Preview button
+        html += '<button class="btn btn-sm" style="font-size:11px;flex-shrink:0;" onclick="anDescargarArchivo(\'' + a.file_path + '\',\'' + a.file_name + '\')">👁 Ver</button>';
+
+        // Status badge
+        if (isDWG) {
+          html += '<span style="font-size:10px;background:#FEF3C7;color:#854F0B;padding:2px 7px;border-radius:8px;flex-shrink:0;">Manual</span>';
+        } else if (isMed) {
+          html += '<span style="font-size:10px;background:#EAF3DE;color:#3B6D11;padding:2px 7px;border-radius:8px;flex-shrink:0;">SheetJS</span>';
+        } else if (confirmado) {
+          html += '<span style="font-size:10px;background:#EAF3DE;color:#3B6D11;padding:2px 7px;border-radius:8px;flex-shrink:0;">✓ OK</span>';
+        }
+
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Show existing report if available
+    if (repData.ai_report) {
+      html += '<div style="margin-top:1rem;border-top:1px solid #f0f0ea;padding-top:1rem;">';
+      html += '<div style="font-size:11px;color:#888;margin-bottom:6px;">Informe generado ' + (repData.ai_report_generated_at ? new Date(repData.ai_report_generated_at).toLocaleDateString('es-ES') : '') + ' · ' + (repData.ai_report_by || '') + '</div>';
+      html += '<div id="an-ai-report-content" style="font-size:12px;line-height:1.6;color:#333;background:#f9f9f6;border-radius:8px;padding:1rem;white-space:pre-wrap;">' + repData.ai_report + '</div>';
+      html += '</div>';
+    } else {
+      html += '<div id="an-ai-report-content"></div>';
+    }
+
+    html += '</div>';
+    el.innerHTML = html;
+
+  } catch(e) {
+    document.getElementById('an-doc-analysis-section').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+  }
+}
+
+// Cambiar tipo de documento y guardar
+async function cambiarTipoDoc(attachmentId, newType, projectId) {
+  try {
+    await db.from('project_attachments').update({
+      doc_type: newType,
+      doc_type_confirmed: true
+    }).eq('id', attachmentId);
+    // Refresh just the row visually
+    cargarSeccionAnalisisDocumental(projectId);
+  } catch(e) { console.error('Error cambiando tipo:', e); }
+}
+
+// Ejecutar análisis IA sobre los documentos
+async function ejecutarAnalisisIA(projectId) {
+  var reportEl = document.getElementById('an-ai-report-content');
+  if (reportEl) {
+    reportEl.innerHTML = '<div style="text-align:center;padding:2rem;font-size:12px;color:#888;"><div style="margin-bottom:8px;">🤖 Analizando documentos con IA...</div><div style="font-size:11px;">Esto puede tardar unos segundos por archivo</div></div>';
+  }
+
+  try {
+    var res = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
+    var adj = res.data || [];
+
+    var informeSecciones = [];
+    var docsProcesados = 0;
+    var docsOmitidos = [];
+
+    for (var i = 0; i < adj.length; i++) {
+      var a = adj[i];
+      var tipo = a.doc_type || clasificarDocumentoPorNombre(a.file_name, a.mime_type);
+
+      // Skip DWG, mediciones and non-PDF/doc files
+      if (tipo === 'DWG') {
+        docsOmitidos.push(a.file_name + ' (DWG — consulta manual)');
+        continue;
+      }
+      if (tipo === 'MEDICIONES' || a.is_measurements) {
+        docsOmitidos.push(a.file_name + ' (Mediciones — procesado con SheetJS)');
+        continue;
+      }
+
+      var mimeOk = a.mime_type && (a.mime_type.includes('pdf') || a.mime_type.includes('word') || a.mime_type.includes('image'));
+      if (!mimeOk) {
+        docsOmitidos.push(a.file_name + ' (formato no analizable por IA)');
+        continue;
+      }
+
+      // Get file from Supabase Storage
+      try {
+        if (reportEl) reportEl.innerHTML = '<div style="text-align:center;padding:2rem;font-size:12px;color:#888;">🤖 Analizando ' + (i+1) + '/' + adj.length + ': ' + a.file_name + '...</div>';
+
+        var signedRes = await db.storage.from('project-attachments').createSignedUrl(a.file_path, 120);
+        if (!signedRes.data || !signedRes.data.signedUrl) {
+          docsOmitidos.push(a.file_name + ' (no se pudo acceder al archivo)');
+          continue;
+        }
+
+        // Fetch file as base64
+        var fileResp = await fetch(signedRes.data.signedUrl);
+        var blob = await fileResp.blob();
+        var base64 = await new Promise(function(resolve) {
+          var reader = new FileReader();
+          reader.onloadend = function() { resolve(reader.result.split(',')[1]); };
+          reader.readAsDataURL(blob);
+        });
+
+        // Select prompt based on type
+        var prompt = DOC_PROMPTS[tipo] || DOC_PROMPTS['OTRO'];
+
+        // Call Claude API
+        var apiResp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            messages: [{
+              role: 'user',
+              content: [
+                {
+                  type: a.mime_type.includes('pdf') ? 'document' : 'image',
+                  source: {
+                    type: 'base64',
+                    media_type: a.mime_type,
+                    data: base64
+                  }
+                },
+                { type: 'text', text: prompt }
+              ]
+            }]
+          })
+        });
+
+        var apiData = await apiResp.json();
+        var resultado = apiData.content && apiData.content[0] ? apiData.content[0].text : 'Sin respuesta';
+
+        var tipoInfo = DOC_TYPES[tipo] || DOC_TYPES['OTRO'];
+        informeSecciones.push(
+          '═══════════════════════════════════════\n' +
+          tipoInfo.icon + ' ' + tipoInfo.label.toUpperCase() + ': ' + a.file_name + '\n' +
+          '═══════════════════════════════════════\n' +
+          resultado
+        );
+        docsProcesados++;
+
+      } catch(fileErr) {
+        docsOmitidos.push(a.file_name + ' (error al procesar: ' + fileErr.message + ')');
+      }
+    }
+
+    // Build final report
+    var informeFinal = '📋 INFORME DE ANÁLISIS DOCUMENTAL\n';
+    informeFinal += 'Proyecto ID: ' + projectId + ' · Generado: ' + new Date().toLocaleString('es-ES') + '\n';
+    informeFinal += 'Documentos analizados: ' + docsProcesados + '\n';
+    if (docsOmitidos.length) {
+      informeFinal += 'Omitidos: ' + docsOmitidos.join(', ') + '\n';
+    }
+    informeFinal += '\n' + informeSecciones.join('\n\n');
+
+    // Save to project_analysis
+    var existing = await db.from('project_analysis').select('id').eq('project_id', projectId).maybeSingle();
+    if (existing.data) {
+      await db.from('project_analysis').update({
+        ai_report: informeFinal,
+        ai_report_generated_at: new Date().toISOString(),
+        ai_report_by: currentUser ? currentUser.email : 'tecnico'
+      }).eq('project_id', projectId);
+    } else {
+      await db.from('project_analysis').insert({
+        project_id: projectId,
+        docs_reviewed: false,
+        ai_report: informeFinal,
+        ai_report_generated_at: new Date().toISOString(),
+        ai_report_by: currentUser ? currentUser.email : 'tecnico',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    // Show report
+    if (reportEl) {
+      reportEl.style.cssText = 'font-size:12px;line-height:1.6;color:#333;background:#f9f9f6;border-radius:8px;padding:1rem;white-space:pre-wrap;margin-top:1rem;';
+      reportEl.textContent = informeFinal;
+    }
+
+    // Reload section to show updated state
+    cargarSeccionAnalisisDocumental(projectId);
+
+  } catch(e) {
+    if (reportEl) reportEl.innerHTML = '<div style="color:#E02020;font-size:12px;padding:1rem;">Error al analizar: ' + e.message + '</div>';
+  }
+}
+
+// Detect external links in project description/email body
+async function detectarEnlacesExternos(projectId, textoEmail) {
+  if (!textoEmail) return;
+  var urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/gi;
+  var matches = textoEmail.match(urlRegex);
+  if (!matches) return;
+
+  var linksExternos = matches.filter(function(url) {
+    return url.includes('wetransfer') || url.includes('transfernow') ||
+           url.includes('dropbox') || url.includes('drive.google') ||
+           url.includes('onedrive') || url.includes('sharepoint');
+  });
+
+  if (linksExternos.length > 0) {
+    await db.from('project_analysis').upsert({
+      project_id: projectId,
+      docs_reviewed: false,
+      external_links: linksExternos.join(' | '),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'project_id' });
+  }
 }
 
 </script>
