@@ -6,6 +6,7 @@
   <title>EasyProject · BYG Soluciones</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; transition: background 0.3s; }
@@ -7921,17 +7922,45 @@ async function ejecutarAnalisisIA(projectId) {
           continue;
         }
 
-        // Fetch file as base64
+        // Fetch file as arrayBuffer for text extraction
         var fileResp = await fetch(signedRes.data.signedUrl);
-        var blob = await fileResp.blob();
-        var base64 = await new Promise(function(resolve) {
-          var reader = new FileReader();
-          reader.onloadend = function() { resolve(reader.result.split(',')[1]); };
-          reader.readAsDataURL(blob);
-        });
+        var arrayBuffer = await fileResp.arrayBuffer();
+
+        // Extract text based on file type
+        var textoExtraido = '';
+        var isPdf = a.mime_type && a.mime_type.includes('pdf');
+        var isImage = a.mime_type && a.mime_type.startsWith('image/');
+
+        if (isPdf && typeof pdfjsLib !== 'undefined') {
+          try {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            var pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            var maxPages = Math.min(pdfDoc.numPages, 10);
+            var textos = [];
+            for (var pg = 1; pg <= maxPages; pg++) {
+              var page = await pdfDoc.getPage(pg);
+              var tc = await page.getTextContent();
+              var pageText = tc.items.map(function(it){ return it.str; }).join(' ');
+              if (pageText.trim()) textos.push('--- Pág ' + pg + ' ---\n' + pageText);
+            }
+            textoExtraido = textos.join('\n\n') || '[PDF sin texto extraíble]';
+          } catch(pdfErr) {
+            textoExtraido = '[Error extrayendo texto: ' + pdfErr.message + ']';
+          }
+        } else if (isImage) {
+          var imgBlob = new Blob([arrayBuffer], { type: a.mime_type });
+          textoExtraido = await new Promise(function(resolve) {
+            var reader = new FileReader();
+            reader.onloadend = function() { resolve(reader.result.split(',')[1]); };
+            reader.readAsDataURL(imgBlob);
+          });
+        } else {
+          textoExtraido = new TextDecoder('utf-8', { fatal: false }).decode(arrayBuffer).substring(0, 4000);
+        }
 
         // Select prompt based on type
         var prompt = DOC_PROMPTS[tipo] || DOC_PROMPTS['OTRO'];
+        var promptFinal = isImage ? prompt : prompt + '\n\nCONTENIDO DEL DOCUMENTO:\n' + textoExtraido.substring(0, 8000);
 
         // Call n8n webhook → OpenAI GPT-4o
         var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/analisis-documental';
@@ -7939,11 +7968,13 @@ async function ejecutarAnalisisIA(projectId) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            file_base64: base64,
+            file_base64: isImage ? textoExtraido : null,
             mime_type: a.mime_type,
             file_name: a.file_name,
             doc_type: tipo,
-            prompt: prompt
+            texto_extraido: isImage ? null : textoExtraido,
+            prompt: promptFinal,
+            es_imagen: isImage
           })
         });
 
