@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; transition: background 0.3s; }
@@ -7958,6 +7959,14 @@ async function ejecutarAnalisisIA(projectId) {
             reader.onloadend = function() { resolve(reader.result.split(',')[1]); };
             reader.readAsDataURL(imgBlob);
           });
+        } else if (a.file_name && a.file_name.toLowerCase().endsWith('.docx')) {
+          // Use mammoth.js to extract text from Word documents
+          try {
+            var mammothResult = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+            textoExtraido = mammothResult.value ? mammothResult.value.substring(0, 8000) : '[Documento Word vacío]';
+          } catch(docxErr) {
+            textoExtraido = '[Error leyendo Word: ' + docxErr.message + ']';
+          }
         } else {
           textoExtraido = new TextDecoder('utf-8', { fatal: false }).decode(arrayBuffer).substring(0, 4000);
         }
