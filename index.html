@@ -7597,10 +7597,21 @@ async function cargarCertificaciones(projectId) {
         });
         html += '</div>';
       }
+        // Show compare button when both docs exist
+        if (c.client_doc_path && c.byg_doc_path) {
+          html += '<button class="btn btn-primary btn-sm" style="font-size:11px;margin-top:6px;" onclick="compararCertificacionIA(' + c.id + ',' + projectId + ')">&#x1F916; Comparar con IA</button>';
+        }
 
       // Contrapropuesta section
       if (estado === 'negociacion' && ['tecnico','direccion'].indexOf(currentDept) > -1) {
         html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0ea;">';
+      // Show AI comparison result if exists
+      if (c.ai_comparison) {
+        html += '<div style="margin-top:10px;background:#f0f9ff;border:1px solid #BFDBFE;border-radius:8px;padding:10px;font-size:11px;color:#333;line-height:1.5;">';
+        html += '<div style="font-size:10px;color:#3b82f6;font-weight:600;margin-bottom:4px;">COMPARATIVA IA</div>';
+        html += (c.ai_comparison || '').replace(/\n/g, '<br>');
+        html += '</div>';
+      }
         html += '<div style="font-size:11px;color:#888;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Contrapropuesta ByG</div>';
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
         html += '<div><label style="font-size:10px;color:#C0392B;font-weight:600;display:block;margin-bottom:3px;">* Importe contrapropuesta ByG (EUR)</label>';
@@ -8169,6 +8180,108 @@ async function generarPdfInforme(projectId, textoInforme) {
     } catch(eu){ console.error('Upload PDF:',eu); }
     doc.save('Informe_Analisis_Proyecto_'+projectId+'.pdf');
   } catch(e) { alert('Error generando PDF: '+e.message); console.error(e); }
+}
+
+
+// ============================================================
+// COMPARATIVA IA CERTIFICACIONES
+// ============================================================
+async function compararCertificacionIA(certId, projectId) {
+  var btn = event.target;
+  btn.textContent = '⏳ Analizando...';
+  btn.disabled = true;
+
+  try {
+    // Load certification data
+    var certRes = await db.from('project_certifications').select('*').eq('id', certId).single();
+    var cert = certRes.data;
+    if (!cert) { alert('No se encontró la certificación'); return; }
+    if (!cert.client_doc_path || !cert.byg_doc_path) {
+      alert('Se necesitan los dos documentos (cliente y ByG) para comparar');
+      return;
+    }
+
+    // Get signed URLs for both docs
+    var urlCliente = await db.storage.from('project-attachments').createSignedUrl(cert.client_doc_path, 120);
+    var urlByg = await db.storage.from('project-attachments').createSignedUrl(cert.byg_doc_path, 120);
+
+    if (!urlCliente.data || !urlByg.data) {
+      alert('No se pudieron acceder a los documentos');
+      return;
+    }
+
+    // Extract text from both documents
+    async function extraerTextoDoc(signedUrl, fileName) {
+      var resp = await fetch(signedUrl);
+      var arrayBuffer = await resp.arrayBuffer();
+      var nombre = (fileName || '').toLowerCase();
+
+      if (nombre.endsWith('.docx')) {
+        var result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+        return result.value ? result.value.substring(0, 6000) : '[Word vacío]';
+      } else if (nombre.endsWith('.pdf') && typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        var pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        var textos = [];
+        var maxPg = Math.min(pdfDoc.numPages, 10);
+        for (var p = 1; p <= maxPg; p++) {
+          var page = await pdfDoc.getPage(p);
+          var tc = await page.getTextContent();
+          textos.push(tc.items.map(function(it){ return it.str; }).join(' '));
+        }
+        return textos.join('\n').substring(0, 6000) || '[PDF sin texto]';
+      } else {
+        return new TextDecoder('utf-8', { fatal: false }).decode(arrayBuffer).substring(0, 4000);
+      }
+    }
+
+    var textoCliente = await extraerTextoDoc(urlCliente.data.signedUrl, cert.client_doc_path.split('/').pop());
+    var textoByg = await extraerTextoDoc(urlByg.data.signedUrl, cert.byg_doc_path.split('/').pop());
+
+    // Build comparison prompt
+    var prompt = "Eres un técnico experto en certificaciones de obra de reforma comercial. " +
+      "Compara estos dos documentos de certificación económica final de obra y extrae:\n\n" +
+      "1. IMPORTES: Importe propuesto por el cliente vs importe propuesto por ByG. Diferencia en euros y porcentaje.\n" +
+      "2. PARTIDAS EN CONFLICTO: Partidas o trabajos donde hay discrepancia entre los dos documentos.\n" +
+      "3. PARTIDAS ADICIONALES: Trabajos que aparecen en uno pero no en el otro.\n" +
+      "4. OBSERVACIONES: Aspectos relevantes para la negociación.\n" +
+      "5. RECOMENDACION: Posición negociadora recomendada para ByG.\n\n" +
+      "DOCUMENTO CLIENTE:\n" + textoCliente + "\n\n" +
+      "DOCUMENTO BYG:\n" + textoByg;
+
+    // Call n8n webhook
+    var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/analisis-documental';
+    var apiResp = await fetch(n8nUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file_base64: null,
+        mime_type: 'text/plain',
+        file_name: 'comparativa_cert.txt',
+        doc_type: 'COMPARATIVA',
+        texto_extraido: textoCliente + textoByg,
+        prompt: prompt,
+        es_imagen: false
+      })
+    });
+
+    var apiData = await apiResp.json();
+    var resultado = apiData.resultado || (Array.isArray(apiData) && apiData[0] ? apiData[0].resultado : 'Sin respuesta');
+
+    // Save result
+    await db.from('project_certifications').update({
+      ai_comparison: resultado,
+      ai_comparison_at: new Date().toISOString()
+    }).eq('id', certId);
+
+    // Reload
+    cargarCertificaciones(projectId);
+
+  } catch(e) {
+    alert('Error en comparativa IA: ' + e.message);
+    btn.textContent = '🤖 Comparar con IA';
+    btn.disabled = false;
+  }
 }
 
 </script>
