@@ -7933,32 +7933,22 @@ async function ejecutarAnalisisIA(projectId) {
         // Select prompt based on type
         var prompt = DOC_PROMPTS[tipo] || DOC_PROMPTS['OTRO'];
 
-        // Call Claude API
-        var apiResp = await fetch('https://api.anthropic.com/v1/messages', {
+        // Call n8n webhook → OpenAI GPT-4o
+        var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/analisis-documental';
+        var apiResp = await fetch(n8nUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1000,
-            messages: [{
-              role: 'user',
-              content: [
-                {
-                  type: a.mime_type.includes('pdf') ? 'document' : 'image',
-                  source: {
-                    type: 'base64',
-                    media_type: a.mime_type,
-                    data: base64
-                  }
-                },
-                { type: 'text', text: prompt }
-              ]
-            }]
+            file_base64: base64,
+            mime_type: a.mime_type,
+            file_name: a.file_name,
+            doc_type: tipo,
+            prompt: prompt
           })
         });
 
         var apiData = await apiResp.json();
-        var resultado = apiData.content && apiData.content[0] ? apiData.content[0].text : 'Sin respuesta';
+        var resultado = apiData.resultado || 'Sin respuesta';
 
         var tipoInfo = DOC_TYPES[tipo] || DOC_TYPES['OTRO'];
         informeSecciones.push(
