@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; transition: background 0.3s; }
@@ -7852,6 +7853,9 @@ async function cargarSeccionAnalisisDocumental(projectId) {
       html += '<div style="margin-top:1rem;border-top:1px solid #f0f0ea;padding-top:1rem;">';
       html += '<div style="font-size:11px;color:#888;margin-bottom:6px;">Informe generado ' + (repData.ai_report_generated_at ? new Date(repData.ai_report_generated_at).toLocaleDateString('es-ES') : '') + ' · ' + (repData.ai_report_by || '') + '</div>';
       html += '<div id="an-ai-report-content" style="font-size:12px;line-height:1.6;color:#333;background:#f9f9f6;border-radius:8px;padding:1rem;white-space:pre-wrap;">' + repData.ai_report + '</div>';
+      html += '<div style="margin-top:10px;display:flex;gap:8px;">';
+      html += '<button class="btn btn-primary btn-sm" onclick="generarPdfInforme(' + projectId + ', document.getElementById(\'an-ai-report-content\').textContent)">📥 Descargar informe PDF</button>';
+      html += '</div>';
       html += '</div>';
     } else {
       html += '<div id="an-ai-report-content"></div>';
@@ -8040,8 +8044,11 @@ async function ejecutarAnalisisIA(projectId) {
       reportEl.textContent = informeFinal;
     }
 
-    // Reload section to show updated state
+    // Reload section to show updated state with download button
     cargarSeccionAnalisisDocumental(projectId);
+    
+    // Auto-generate PDF
+    setTimeout(function() { generarPdfInforme(projectId, informeFinal); }, 500);
 
   } catch(e) {
     if (reportEl) reportEl.innerHTML = '<div style="color:#E02020;font-size:12px;padding:1rem;">Error al analizar: ' + e.message + '</div>';
@@ -8069,6 +8076,136 @@ async function detectarEnlacesExternos(projectId, textoEmail) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }, { onConflict: 'project_id' });
+  }
+}
+
+
+// ============================================================
+// GENERAR PDF DEL INFORME DE ANÁLISIS
+// ============================================================
+async function generarPdfInforme(projectId, textoInforme) {
+  try {
+    var { jsPDF } = window.jspdf;
+    var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    var pageW = 210;
+    var margin = 15;
+    var contentW = pageW - margin * 2;
+    var y = 20;
+
+    // Header
+    doc.setFillColor(31, 56, 100);
+    doc.rect(0, 0, pageW, 18, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('EasyProject by Solventa IA', margin, 12);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Informe de Análisis Documental', pageW - margin, 12, { align: 'right' });
+
+    y = 28;
+    doc.setTextColor(30, 30, 30);
+
+    // Split text into lines
+    var lines = textoInforme.split('\n');
+    doc.setFontSize(8.5);
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+
+      // Section headers
+      if (line.startsWith('═══')) {
+        y += 3;
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y, pageW - margin, y);
+        y += 3;
+        continue;
+      }
+
+      if (line.startsWith('📋 INFORME')) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 56, 100);
+        var wrapped = doc.splitTextToSize(line, contentW);
+        doc.text(wrapped, margin, y);
+        y += wrapped.length * 6 + 2;
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 30, 30);
+        continue;
+      }
+
+      if (line.match(/^[🗺📄📋📐📁]/u)) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(46, 90, 156);
+        var wrapped = doc.splitTextToSize(line, contentW);
+        doc.text(wrapped, margin, y);
+        y += wrapped.length * 5.5 + 2;
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 30, 30);
+        continue;
+      }
+
+      if (line.match(/^\d+\. \*\*/) || line.startsWith('**')) {
+        doc.setFont('helvetica', 'bold');
+        var cleanLine = line.replace(/\*\*/g, '');
+        var wrapped = doc.splitTextToSize(cleanLine, contentW);
+        doc.text(wrapped, margin, y);
+        y += wrapped.length * 4.5;
+        doc.setFont('helvetica', 'normal');
+        continue;
+      }
+
+      if (line.trim() === '') {
+        y += 2;
+        continue;
+      }
+
+      // Normal text
+      var cleanLine = line.replace(/\*\*/g, '').replace(/^\s{3,}/, '  ');
+      var wrapped = doc.splitTextToSize(cleanLine, contentW);
+      doc.text(wrapped, margin, y);
+      y += wrapped.length * 4.5;
+
+      // New page if needed
+      if (y > 275) {
+        doc.addPage();
+        y = 20;
+      }
+    }
+
+    // Footer on each page
+    var totalPages = doc.internal.getNumberOfPages();
+    for (var pg = 1; pg <= totalPages; pg++) {
+      doc.setPage(pg);
+      doc.setFontSize(7);
+      doc.setTextColor(150, 150, 150);
+      doc.text('EasyProject by Solventa IA · Informe generado automáticamente · Pág ' + pg + '/' + totalPages, pageW / 2, 290, { align: 'center' });
+    }
+
+    // Convert to blob and upload to Supabase
+    var pdfBlob = doc.output('blob');
+    var pdfArray = await pdfBlob.arrayBuffer();
+    var pdfPath = 'informes/informe_analisis_' + projectId + '_' + Date.now() + '.pdf';
+
+    var uploadRes = await db.storage.from('project-attachments').upload(pdfPath, new Uint8Array(pdfArray), { contentType: 'application/pdf' });
+
+    if (!uploadRes.error) {
+      // Save path in project_analysis
+      await db.from('project_analysis').update({ ai_report_pdf_path: pdfPath }).eq('project_id', projectId);
+      // Also download locally
+      doc.save('Informe_Analisis_Proyecto_' + projectId + '.pdf');
+      alert('✅ Informe PDF generado y guardado en el proyecto.');
+    } else {
+      // Download only if upload fails
+      doc.save('Informe_Analisis_Proyecto_' + projectId + '.pdf');
+    }
+
+  } catch(e) {
+    alert('Error generando PDF: ' + e.message);
   }
 }
 
