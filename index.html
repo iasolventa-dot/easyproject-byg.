@@ -7948,7 +7948,17 @@ async function ejecutarAnalisisIA(projectId) {
         });
 
         var apiData = await apiResp.json();
-        var resultado = apiData.resultado || 'Sin respuesta';
+        // Handle different response formats from n8n
+        var resultado = 'Sin respuesta';
+        if (apiData.resultado) {
+          resultado = apiData.resultado;
+        } else if (Array.isArray(apiData) && apiData[0] && apiData[0].resultado) {
+          resultado = apiData[0].resultado;
+        } else if (Array.isArray(apiData) && apiData[0] && apiData[0].json && apiData[0].json.resultado) {
+          resultado = apiData[0].json.resultado;
+        } else if (apiData.json && apiData.json.resultado) {
+          resultado = apiData.json.resultado;
+        }
 
         var tipoInfo = DOC_TYPES[tipo] || DOC_TYPES['OTRO'];
         informeSecciones.push(
