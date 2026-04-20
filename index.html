@@ -7939,7 +7939,7 @@ async function ejecutarAnalisisIA(projectId) {
           try {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             var pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            var maxPages = Math.min(pdfDoc.numPages, 10);
+            var maxPages = Math.min(pdfDoc.numPages, 20);
             var textos = [];
             for (var pg = 1; pg <= maxPages; pg++) {
               var page = await pdfDoc.getPage(pg);
@@ -8087,126 +8087,79 @@ async function generarPdfInforme(projectId, textoInforme) {
   try {
     var { jsPDF } = window.jspdf;
     var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var pageW = 210, margin = 15, contentW = 180, y = 20;
 
-    var pageW = 210;
-    var margin = 15;
-    var contentW = pageW - margin * 2;
-    var y = 20;
+    function cleanText(t) {
+      return (t||'').replace(/[^\x00-\xFF]/g,'').replace(/\*\*/g,'').trim();
+    }
 
     // Header
-    doc.setFillColor(31, 56, 100);
-    doc.rect(0, 0, pageW, 18, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
+    doc.setFillColor(31,56,100); doc.rect(0,0,pageW,18,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
     doc.text('EasyProject by Solventa IA', margin, 12);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Informe de Análisis Documental', pageW - margin, 12, { align: 'right' });
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('Informe de Analisis Documental', pageW-margin, 12, {align:'right'});
+    y = 28; doc.setTextColor(30,30,30);
 
-    y = 28;
-    doc.setTextColor(30, 30, 30);
-
-    // Split text into lines
     var lines = textoInforme.split('\n');
-    doc.setFontSize(8.5);
+    doc.setFontSize(8.5); doc.setFont('helvetica','normal');
 
-    for (var i = 0; i < lines.length; i++) {
+    for (var i=0; i<lines.length; i++) {
       var line = lines[i];
+      var clean = cleanText(line);
 
-      // Section headers
-      if (line.startsWith('═══')) {
-        y += 3;
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, y, pageW - margin, y);
-        y += 3;
-        continue;
+      if (line.includes('===') || line.includes('---')) {
+        y+=2; doc.setDrawColor(180,180,180); doc.line(margin,y,pageW-margin,y); y+=4; continue;
       }
-
-      if (line.startsWith('📋 INFORME')) {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(31, 56, 100);
-        var wrapped = doc.splitTextToSize(line, contentW);
-        doc.text(wrapped, margin, y);
-        y += wrapped.length * 6 + 2;
-        doc.setFontSize(8.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(30, 30, 30);
-        continue;
+      if (line.includes('INFORME DE AN')) {
+        doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(31,56,100);
+        var w=doc.splitTextToSize('INFORME DE ANALISIS DOCUMENTAL',contentW);
+        doc.text(w,margin,y); y+=w.length*6+2;
+        doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); continue;
       }
-
-      if (line.match(/^[🗺📄📋📐📁]/u)) {
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(46, 90, 156);
-        var wrapped = doc.splitTextToSize(line, contentW);
-        doc.text(wrapped, margin, y);
-        y += wrapped.length * 5.5 + 2;
-        doc.setFontSize(8.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(30, 30, 30);
-        continue;
+      if ((line.includes('PLANOS') || line.includes('MEMORIA') || line.includes('ESPECIFICAC') || line.match(/OTRO:/)) && !line.startsWith(' ') && clean.length > 3) {
+        y+=2; doc.setFillColor(240,245,255); doc.rect(margin-2,y-4,contentW+4,8,'F');
+        doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(46,90,156);
+        var w=doc.splitTextToSize(clean,contentW);
+        doc.text(w,margin,y); y+=w.length*5.5+3;
+        doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); continue;
       }
-
-      if (line.match(/^\d+\. \*\*/) || line.startsWith('**')) {
-        doc.setFont('helvetica', 'bold');
-        var cleanLine = line.replace(/\*\*/g, '');
-        var wrapped = doc.splitTextToSize(cleanLine, contentW);
-        doc.text(wrapped, margin, y);
-        y += wrapped.length * 4.5;
-        doc.setFont('helvetica', 'normal');
-        continue;
+      if (line.match(/^\d+\.\s+[A-Z]/) || line.match(/^\*\*\d/)) {
+        doc.setFont('helvetica','bold');
+        var w=doc.splitTextToSize(clean,contentW); doc.text(w,margin,y); y+=w.length*4.8;
+        doc.setFont('helvetica','normal'); continue;
       }
-
-      if (line.trim() === '') {
-        y += 2;
-        continue;
+      if (line.startsWith('Proyecto ID') || line.startsWith('Documentos') || line.startsWith('Omitidos') || line.startsWith('Generado')) {
+        doc.setTextColor(100,100,100); doc.setFontSize(8);
+        var w=doc.splitTextToSize(clean,contentW); doc.text(w,margin,y); y+=w.length*4.2;
+        doc.setFontSize(8.5); doc.setTextColor(30,30,30); continue;
       }
-
-      // Normal text
-      var cleanLine = line.replace(/\*\*/g, '').replace(/^\s{3,}/, '  ');
-      var wrapped = doc.splitTextToSize(cleanLine, contentW);
-      doc.text(wrapped, margin, y);
-      y += wrapped.length * 4.5;
-
-      // New page if needed
-      if (y > 275) {
+      if (clean==='') { y+=2; continue; }
+      var ind = line.match(/^\s{2,}/) ? 5 : 0;
+      var w=doc.splitTextToSize(clean, contentW-ind); doc.text(w,margin+ind,y); y+=w.length*4.5;
+      if (y>275) {
         doc.addPage();
-        y = 20;
+        doc.setFillColor(31,56,100); doc.rect(0,0,pageW,10,'F');
+        doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+        doc.text('EasyProject by Solventa IA - continuacion',margin,7);
+        doc.setTextColor(30,30,30); doc.setFont('helvetica','normal'); doc.setFontSize(8.5); y=18;
       }
     }
-
-    // Footer on each page
-    var totalPages = doc.internal.getNumberOfPages();
-    for (var pg = 1; pg <= totalPages; pg++) {
-      doc.setPage(pg);
-      doc.setFontSize(7);
-      doc.setTextColor(150, 150, 150);
-      doc.text('EasyProject by Solventa IA · Informe generado automáticamente · Pág ' + pg + '/' + totalPages, pageW / 2, 290, { align: 'center' });
+    var total=doc.internal.getNumberOfPages();
+    for (var pg=1;pg<=total;pg++) {
+      doc.setPage(pg); doc.setFontSize(7); doc.setTextColor(150,150,150);
+      doc.line(margin,287,pageW-margin,287);
+      doc.text('EasyProject by Solventa IA  |  Informe de Analisis Documental  |  Pag. '+pg+' de '+total, pageW/2, 290, {align:'center'});
     }
-
-    // Convert to blob and upload to Supabase
-    var pdfBlob = doc.output('blob');
-    var pdfArray = await pdfBlob.arrayBuffer();
-    var pdfPath = 'informes/informe_analisis_' + projectId + '_' + Date.now() + '.pdf';
-
-    var uploadRes = await db.storage.from('project-attachments').upload(pdfPath, new Uint8Array(pdfArray), { contentType: 'application/pdf' });
-
-    if (!uploadRes.error) {
-      // Save path in project_analysis
-      await db.from('project_analysis').update({ ai_report_pdf_path: pdfPath }).eq('project_id', projectId);
-      // Also download locally
-      doc.save('Informe_Analisis_Proyecto_' + projectId + '.pdf');
-      alert('✅ Informe PDF generado y guardado en el proyecto.');
-    } else {
-      // Download only if upload fails
-      doc.save('Informe_Analisis_Proyecto_' + projectId + '.pdf');
-    }
-
-  } catch(e) {
-    alert('Error generando PDF: ' + e.message);
-  }
+    try {
+      var pdfBlob=doc.output('blob');
+      var pdfArr=await pdfBlob.arrayBuffer();
+      var pdfPath='informes/informe_analisis_'+projectId+'_'+Date.now()+'.pdf';
+      var up=await db.storage.from('project-attachments').upload(pdfPath,new Uint8Array(pdfArr),{contentType:'application/pdf'});
+      if (!up.error) await db.from('project_analysis').update({ai_report_pdf_path:pdfPath}).eq('project_id',projectId);
+    } catch(eu){ console.error('Upload PDF:',eu); }
+    doc.save('Informe_Analisis_Proyecto_'+projectId+'.pdf');
+  } catch(e) { alert('Error generando PDF: '+e.message); console.error(e); }
 }
 
 </script>
