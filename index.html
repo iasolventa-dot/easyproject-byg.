@@ -628,7 +628,7 @@
   </div>
   <div id="proj-tab-documentos" class="proj-tab-content" style="display:none;">
     <div class="card">
-      <div class="empty">Documentos almacenados en SharePoint.<br>Conexión pendiente de credenciales Microsoft 365.</div>
+      <div class="empty">No hay documentos adjuntos en este proyecto.</div>
     </div>
   </div>
 </div>
@@ -3158,10 +3158,7 @@ async function cargarDocumentosAnálisis(projectId, categoria) {
     var attRes = await db.from('project_attachments').select('*').eq('project_id', projectId).order('uploaded_at');
     var adj = attRes.data || [];
     el.innerHTML = '';
-    var ban = document.createElement('div');
-    ban.style.cssText = 'background:#FEF6EE;border:1px solid #FAC775;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:11px;color:#854F0B;';
-    ban.textContent = 'Cuando se active Microsoft 365, los archivos se almacenaran en SharePoint. Actualmente en Supabase Storage.';
-    el.appendChild(ban);
+
     if (!adj.length) {
       var emp = document.createElement('div'); emp.className='empty';
       emp.textContent='No hay archivos adjuntos. Puedes anadir archivos con el boton de abajo.';
@@ -3401,7 +3398,7 @@ function volverDesdeAnálisis() {
 }
 
 function abrirDocumento(nombre) {
-  alert('Abriendo ' + nombre + ' desde SharePoint...');
+  // Apertura de documento desde Supabase Storage
 }
 
 // -- OFERTA EN CURSO --
