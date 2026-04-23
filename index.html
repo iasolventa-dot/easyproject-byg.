@@ -1351,6 +1351,21 @@
     <div id="an-docs-list">
       <div class="loading">Cargando documentos...</div>
     </div>
+
+    <!-- ENLACE EXTERNO (WeTransfer, Drive, Dropbox...) -->
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f0f0ea;">
+      <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">
+        📎 Documentación en enlace externo (WeTransfer, Drive, Dropbox...)
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="an-url-externa" placeholder="Pega aquí el enlace de WeTransfer, Drive, Dropbox u otro..."
+          style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;color:#1a1a1a;"
+          onkeydown="if(event.key==='Enter') guardarUrlExterna()">
+        <button class="btn btn-primary btn-sm" onclick="guardarUrlExterna()" style="white-space:nowrap;">Guardar enlace</button>
+      </div>
+      <div id="an-url-externa-banner" style="display:none;"></div>
+    </div>
+
     <div id="an-doc-analysis-section"></div>
   </div>
 
@@ -1536,6 +1551,21 @@
     </div>
     <input type="file" id="np-file-input" multiple style="display:none;" onchange="npAgregarArchivos(this.files)">
     <div id="np-archivos-lista"></div>
+
+    <!-- ENLACE EXTERNO -->
+    <div style="margin-top:1rem;padding:1rem;background:#f9f9f6;border:1px solid #e5e5e0;border-radius:8px;">
+      <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">
+        📎 ¿La documentación está en un enlace externo?
+      </div>
+      <div style="font-size:11px;color:#888;margin-bottom:8px;">WeTransfer, Google Drive, Dropbox, OneDrive... Guarda el enlace como referencia y descarga los archivos manualmente para subirlos aquí.</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="np-url-externa" placeholder="Pega aquí el enlace externo..."
+          style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;color:#1a1a1a;">
+        <button class="btn btn-sm" onclick="npGuardarUrlExterna()" style="white-space:nowrap;border-color:#FAC775;color:#854F0B;background:#FEF6EE;">Guardar enlace</button>
+      </div>
+      <div id="np-url-externa-banner" style="display:none;margin-top:8px;"></div>
+    </div>
+
     <div style="display:flex;justify-content:space-between;margin-top:1.5rem;"><button class="btn" onclick="npAnterior(3)">Anterior</button><button class="btn btn-primary" onclick="npSiguiente(3)">Siguiente</button></div>
   </div></div>
   <div id="np-paso-4" style="display:none;"><div class="card" style="max-width:700px;">
@@ -3144,6 +3174,7 @@ async function abrirAnalisis(id, nameEnc) {
     // Cargar documentos
     cargarDocumentosAnálisis(id, análisisProyecto.category);
     cargarSeccionAnalisisDocumental(id);
+    cargarUrlsExternas(id);
 
     // Cargar gremios y proveedores propuestos
     cargarGremiosAnálisis(análisisProyecto.category);
@@ -6310,6 +6341,88 @@ async function verDocumentoGasto(fileName, displayName) {
 
 </script>
 <script>
+// ============================================================
+// ENLACE EXTERNO (WeTransfer, Drive, Dropbox...)
+// ============================================================
+
+var npUrlExternaGuardada = '';
+
+function npGuardarUrlExterna() {
+  var input = document.getElementById('np-url-externa');
+  var banner = document.getElementById('np-url-externa-banner');
+  var url = input ? input.value.trim() : '';
+  if (!url) { alert('Pega primero el enlace externo'); return; }
+  var plataforma = detectarPlataformaUrl(url);
+  npUrlExternaGuardada = url;
+  if (banner) {
+    banner.style.display = 'block';
+    banner.innerHTML = renderBannerUrlExterna(url, plataforma, false);
+  }
+}
+
+async function guardarUrlExterna() {
+  if (!análisisProyecto) { alert('No hay proyecto activo'); return; }
+  var input = document.getElementById('an-url-externa');
+  var banner = document.getElementById('an-url-externa-banner');
+  var url = input ? input.value.trim() : '';
+  if (!url) { alert('Pega primero el enlace externo'); return; }
+  var plataforma = detectarPlataformaUrl(url);
+  try {
+    var existing = await db.from('project_analysis').select('id,external_links').eq('project_id', análisisProyecto.id).maybeSingle();
+    var linksArr = (existing.data && existing.data.external_links) ? existing.data.external_links.split(' | ').filter(function(l){ return l.trim(); }) : [];
+    if (!linksArr.includes(url)) linksArr.push(url);
+    var linksNuevos = linksArr.join(' | ');
+    if (existing.data) {
+      await db.from('project_analysis').update({ external_links: linksNuevos, updated_at: new Date().toISOString() }).eq('project_id', análisisProyecto.id);
+    } else {
+      await db.from('project_analysis').insert({ project_id: análisisProyecto.id, docs_reviewed: false, external_links: linksNuevos, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+    }
+    if (banner) { banner.style.display = 'block'; banner.innerHTML = renderBannerUrlExterna(url, plataforma, true); }
+    if (input) input.value = '';
+  } catch(e) { alert('Error al guardar: ' + e.message); }
+}
+
+function detectarPlataformaUrl(url) {
+  var u = (url || '').toLowerCase();
+  if (u.includes('wetransfer') || u.includes('we.tl')) return { nombre: 'WeTransfer', icono: '📦', color: '#1B4F8A' };
+  if (u.includes('drive.google') || u.includes('docs.google')) return { nombre: 'Google Drive', icono: '🟢', color: '#1A6B3C' };
+  if (u.includes('dropbox')) return { nombre: 'Dropbox', icono: '📂', color: '#0061FF' };
+  if (u.includes('onedrive') || u.includes('sharepoint') || u.includes('1drv')) return { nombre: 'OneDrive', icono: '☁️', color: '#0078D4' };
+  return { nombre: 'Enlace externo', icono: '🔗', color: '#854F0B' };
+}
+
+function renderBannerUrlExterna(url, plataforma, guardado) {
+  return '<div style="background:#FEF6EE;border:1px solid #FAC775;border-left:4px solid #EF9F27;border-radius:8px;padding:12px 16px;margin-top:8px;">' +
+    '<div style="display:flex;align-items:flex-start;gap:10px;">' +
+    '<span style="font-size:18px;flex-shrink:0;">' + plataforma.icono + '</span>' +
+    '<div style="flex:1;min-width:0;">' +
+    '<div style="font-size:12px;font-weight:600;color:#854F0B;margin-bottom:4px;">' + (guardado ? '✓ Enlace guardado — ' : '') + plataforma.nombre + ' detectado</div>' +
+    '<div style="font-size:11px;color:#92400e;margin-bottom:8px;">Accede al enlace, descarga los archivos y súbelos arrastrándolos en la zona de documentos.</div>' +
+    '<a href="' + url + '" target="_blank" style="display:inline-block;background:#854F0B;color:white;padding:5px 12px;border-radius:5px;font-size:11px;font-weight:500;text-decoration:none;">🔗 Abrir ' + plataforma.nombre + '</a>' +
+    '<span style="font-size:10px;color:#aaa;margin-left:10px;word-break:break-all;">' + (url.length > 55 ? url.substring(0,55)+'...' : url) + '</span>' +
+    '</div></div></div>';
+}
+
+async function cargarUrlsExternas(projectId) {
+  var banner = document.getElementById('an-url-externa-banner');
+  if (!banner) return;
+  try {
+    var res = await db.from('project_analysis').select('external_links').eq('project_id', projectId).maybeSingle();
+    if (res.data && res.data.external_links) {
+      var links = res.data.external_links.split(' | ').filter(function(l){ return l.trim(); });
+      banner.style.display = 'block';
+      banner.innerHTML = links.map(function(url) {
+        return renderBannerUrlExterna(url, detectarPlataformaUrl(url), true);
+      }).join('');
+    }
+  } catch(e) { console.error('cargarUrlsExternas:', e); }
+}
+
+function npGetUrlExterna() {
+  return npUrlExternaGuardada || (document.getElementById('np-url-externa') ? document.getElementById('np-url-externa').value.trim() : '');
+}
+
+// ============================================================
 // MÓDULO NUEVO PROYECTO + ADJUNTOS
 var npClienteTipo = 'existente';
 var npClienteSeleccionado = null;
@@ -6609,7 +6722,21 @@ async function npGuardar() {
         });
       } catch(ne) { console.error('Error notif:', ne); }
     }
-    alert('Proyecto registrado: ' + projCode + '\n\nSe ha notificado a los departamentos correspondientes.');
+    // Guardar URL externa si se proporcionó en el paso 3
+    var urlExterna = npGetUrlExterna();
+    if (urlExterna) {
+      try {
+        await db.from('project_analysis').insert({
+          project_id: proyectoId,
+          docs_reviewed: false,
+          external_links: urlExterna,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      } catch(eu) { console.error('Error guardando URL externa:', eu); }
+    }
+    alert('Proyecto registrado: ' + projCode + '\n\nSe ha notificado a los departamentos correspondientes.' + (urlExterna ? '\n\nEnlace externo guardado: ' + urlExterna : ''));
+    npUrlExternaGuardada = '';
     npReset(); showPanel('dashboard'); loadDashboard();
   } catch(e) {
     console.error(e); alert('Error: '+(e.message||JSON.stringify(e)));
