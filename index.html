@@ -1929,7 +1929,7 @@ async function cargarMetricasDept(dept) {
       var notifResult = await cargarNotificacionesNuevosProyectos('tecnico');
       if (notifResult && notifResult.notifs.length && banner) {
         var msgNotif = notifResult.notifs[0].error_message;
-        npMostrarBannerNotif(banner, notifResult.notifs.length, msgNotif, notifResult.ids);
+        npMostrarBannerNotif(banner, notifResult.count || notifResult.notifs.length, msgNotif, notifResult.ids);
         return;
       }
       var stCodes = ['en_analisis','oferta_en_curso','pending_tech_review'];
@@ -1959,7 +1959,7 @@ async function cargarMetricasDept(dept) {
     try {
       var notifDir = await cargarNotificacionesNuevosProyectos('direccion');
       if (notifDir && notifDir.notifs.length && banner) {
-        npMostrarBannerNotif(banner, notifDir.notifs.length, notifDir.notifs[0].error_message, notifDir.ids);
+        npMostrarBannerNotif(banner, notifDir.count || notifDir.notifs.length, notifDir.notifs[0].error_message, notifDir.ids);
         return;
       }
       var adjRes = await db.from('project_awards').select('awarded_amount').eq('award_type','adjudicado');
@@ -2001,7 +2001,7 @@ async function cargarMetricasDept(dept) {
     try {
       var notifCom = await cargarNotificacionesNuevosProyectos('comercial');
       if (notifCom && notifCom.notifs.length && banner) {
-        npMostrarBannerNotif(banner, notifCom.notifs.length, notifCom.notifs[0].error_message, notifCom.ids);
+        npMostrarBannerNotif(banner, notifCom.count || notifCom.notifs.length, notifCom.notifs[0].error_message, notifCom.ids);
         return;
       }
       var stOE = await db.from('project_statuses').select('id').eq('code','oferta_enviada').single();
@@ -5710,30 +5710,75 @@ async function guardarCliente() {
 // ---- ALERTAS PLANNING PARA DIRECCION ----
 function npMostrarBannerNotif(banner, count, msg, ids) {
   banner.style.display = 'block';
+  banner.innerHTML = '';
+
+  // Separar notificaciones de evaluacion tecnico vs nuevos proyectos
+  // Las notificaciones de evaluacion empiezan con "PROYECTO ACEPTADO" o "PROYECTO RECHAZADO"
+  // Las de nueva solicitud son el resto
+  // Mostramos todas las notificaciones individualmente
+  // pero si hay mezcla, agrupamos las de nueva solicitud en un solo banner
+
+  // Para esta llamada recibimos todas las notifs del dept — las renderizamos en bloque
+  // Detectar tipo por el primer mensaje
+  var esEvalTecnico = msg && (msg.indexOf('PROYECTO ACEPTADO') === 0 || msg.indexOf('PROYECTO RECHAZADO') === 0);
+
   var div = document.createElement('div');
-  div.style.cssText = 'background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;';
-  div.onclick = function(){ showProyectosFase('solicitado'); };
-  var left = document.createElement('div');
-  left.style.cssText = 'display:flex;align-items:center;gap:12px;';
-  var icon = document.createElement('div');
-  icon.style.cssText = 'width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;';
-  icon.textContent = '+';
-  var text = document.createElement('div');
-  text.innerHTML = '<div style="font-size:13px;font-weight:600;color:#27500A;">' + count + ' nuevo(s) proyecto(s) registrado(s)</div>' +
-    '<div style="font-size:11px;color:#3B6D11;">' + msg + '</div>';
-  left.appendChild(icon);
-  left.appendChild(text);
+
+  if (esEvalTecnico) {
+    // Notificacion de decision del tecnico
+    var esAprobado = msg.indexOf('PROYECTO ACEPTADO') === 0;
+    var bgColor   = esAprobado ? '#EAF3DE' : '#FCEBEB';
+    var bdColor   = esAprobado ? '#C0DD97' : '#F7C1C1';
+    var txtColor  = esAprobado ? '#27500A' : '#A32D2D';
+    var iconColor = esAprobado ? '#3B6D11' : '#A32D2D';
+    var iconChar  = esAprobado ? '✓' : '✗';
+    var titulo    = esAprobado ? 'Proyecto aceptado por Dpto. Técnico' : 'Proyecto rechazado por Dpto. Técnico';
+    var destino   = esAprobado ? 'en_analisis' : 'cancelado';
+
+    div.style.cssText = 'background:'+bgColor+';border:1px solid '+bdColor+';border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;';
+    div.onclick = function(){ showProyectosFase(destino); };
+
+    var left = document.createElement('div');
+    left.style.cssText = 'display:flex;align-items:center;gap:12px;';
+    var icon = document.createElement('div');
+    icon.style.cssText = 'width:32px;height:32px;border-radius:50%;background:'+iconColor+';display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;';
+    icon.textContent = iconChar;
+    var text = document.createElement('div');
+    text.innerHTML = '<div style="font-size:13px;font-weight:600;color:'+txtColor+';">'+titulo+'</div>' +
+      '<div style="font-size:11px;color:'+txtColor+';opacity:0.85;">'+msg+'</div>';
+    left.appendChild(icon);
+    left.appendChild(text);
+    div.appendChild(left);
+
+  } else {
+    // Notificacion de nuevo proyecto registrado manualmente
+    div.style.cssText = 'background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 16px;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;';
+    div.onclick = function(){ showProyectosFase('solicitado'); };
+
+    var left = document.createElement('div');
+    left.style.cssText = 'display:flex;align-items:center;gap:12px;';
+    var icon = document.createElement('div');
+    icon.style.cssText = 'width:32px;height:32px;border-radius:50%;background:#3B6D11;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;';
+    icon.textContent = '+';
+    var text = document.createElement('div');
+    text.innerHTML = '<div style="font-size:13px;font-weight:600;color:#27500A;">'+count+' nuevo(s) proyecto(s) registrado(s)</div>' +
+      '<div style="font-size:11px;color:#3B6D11;">'+msg+'</div>';
+    left.appendChild(icon);
+    left.appendChild(text);
+    div.appendChild(left);
+  }
+
+  // Boton marcar como leida
   var btn = document.createElement('button');
   btn.textContent = '✓';
   btn.title = 'Marcar como leído';
-  btn.style.cssText = 'background:none;border:none;font-size:16px;cursor:pointer;color:#888;';
+  btn.style.cssText = 'background:none;border:none;font-size:16px;cursor:pointer;color:#888;flex-shrink:0;';
   btn.onclick = function(e) {
     e.stopPropagation();
     marcarNotificacionesLeidas(ids).then(function(){ loadDashboard(); });
   };
-  div.appendChild(left);
   div.appendChild(btn);
-  banner.innerHTML = '';
+
   banner.appendChild(div);
 }
 
@@ -5744,15 +5789,33 @@ async function cargarNotificacionesNuevosProyectos(dept) {
       .eq('flow_name', 'NOTIFICACION')
       .eq('node_name', dept)
       .order('created_at', {ascending: false})
-      .limit(5);
-    
+      .limit(10);
+
     var notifs = res.data || [];
     if (!notifs.length) return null;
-    
-    // Marcar como leídas después de mostrar (borrar)
+
     var ids = notifs.map(function(n){ return n.id; });
-    
-    return {notifs: notifs, ids: ids};
+
+    // Separar por tipo: evaluacion tecnico vs nuevos proyectos registrados
+    var evalNotifs = notifs.filter(function(n){
+      return n.error_message && (
+        n.error_message.indexOf('PROYECTO ACEPTADO') === 0 ||
+        n.error_message.indexOf('PROYECTO RECHAZADO') === 0
+      );
+    });
+    var nuevosNotifs = notifs.filter(function(n){
+      return !n.error_message || (
+        n.error_message.indexOf('PROYECTO ACEPTADO') !== 0 &&
+        n.error_message.indexOf('PROYECTO RECHAZADO') !== 0
+      );
+    });
+
+    // Prioridad: mostrar primero la de evaluacion tecnico si existe
+    // porque es la mas relevante. Devolvemos la mas reciente de cada tipo.
+    var notifMostrar = evalNotifs.length ? evalNotifs[0] : nuevosNotifs[0];
+    var countMostrar = evalNotifs.length ? evalNotifs.length : nuevosNotifs.length;
+
+    return {notifs: [notifMostrar], count: countMostrar, ids: ids};
   } catch(e) { return null; }
 }
 
