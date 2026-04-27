@@ -1428,7 +1428,7 @@
   <!-- ALERTA ESTADO -->
   <div id="eval-alert" class="alert-box" style="margin-bottom:1.5rem;">
     <div class="alert-box-title">Evaluación simultánea requerida</div>
-    <div class="alert-box-desc">Los tres departamentos deben evaluar este proyecto de forma independiente. Si cualquier departamento lo rechaza, el proyecto queda cancelado y se notifica al resto.</div>
+    <div class="alert-box-desc">El Departamento Técnico toma la decisión final: si aprueba, el proyecto avanza automáticamente a En Análisis. Comercial y Dirección registran su opinión a título informativo.</div>
   </div>
 
   <!-- GRID 3 DEPARTAMENTOS -->
@@ -1438,10 +1438,10 @@
     <div class="card" id="eval-card-tecnico">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
         <div style="width:32px;height:32px;border-radius:8px;background:#f0f0ea;display:flex;align-items:center;justify-content:center;font-size:14px;">⚙️</div>
-        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dpto. Técnico</div><div style="font-size:11px;color:#888;">Capacidad y viabilidad técnica</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dpto. Técnico</div><div style="font-size:11px;color:#888;">Capacidad y viabilidad técnica <span style="background:#EAF3DE;color:#3B6D11;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px;">DECISION FINAL</span></div></div>
       </div>
       <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
-        Evalúa si ByG dispone de los recursos técnicos, experiencia y capacidad de ejecución para este proyecto.
+        Evalúa si ByG dispone de los recursos técnicos, experiencia y capacidad de ejecución para este proyecto. <strong>Su decisión es definitiva: si aprueba, el proyecto avanza; si rechaza, el proyecto queda cancelado.</strong>
       </div>
       <div id="eval-estado-tecnico" style="margin-bottom:0.75rem;"></div>
       <div id="eval-form-tecnico">
@@ -1458,10 +1458,10 @@
     <div class="card" id="eval-card-comercial">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
         <div style="width:32px;height:32px;border-radius:8px;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:14px;">💼</div>
-        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dpto. Comercial</div><div style="font-size:11px;color:#888;">Interés estratégico y margen</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dpto. Comercial</div><div style="font-size:11px;color:#888;">Interés estratégico y margen <span style="background:#FEF3C7;color:#92400e;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px;">INFORMATIVO</span></div></div>
       </div>
       <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
-        Evalúa si el cliente es estratégico, el margen comercial es interesante y la operación encaja en la estrategia de ByG.
+        Evalúa si el cliente es estratégico, el margen comercial es interesante y la operación encaja en la estrategia de ByG. Su respuesta es informativa y queda registrada para conocimiento del equipo.
       </div>
       <div id="eval-estado-comercial" style="margin-bottom:0.75rem;"></div>
       <div id="eval-form-comercial">
@@ -1478,10 +1478,10 @@
     <div class="card" id="eval-card-direccion">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0ea;">
         <div style="width:32px;height:32px;border-radius:8px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:14px;">🏢</div>
-        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dirección</div><div style="font-size:11px;color:#888;">Visto bueno ejecutivo</div></div>
+        <div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Dirección</div><div style="font-size:11px;color:#888;">Visto bueno ejecutivo <span style="background:#FEF3C7;color:#92400e;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px;">INFORMATIVO</span></div></div>
       </div>
       <div style="font-size:11px;color:#666;margin-bottom:0.75rem;line-height:1.5;">
-        Aprobación final de Dirección para que el proyecto entre en fase de análisis y presupuestación.
+        Dirección registra su opinión sobre el proyecto a título informativo. Su respuesta queda registrada pero no condiciona el avance del proyecto.
       </div>
       <div id="eval-estado-direccion" style="margin-bottom:0.75rem;"></div>
       <div id="eval-form-direccion">
@@ -3033,41 +3033,63 @@ function mostrarEstadoEval(dept, decision, reason, by) {
 }
 
 function resetAlertaEval() {
-  var depts = ['tecnico','comercial','direccion'];
-  var aprobados = depts.filter(function(d){return evalDecisiones[d] && evalDecisiones[d].decision==='approved';});
-  var rechazados = depts.filter(function(d){return evalDecisiones[d] && evalDecisiones[d].decision==='rejected';});
-  var alert = document.getElementById('eval-alert');
+  // LOGICA: solo el Tecnico decide. Comercial y Direccion son informativos.
+  var tecnico   = evalDecisiones['tecnico'];
+  var comercial = evalDecisiones['comercial'];
+  var direccion = evalDecisiones['direccion'];
+  var alertEl   = document.getElementById('eval-alert');
   var resultado = document.getElementById('eval-resultado');
 
-  if (rechazados.length > 0) {
-    alert.className = 'alert-box';
-    alert.style.display = 'block';
-    alert.innerHTML = '<div class="alert-box-title">Proyecto rechazado por '+rechazados.join(', ')+'</div>' +
-      '<div class="alert-box-desc">Se ha notificado al resto de departamentos. El proyecto quedará cancelado.</div>';
+  // --- TECNICO RECHAZA: proyecto cancelado ---
+  if (tecnico && tecnico.decision === 'rejected') {
+    alertEl.className = 'alert-box';
+    alertEl.style.display = 'block';
+    alertEl.innerHTML = '<div class="alert-box-title">Proyecto rechazado por el Dpto. Tecnico</div>' +
+      '<div class="alert-box-desc">El Departamento Tecnico ha rechazado el proyecto. El proyecto queda cancelado y se notifica automaticamente al equipo.</div>';
     resultado.style.display = 'block';
     resultado.innerHTML = '<div style="background:#FCEBEB;border:1px solid #F7C1C1;border-radius:10px;padding:1.5rem;text-align:center;">' +
       '<div style="font-size:28px;margin-bottom:8px;">X</div>' +
       '<div style="font-size:15px;font-weight:600;color:#A32D2D;margin-bottom:6px;">Proyecto no aceptado</div>' +
-      '<div style="font-size:12px;color:#A32D2D;">Al menos un departamento ha rechazado el proyecto. Se notifica automáticamente al equipo.</div></div>';
-  } else if (aprobados.length === 3) {
-    alert.className = 'alert-box alert-box-success';
-    alert.style.display = 'block';
-    alert.innerHTML = '<div class="alert-box-title">Los tres departamentos han aprobado el proyecto</div>' +
-      '<div class="alert-box-desc">El proyecto pasará automáticamente a fase En Análisis.</div>';
+      '<div style="font-size:12px;color:#A32D2D;">El Departamento Tecnico ha rechazado el proyecto. Se notifica automaticamente al equipo.</div></div>';
+    return;
+  }
+
+  // --- TECNICO APRUEBA: proyecto avanza ---
+  if (tecnico && tecnico.decision === 'approved') {
+    // Contar respuestas informativas de los otros dos
+    var otros = [];
+    if (comercial) otros.push('Comercial (' + (comercial.decision === 'approved' ? 'de acuerdo' : 'no de acuerdo') + ')');
+    if (direccion) otros.push('Direccion (' + (direccion.decision === 'approved' ? 'de acuerdo' : 'no de acuerdo') + ')');
+    var otrosStr = otros.length ? ' | Informativo: ' + otros.join(', ') : '';
+
+    alertEl.className = 'alert-box alert-box-success';
+    alertEl.style.display = 'block';
+    alertEl.innerHTML = '<div class="alert-box-title">Dpto. Tecnico ha aprobado el proyecto</div>' +
+      '<div class="alert-box-desc">El proyecto puede avanzar a En Analisis.' + otrosStr + '</div>';
     resultado.style.display = 'block';
     resultado.innerHTML = '<div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:10px;padding:1.5rem;text-align:center;">' +
       '<div style="font-size:28px;margin-bottom:8px;">OK</div>' +
-      '<div style="font-size:15px;font-weight:600;color:#3B6D11;margin-bottom:6px;">Proyecto aceptado</div>' +
-      '<div style="font-size:12px;color:#3B6D11;margin-bottom:1rem;">Los tres departamentos han aprobado. El proyecto avanza a fase En Análisis.</div>' +
-      '<button class="btn btn-success" onclick="avanzarAAnálisis()">Confirmar y avanzar a En Análisis</button></div>';
-  } else {
-    alert.className = 'alert-box';
-    alert.style.display = 'block';
-    alert.innerHTML = '<div class="alert-box-title">Evaluación en curso - '+aprobados.length+' de 3 departamentos han respondido</div>' +
-      '<div class="alert-box-desc">Pendiente de respuesta de los departamentos restantes.</div>';
-    resultado.style.display = 'none';
+      '<div style="font-size:15px;font-weight:600;color:#3B6D11;margin-bottom:6px;">Proyecto aceptado por el Dpto. Tecnico</div>' +
+      '<div style="font-size:12px;color:#3B6D11;margin-bottom:1rem;">El Departamento Tecnico ha dado el visto bueno. El proyecto avanza a fase En Analisis.</div>' +
+      '<button class="btn btn-success" onclick="avanzarAAnalisis()">Confirmar y avanzar a En Analisis</button></div>';
+    return;
   }
+
+  // --- TECNICO AUN NO HA RESPONDIDO ---
+  var respondidos = [];
+  if (comercial) respondidos.push('Comercial');
+  if (direccion) respondidos.push('Direccion');
+  var pendStr = respondidos.length ? ' (' + respondidos.join(' y ') + ' ya han respondido a titulo informativo)' : '';
+
+  alertEl.className = 'alert-box';
+  alertEl.style.display = 'block';
+  alertEl.innerHTML = '<div class="alert-box-title">Pendiente de evaluacion del Dpto. Tecnico</div>' +
+    '<div class="alert-box-desc">El Departamento Tecnico aun no ha emitido su decision. Su respuesta es la que determina si el proyecto avanza o se cancela.' + pendStr + '</div>';
+  resultado.style.display = 'none';
 }
+
+// Alias para compatibilidad con el boton del HTML generado dinamicamente
+function avanzarAAnalisis() { avanzarAAnálisis(); }
 
 async function registrarEvaluación(dept, decision) {
   if (!evalProyecto) return;
@@ -3092,13 +3114,23 @@ async function registrarEvaluación(dept, decision) {
     evalDecisiones[dept] = evalData;
     mostrarEstadoEval(dept, decision, reason, deptNames[dept]);
 
-    // Si rechazado, actualizar estado proyecto a cancelado
-    if (decision === 'rejected') {
-      var cancelId = await db.from('project_statuses').select('id').eq('code','cancelled').single();
-      if (cancelId.data) {
-        await db.from('projects').update({project_status_id:cancelId.data.id, updated_at:new Date().toISOString()}).eq('id',evalProyecto.id);
+    // LOGICA: solo el Tecnico decide
+    if (dept === 'tecnico') {
+      if (decision === 'rejected') {
+        // Tecnico rechaza -> cancelar proyecto
+        var cancelId = await db.from('project_statuses').select('id').eq('code','cancelled').single();
+        if (cancelId.data) {
+          await db.from('projects').update({project_status_id:cancelId.data.id, updated_at:new Date().toISOString()}).eq('id',evalProyecto.id);
+        }
+      } else if (decision === 'approved') {
+        // Tecnico aprueba -> avanzar automaticamente a En Analisis
+        var stRes = await db.from('project_statuses').select('id').eq('code','en_analisis').single();
+        if (stRes.data) {
+          await db.from('projects').update({project_status_id:stRes.data.id, updated_at:new Date().toISOString()}).eq('id',evalProyecto.id);
+        }
       }
     }
+    // Comercial y Direccion: solo registran su opinion, no cambian el estado del proyecto
     resetAlertaEval();
   } catch(e) { alert('Error al registrar: '+e.message); }
 }
