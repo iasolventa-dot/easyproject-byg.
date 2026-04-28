@@ -8015,22 +8015,33 @@ async function ejecutarAnalisisIA(projectId) {
 
         // Select prompt based on type
         var prompt = DOC_PROMPTS[tipo] || DOC_PROMPTS['OTRO'];
-        var promptFinal = isImage ? prompt : prompt + '\n\nCONTENIDO DEL DOCUMENTO:\n' + textoExtraido.substring(0, 8000);
 
         // Call n8n webhook → OpenAI GPT-4o
+        // Enviamos la URL firmada de Supabase para que n8n descargue el archivo directamente
+        // Esto evita problemas de truncado al extraer texto en el navegador
         var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/analisis-documental';
+        var payloadIA = {
+          signed_url: signedRes.data.signedUrl,
+          file_name: a.file_name,
+          mime_type: a.mime_type,
+          doc_type: tipo,
+          prompt: prompt,
+          es_imagen: isImage,
+          project_id: projectId
+        };
+        // Para imágenes adjuntamos base64 directamente (son archivos pequeños)
+        if (isImage) {
+          payloadIA.file_base64 = textoExtraido;
+        }
+        // Para Word y otros formatos que el navegador puede leer fácilmente,
+        // enviamos el texto ya extraído como respaldo
+        if (textoExtraido && textoExtraido.length > 10 && !isImage) {
+          payloadIA.texto_extraido = textoExtraido.substring(0, 12000);
+        }
         var apiResp = await fetch(n8nUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            file_base64: isImage ? textoExtraido : null,
-            mime_type: a.mime_type,
-            file_name: a.file_name,
-            doc_type: tipo,
-            texto_extraido: isImage ? null : textoExtraido,
-            prompt: promptFinal,
-            es_imagen: isImage
-          })
+          body: JSON.stringify(payloadIA)
         });
 
         var apiData = await apiResp.json();
@@ -8314,229 +8325,6 @@ async function compararCertificacionIA(certId, projectId) {
     btn.disabled = false;
   }
 }
-
-
-// ---- INFORMES: HISTÓRICO DE PROYECTOS ----
-var infProyData = [];
-
-async function cargarInformeProyectos() {
-  var el = document.getElementById('informes-proyectos-content');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">Cargando...</div>';
-  try {
-    var res = await db.from('projects')
-      .select('id, name, code, contact_email, category, confidence, received_at, project_statuses(code, name)')
-      .order('received_at', { ascending: false });
-    infProyData = res.data || [];
-    document.getElementById('inf-proy-buscar').value = '';
-    document.getElementById('inf-proy-estado').value = '';
-    document.getElementById('inf-proy-desde').value = '';
-    document.getElementById('inf-proy-hasta').value = '';
-    renderInformeProyectos(infProyData);
-  } catch(e) {
-    el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
-  }
-}
-
-function filtrarInformeProyectos() {
-  var q = (document.getElementById('inf-proy-buscar').value || '').toLowerCase();
-  var estado = document.getElementById('inf-proy-estado').value;
-  var desde = document.getElementById('inf-proy-desde').value;
-  var hasta = document.getElementById('inf-proy-hasta').value;
-  var filtered = infProyData.filter(function(p) {
-    var texto = ((p.name||'') + ' ' + (p.code||'') + ' ' + (p.contact_email||'')).toLowerCase();
-    if (q && texto.indexOf(q) === -1) return false;
-    var stCode = p.project_statuses ? p.project_statuses.code : '';
-    if (estado && stCode !== estado) return false;
-    if (desde && (p.received_at||'') < desde) return false;
-    if (hasta && (p.received_at||'').substring(0,10) > hasta) return false;
-    return true;
-  });
-  renderInformeProyectos(filtered);
-}
-
-function limpiarFiltrosProyectos() {
-  document.getElementById('inf-proy-buscar').value = '';
-  document.getElementById('inf-proy-estado').value = '';
-  document.getElementById('inf-proy-desde').value = '';
-  document.getElementById('inf-proy-hasta').value = '';
-  renderInformeProyectos(infProyData);
-}
-
-function renderInformeProyectos(data) {
-  var count = document.getElementById('inf-proy-count');
-  var el = document.getElementById('informes-proyectos-content');
-  if (count) count.textContent = data.length + ' proyecto(s)';
-  if (!data.length) { el.innerHTML = '<div class="empty">No hay proyectos que coincidan con los filtros.</div>'; return; }
-  var stBadgeMap = {
-    solicitado: '<span class="badge b-solicitado">Solicitado</span>',
-    en_analisis: '<span class="badge b-analisis">En análisis</span>',
-    oferta_en_curso: '<span class="badge b-oferta_curso">Oferta en curso</span>',
-    oferta_enviada: '<span class="badge b-oferta_enviada">Oferta enviada</span>',
-    adjudicado: '<span class="badge b-adjudicado">Adjudicado</span>',
-    pendiente_lanzamiento: '<span class="badge b-oferta_curso">Pend. lanzamiento</span>',
-    en_ejecucion: '<span class="badge b-ejecucion">En ejecución</span>',
-    cancelled: '<span class="badge b-red">Cancelado</span>'
-  };
-  var rows = data.map(function(p) {
-    var st = p.project_statuses ? p.project_statuses.code : '';
-    var badge = stBadgeMap[st] || '<span class="badge b-default">' + (st||'-') + '</span>';
-    var conf = p.confidence ? Math.round(p.confidence * 100) + '%' : '-';
-    var fecha = p.received_at ? new Date(p.received_at).toLocaleDateString('es-ES') : '-';
-    return '<tr onclick="abrirProyectoById(' + p.id + ')" style="cursor:pointer;">' +
-      '<td><strong>' + (p.name || p.code || '#' + p.id) + '</strong></td>' +
-      '<td style="font-size:11px;color:#888;">' + (p.contact_email || '-') + '</td>' +
-      '<td>' + (p.category || '-') + '</td>' +
-      '<td style="text-align:center;">' + conf + '</td>' +
-      '<td>' + badge + '</td>' +
-      '<td style="white-space:nowrap;">' + fecha + '</td>' +
-      '</tr>';
-  }).join('');
-  el.innerHTML = '<div class="card"><table><thead><tr>' +
-    '<th>Proyecto</th><th>Cliente</th><th>Gremio</th><th style="text-align:center;">Confianza IA</th><th>Estado</th><th>Fecha recepción</th>' +
-    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
-}
-
-function imprimirInforme(contenedorId) {
-  var el = document.getElementById(contenedorId);
-  if (!el) return;
-  var w = window.open('', '_blank');
-  w.document.write('<html><head><title>Informe EasyProject</title>' +
-    '<style>body{font-family:sans-serif;font-size:12px;padding:1rem;}' +
-    'table{width:100%;border-collapse:collapse;}' +
-    'th{background:#f5f5f0;padding:8px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;border-bottom:2px solid #ccc;}' +
-    'td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;}' +
-    'h1{font-size:15px;margin-bottom:4px;}p{font-size:11px;color:#888;margin-bottom:1rem;}' +
-    '.badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:500;}' +
-    '</style></head><body>' +
-    '<h1>EasyProject by Solventa IA — Informe</h1>' +
-    '<p>BYG Soluciones S.L. · Generado el ' + new Date().toLocaleDateString('es-ES') + ' a las ' + new Date().toLocaleTimeString('es-ES') + '</p>' +
-    el.innerHTML + '</body></html>');
-  w.document.close();
-  w.print();
-}
-
-// ---- INFORMES: GASTOS ----
-var infGasData = [];
-
-async function cargarInformeGastos() {
-  var el = document.getElementById('informes-gastos-content');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">Cargando...</div>';
-  try {
-    var res = await db.from('project_expenses')
-      .select('*, projects(name, code)')
-      .order('expense_date', { ascending: false });
-    infGasData = res.data || [];
-    document.getElementById('inf-gas-buscar').value = '';
-    document.getElementById('inf-gas-aprobado').value = '';
-    document.getElementById('inf-gas-desde').value = '';
-    document.getElementById('inf-gas-hasta').value = '';
-    renderInformeGastos(infGasData);
-  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
-}
-
-function filtrarInformeGastos() {
-  var q = (document.getElementById('inf-gas-buscar').value || '').toLowerCase();
-  var aprobado = document.getElementById('inf-gas-aprobado').value;
-  var desde = document.getElementById('inf-gas-desde').value;
-  var hasta = document.getElementById('inf-gas-hasta').value;
-  var filtered = infGasData.filter(function(g) {
-    var texto = ((g.projects ? g.projects.name : '') + ' ' + (g.supplier_name||'') + ' ' + (g.concept||'')).toLowerCase();
-    if (q && texto.indexOf(q) === -1) return false;
-    if (aprobado !== '' && String(g.approved ? 1 : 0) !== aprobado) return false;
-    if (desde && (g.expense_date||'') < desde) return false;
-    if (hasta && (g.expense_date||'').substring(0,10) > hasta) return false;
-    return true;
-  });
-  renderInformeGastos(filtered);
-}
-
-function renderInformeGastos(data) {
-  var el = document.getElementById('informes-gastos-content');
-  var totalEl = document.getElementById('inf-gas-total');
-  var total = data.reduce(function(acc, g){ return acc + (parseFloat(g.amount)||0); }, 0);
-  if (totalEl) totalEl.textContent = 'Total: ' + total.toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR (' + data.length + ' registros)';
-  if (!data.length) { el.innerHTML = '<div class="empty">No hay gastos que coincidan.</div>'; return; }
-  var rows = data.map(function(g) {
-    var pnombre = g.projects ? (g.projects.name || g.projects.code) : '-';
-    var fecha = g.expense_date ? new Date(g.expense_date).toLocaleDateString('es-ES') : '-';
-    return '<tr><td>' + pnombre + '</td>' +
-      '<td>' + (g.expense_type === 'factura' ? 'Factura' : 'Albarán') + '</td>' +
-      '<td>' + (g.supplier_name||'-') + '</td>' +
-      '<td>' + (g.concept||'-') + '</td>' +
-      '<td style="text-align:right;font-weight:500;">' + parseFloat(g.amount||0).toLocaleString('es-ES',{minimumFractionDigits:2}) + ' EUR</td>' +
-      '<td>' + (g.approved ? '<span class="badge b-adjudicado">Aprobado</span>' : '<span class="badge b-review">Pendiente</span>') + '</td>' +
-      '<td>' + fecha + '</td></tr>';
-  }).join('');
-  el.innerHTML = '<div class="card"><table><thead><tr>' +
-    '<th>Proyecto</th><th>Tipo</th><th>Proveedor</th><th>Concepto</th><th style="text-align:right;">Importe</th><th>Estado</th><th>Fecha</th>' +
-    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
-}
-
-// ---- INFORMES: DESVIACIONES DE OBRA ----
-var infDesvData = [];
-
-async function cargarInformeDesviaciones() {
-  var el = document.getElementById('informes-desviaciones-content');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">Cargando...</div>';
-  try {
-    var stRes = await db.from('project_statuses').select('id').eq('code','en_ejecucion').single();
-    if (!stRes.data) { el.innerHTML = '<div class="empty">No hay obras en ejecución.</div>'; return; }
-    var proyRes = await db.from('projects')
-      .select('id, name, code, project_manager_id, project_managers(full_name)')
-      .eq('project_status_id', stRes.data.id);
-    var proyectos = proyRes.data || [];
-    infDesvData = [];
-    for (var i = 0; i < proyectos.length; i++) {
-      var p = proyectos[i];
-      var hitosRes = await db.from('project_milestones').select('planned_date, actual_date, completed').eq('project_id', p.id);
-      var hitos = hitosRes.data || [];
-      var completados = hitos.filter(function(h){ return h.completed && h.actual_date; });
-      var totalDesv = completados.reduce(function(acc, h) {
-        return acc + Math.round((new Date(h.actual_date) - new Date(h.planned_date)) / (1000*60*60*24));
-      }, 0);
-      var desvMedia = completados.length ? Math.round(totalDesv / completados.length) : null;
-      infDesvData.push({
-        proyecto: p.name || p.code || '#' + p.id,
-        jefe: p.project_managers ? p.project_managers.full_name : '-',
-        total: hitos.length,
-        completados: completados.length,
-        desvMedia: desvMedia,
-        desvTotal: totalDesv
-      });
-    }
-    renderInformeDesviaciones(infDesvData);
-  } catch(e) { el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>'; }
-}
-
-function filtrarInformeDesviaciones() {
-  var q = (document.getElementById('inf-desv-buscar').value || '').toLowerCase();
-  var filtered = infDesvData.filter(function(d) {
-    return !q || d.proyecto.toLowerCase().indexOf(q) > -1 || d.jefe.toLowerCase().indexOf(q) > -1;
-  });
-  renderInformeDesviaciones(filtered);
-}
-
-function renderInformeDesviaciones(data) {
-  var el = document.getElementById('informes-desviaciones-content');
-  if (!data.length) { el.innerHTML = '<div class="empty">No hay datos de desviaciones.</div>'; return; }
-  var rows = data.map(function(d) {
-    var colMedia = d.desvMedia === null ? '#888' : (d.desvMedia > 0 ? '#A32D2D' : '#0F6E56');
-    var colTotal = d.desvTotal > 0 ? '#A32D2D' : '#0F6E56';
-    return '<tr><td><strong>' + d.proyecto + '</strong></td>' +
-      '<td>' + d.jefe + '</td>' +
-      '<td style="text-align:center;">' + d.completados + ' / ' + d.total + '</td>' +
-      '<td style="text-align:center;font-weight:600;color:' + colMedia + ';">' + (d.desvMedia !== null ? (d.desvMedia > 0 ? '+' : '') + d.desvMedia + ' días' : '-') + '</td>' +
-      '<td style="text-align:center;font-weight:600;color:' + colTotal + ';">' + (d.desvTotal !== 0 ? (d.desvTotal > 0 ? '+' : '') + d.desvTotal + ' días' : '0 días') + '</td>' +
-      '</tr>';
-  }).join('');
-  el.innerHTML = '<div class="card"><table><thead><tr>' +
-    '<th>Proyecto</th><th>Jefe de Obra</th><th style="text-align:center;">Hitos completados</th><th style="text-align:center;">Desviación media</th><th style="text-align:center;">Desviación total</th>' +
-    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
-}
-
 
 // ---- INFORMES TÉCNICOS DE ANÁLISIS ----
 var infTAData = [];
