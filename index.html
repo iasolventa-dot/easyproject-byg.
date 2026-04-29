@@ -8019,7 +8019,7 @@ async function ejecutarAnalisisIA(projectId) {
         // Call n8n webhook → OpenAI GPT-4o
         // Enviamos la URL firmada de Supabase para que n8n descargue el archivo directamente
         // Esto evita problemas de truncado al extraer texto en el navegador
-        var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/analisis-documental';
+        var n8nUrl = '/api/analisis';
         var payloadIA = {
           signed_url: signedRes.data.signedUrl,
           file_name: a.file_name,
@@ -8292,7 +8292,7 @@ async function compararCertificacionIA(certId, projectId) {
       "DOCUMENTO BYG:\n" + textoByg;
 
     // Call n8n webhook
-    var n8nUrl = 'https://unspiring-jerry-extraterritorially.ngrok-free.dev/webhook/analisis-documental';
+    var n8nUrl = '/api/analisis';
     var apiResp = await fetch(n8nUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
